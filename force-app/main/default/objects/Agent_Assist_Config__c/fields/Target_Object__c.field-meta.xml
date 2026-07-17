@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Target_Object__c</fullName>
+    <description>Target Salesforce Object API Name for this profile (e.g. Contact, Case, MessagingSession, or Global/Utility).</description>
+    <externalId>false</externalId>
+    <label>Target Object</label>
+    <length>50</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
