@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Endpoint_URL__c</fullName>
-    <description>API endpoint URL for the Agent Assist backend service.</description>
+    <description
+  >API endpoint URL for the Agent Assist backend service.</description>
     <externalId>false</externalId>
     <label>Endpoint URL</label>
     <required>false</required>

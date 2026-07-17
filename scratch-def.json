@@ -6,7 +6,7 @@
     "ServiceCloud",
     "LiveAgent",
     "LiveMessage",
-    "ServiceCloudVoicePartnerTelephony",
+    "ServiceCloudVoicePartnerTelephony:1",
     "LightningServiceConsole",
     "ServiceUser"
   ],

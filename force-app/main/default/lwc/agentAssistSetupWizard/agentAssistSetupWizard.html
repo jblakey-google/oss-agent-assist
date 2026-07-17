@@ -1,176 +1,207 @@
 <template>
-    <div class="wizard-container slds-p-around_medium">
-        <!-- Main Header -->
-        <div class="slds-page-header slds-page-header_record-home slds-m-bottom_medium wizard-header">
-            <div class="slds-page-header__row">
-                <div class="slds-page-header__col-title">
-                    <div class="slds-media">
-                        <div class="slds-media__figure">
-                            <lightning-icon icon-name="standard:service_resource" size="medium"></lightning-icon>
-                        </div>
-                        <div class="slds-media__body">
-                            <div class="slds-page-header__name">
-                                <div class="slds-page-header__name-title">
-                                    <h1>
-                                        <span class="slds-page-header__title slds-truncate" title="Agent Assist Setup Wizard">
-                                            Agent Assist Setup Wizard
-                                        </span>
-                                    </h1>
-                                </div>
-                            </div>
-                            <p class="slds-page-header__name-meta">
-                                Centralized configuration management for multi-container Agent Assist instances
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="slds-page-header__col-actions">
-                    <div class="slds-page-header__controls">
-                        <lightning-button label="New Profile" icon-name="utility:add" variant="brand" onclick={handleNewProfile}></lightning-button>
-                    </div>
-                </div>
+  <div class="wizard-container slds-p-around_medium">
+    <!-- Main Header -->
+    <div
+      class="slds-page-header slds-page-header_record-home slds-m-bottom_medium wizard-header"
+    >
+      <div class="slds-page-header__row">
+        <div class="slds-page-header__col-title">
+          <div class="slds-media">
+            <div class="slds-media__figure">
+              <lightning-icon
+                icon-name="standard:service_resource"
+                size="medium"
+              ></lightning-icon>
             </div>
+            <div class="slds-media__body">
+              <div class="slds-page-header__name">
+                <div class="slds-page-header__name-title">
+                  <h1>
+                    <span
+                      class="slds-page-header__title slds-truncate"
+                      title="Agent Assist Setup Wizard"
+                    >
+                      Agent Assist Setup Wizard
+                    </span>
+                  </h1>
+                </div>
+              </div>
+              <p class="slds-page-header__name-meta">
+                Centralized configuration management for Agent Assist instances
+              </p>
+            </div>
+          </div>
         </div>
-
-        <!-- Layout Grid -->
-        <div class="slds-grid slds-gutters">
-            
-            <!-- Left Column: Profile Selector List -->
-            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                <lightning-card title="Configuration Profiles" icon-name="utility:list">
-                    <div class="slds-p-around_small">
-                        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
-                            Select a profile to edit or bind to your <code class="xml-code">agentAssistContainer</code> instances.
-                        </p>
-                        <div class="slds-nav-vertical">
-                            <template for:each={profileList} for:item="prof">
-                                <div key={prof.id} class={prof.cssClass} onclick={handleSelectProfile} data-id={prof.developerName}>
-                                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                                        <div>
-                                            <div class="slds-text-title_bold">{prof.name}</div>
-                                            <div class="slds-text-body_small slds-text-color_weak">
-                                                configName: <strong>{prof.developerName}</strong>
-                                            </div>
-                                        </div>
-                                        <span class={prof.badgeClass}>{prof.targetObject}</span>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </lightning-card>
-            </div>
-
-            <!-- Middle Column: Profile Editor Form -->
-            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
-                <lightning-card title={editorCardTitle} icon-name="utility:edit">
-                    <div class="slds-p-around_medium">
-                        
-                        <!-- Form Inputs -->
-                        <div class="slds-grid slds-gutters slds-wrap">
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <lightning-input 
-                                    label="Profile Display Name" 
-                                    value={currentProfile.name} 
-                                    data-field="name" 
-                                    onchange={handleFieldChange} 
-                                    required>
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <lightning-input 
-                                    label="Developer Name (configName)" 
-                                    value={currentProfile.developerName} 
-                                    data-field="developerName" 
-                                    onchange={handleFieldChange} 
-                                    help-text="Unique key referenced in App Builder XML configName property" 
-                                    required>
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <lightning-input 
-                                    label="Container Header Title" 
-                                    value={currentProfile.title} 
-                                    data-field="title" 
-                                    onchange={handleFieldChange}>
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <lightning-combobox 
-                                    label="Target Object / Scope" 
-                                    value={currentProfile.targetObject} 
-                                    options={targetObjectOptions} 
-                                    data-field="targetObject" 
-                                    onchange={handleFieldChange}>
-                                </lightning-combobox>
-                            </div>
-                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
-                                <lightning-input 
-                                    label="Assist Service Endpoint URL" 
-                                    value={currentProfile.endpointUrl} 
-                                    data-field="endpointUrl" 
-                                    onchange={handleFieldChange}>
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <lightning-input 
-                                    type="toggle" 
-                                    label="Enable Auto-Assist" 
-                                    checked={currentProfile.enableAutoAssist} 
-                                    data-field="enableAutoAssist" 
-                                    onchange={handleFieldChange}>
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                                <lightning-input 
-                                    type="toggle" 
-                                    label="Show Knowledge & Suggestions" 
-                                    checked={currentProfile.showSuggestions} 
-                                    data-field="showSuggestions" 
-                                    onchange={handleFieldChange}>
-                                </lightning-input>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="slds-m-top_medium slds-grid slds-grid_align-spread slds-border_top slds-p-top_medium">
-                            <lightning-button 
-                                label="Delete Profile" 
-                                variant="destructive-text" 
-                                icon-name="utility:delete" 
-                                onclick={handleDeleteProfile} 
-                                disabled={isDefaultProfile}>
-                            </lightning-button>
-                            <div class="slds-grid slds-gutters_x-small">
-                                <lightning-button label="Reset Form" variant="neutral" onclick={handleReset}></lightning-button>
-                                <lightning-button label="Save Profile State" variant="brand" icon-name="utility:save" onclick={handleSaveProfile}></lightning-button>
-                            </div>
-                        </div>
-                    </div>
-                </lightning-card>
-
-                <!-- Architecture & XML Binding Info Card -->
-                <div class="slds-m-top_medium">
-                    <lightning-card title="How State Sharing & Multiple Configurations Work" icon-name="utility:matrix">
-                        <div class="slds-p-around_medium slds-theme_shade">
-                            <p class="slds-text-body_small slds-m-bottom_small">
-                                <strong>Multi-Container Architecture:</strong> The Setup Wizard manages shared named configuration records in Salesforce. In Lightning App Builder, you drop the <code class="xml-code">agentAssistContainer</code> on any Record Page (Contact, Case, MessagingSession) or Utility Bar and specify the <code class="xml-code">configName</code> property.
-                            </p>
-                            
-                            <div class="slds-box slds-theme_default slds-p-around_small">
-                                <div class="slds-text-title_caps slds-m-bottom_xx-small">App Builder FlexiPage XML Binding for Active Profile:</div>
-                                <pre class="xml-snippet">&lt;componentInstance&gt;
-    &lt;componentName&gt;c:agentAssistContainer&lt;/componentName&gt;
-    &lt;componentInstanceProperties&gt;
-        &lt;name&gt;configName&lt;/name&gt;
-        &lt;value&gt;{currentProfile.developerName}&lt;/value&gt;
-    &lt;/componentInstanceProperties&gt;
-&lt;/componentInstance&gt;</pre>
-                            </div>
-                        </div>
-                    </lightning-card>
-                </div>
-            </div>
+        <div class="slds-page-header__col-actions">
+          <div class="slds-page-header__controls">
+            <lightning-button
+              label="New Profile"
+              icon-name="utility:add"
+              variant="brand"
+              onclick={handleNewProfile}
+            ></lightning-button>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- Layout Grid -->
+    <div class="slds-grid slds-gutters">
+      <!-- Left Column: Profile Selector List -->
+      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+        <lightning-card title="Configuration Profiles" icon-name="utility:list">
+          <div class="slds-p-around_small">
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+            >
+              Select a profile to edit. Profiles appear in the Lightning Editor
+              dropdown for <code class="xml-code">agentAssistContainer</code>.
+            </p>
+            <div class="slds-nav-vertical">
+              <template for:each={profileList} for:item="prof">
+                <div
+                  key={prof.id}
+                  class={prof.cssClass}
+                  onclick={handleSelectProfile}
+                  data-id={prof.developerName}
+                >
+                  <div
+                    class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                  >
+                    <div>
+                      <div class="slds-text-title_bold">{prof.name}</div>
+                      <div class="slds-text-body_small slds-text-color_weak">
+                        configName: <strong>{prof.developerName}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </lightning-card>
+      </div>
+
+      <!-- Middle Column: Profile Editor Form -->
+      <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+        <lightning-card title={editorCardTitle} icon-name="utility:edit">
+          <div class="slds-p-around_medium">
+            <!-- Form Inputs -->
+            <div class="slds-grid slds-gutters slds-wrap">
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+              >
+                <lightning-input
+                  label="Profile Display Name"
+                  value={currentProfile.name}
+                  data-field="name"
+                  onchange={handleFieldChange}
+                  required
+                >
+                </lightning-input>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+              >
+                <lightning-input
+                  label="Developer Name (configName)"
+                  value={currentProfile.developerName}
+                  data-field="developerName"
+                  onchange={handleFieldChange}
+                  field-level-help="Unique key referenced in Lightning App Builder picklist. Cannot be changed once created to maintain App Builder page integrity."
+                  disabled={isDeveloperNameDisabled}
+                  required
+                >
+                </lightning-input>
+              </div>
+              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                <lightning-input
+                  label="Container Header Title"
+                  value={currentProfile.title}
+                  data-field="title"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                <lightning-input
+                  label="Assist Service Endpoint URL"
+                  value={currentProfile.endpointUrl}
+                  data-field="endpointUrl"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+              >
+                <lightning-input
+                  type="toggle"
+                  label="Enable Auto-Assist"
+                  checked={currentProfile.enableAutoAssist}
+                  data-field="enableAutoAssist"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+              >
+                <lightning-input
+                  type="toggle"
+                  label="Show Knowledge & Suggestions"
+                  checked={currentProfile.showSuggestions}
+                  data-field="showSuggestions"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div
+              class="slds-m-top_medium slds-grid slds-grid_align-spread slds-border_top slds-p-top_medium"
+            >
+              <lightning-button
+                label="Delete Profile"
+                variant="destructive-text"
+                icon-name="utility:delete"
+                onclick={handleDeleteProfile}
+                disabled={isDefaultProfile}
+              >
+              </lightning-button>
+              <div class="slds-grid slds-gutters_x-small">
+                <lightning-button
+                  label="Save Profile State"
+                  variant="brand"
+                  icon-name="utility:save"
+                  onclick={handleSaveProfile}
+                ></lightning-button>
+              </div>
+            </div>
+          </div>
+        </lightning-card>
+
+        <!-- Architecture & Picklist Info Card -->
+        <div class="slds-m-top_medium">
+          <lightning-card
+            title="How Configuration Profiles Work"
+            icon-name="utility:matrix"
+          >
+            <div class="slds-p-around_medium slds-theme_shade">
+              <p class="slds-text-body_small slds-m-bottom_small">
+                <strong>Dropdown Select in Lightning Editor:</strong> Every
+                configuration profile created here is automatically populated
+                into the <strong>Configuration Profile Name</strong> dropdown in
+                Lightning App Builder. Drop the
+                <code class="xml-code">agentAssistContainer</code> on any page
+                (Record Page, Utility Bar, App Page) and select the profile
+                directly from the picklist.
+              </p>
+            </div>
+          </lightning-card>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>

@@ -1,31 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Agent Assist Container</masterLabel>
-    <description>Agent Assist Container for Record Pages and Utility Bar</description>
+    <description
+  >Agent Assist Container for Record Pages and Utility Bar</description>
     <targets>
         <target>lightning__RecordPage</target>
         <target>lightning__UtilityBar</target>
         <target>lightning__AppPage</target>
     </targets>
     <targetConfigs>
-        <targetConfig targets="lightning__RecordPage">
-            <property name="configName" type="String" label="Configuration Profile Name" default="Default" description="Name of the shared configuration profile managed by the Setup Wizard."/>
-            <property name="title" type="String" label="Container Title Override" description="Overrides the title from the shared profile if set." default=""/>
-            <property name="showSuggestions" type="Boolean" label="Show Suggestions Override" description="Override whether to show suggestions." default="true"/>
-            <property name="enableAutoAssist" type="Boolean" label="Enable Auto Assist Override" description="Override whether auto-assist is enabled." default="true"/>
-            <objects>
-                <object>Contact</object>
-                <object>MessagingSession</object>
-                <object>Case</object>
-            </objects>
-        </targetConfig>
-        <targetConfig targets="lightning__UtilityBar,lightning__AppPage">
-            <property name="configName" type="String" label="Configuration Profile Name" default="Default" description="Name of the shared configuration profile managed by the Setup Wizard."/>
-            <property name="title" type="String" label="Container Title Override" description="Overrides the title from the shared profile if set." default=""/>
-            <property name="showSuggestions" type="Boolean" label="Show Suggestions Override" description="Override whether to show suggestions." default="true"/>
-            <property name="enableAutoAssist" type="Boolean" label="Enable Auto Assist Override" description="Override whether auto-assist is enabled." default="true"/>
+        <targetConfig
+      targets="lightning__RecordPage,lightning__UtilityBar,lightning__AppPage"
+    >
+            <property
+        name="configName"
+        type="String"
+        label="Configuration Profile Name"
+        datasource="apex://AgentAssistConfigPicklist"
+        default="Default"
+        description="Select a configuration profile managed in the Setup Wizard."
+      />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

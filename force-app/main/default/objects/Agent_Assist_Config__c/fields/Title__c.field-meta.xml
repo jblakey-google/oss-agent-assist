@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Title__c</fullName>
-    <description>Default title to display in the agentAssistContainer header.</description>
+    <description
+  >Default title to display in the agentAssistContainer header.</description>
     <externalId>false</externalId>
     <label>Title</label>
     <length>255</length>

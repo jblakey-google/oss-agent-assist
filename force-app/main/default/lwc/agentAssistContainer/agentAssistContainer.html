@@ -1,120 +1,268 @@
 <template>
-    <lightning-card title={resolvedTitle} icon-name="standard:service_crew_member">
-        <!-- Header Actions / Mode Indicator -->
-        <div slot="actions" class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small">
-            <template lwc:if={isUtilityBar}>
-                <lightning-badge label="Utility Bar Mode" class="slds-badge_lightest"></lightning-badge>
-            </template>
-            <template lwc:else>
-                <lightning-badge label={contextBadgeLabel} icon-name="utility:record" class="slds-badge_inverse"></lightning-badge>
-            </template>
-            <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh" onclick={handleRefresh} size="small"></lightning-button-icon>
+  <lightning-card
+    title={resolvedTitle}
+    icon-name="standard:service_crew_member"
+  >
+    <!-- Header Actions / Mode Indicator -->
+    <div
+      slot="actions"
+      class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
+    >
+      <template lwc:if={isUtilityBar}>
+        <lightning-badge
+          label="Utility Bar Mode"
+          class="slds-badge_lightest"
+        ></lightning-badge>
+      </template>
+      <template lwc:else>
+        <lightning-badge
+          label={contextBadgeLabel}
+          icon-name="utility:record"
+          class="slds-badge_inverse"
+        ></lightning-badge>
+      </template>
+      <lightning-button-icon
+        icon-name="utility:refresh"
+        alternative-text="Refresh"
+        onclick={handleRefresh}
+        size="small"
+      ></lightning-button-icon>
+    </div>
+
+    <div class="slds-p-horizontal_medium slds-p-vertical_small">
+      <!-- Loading Spinner -->
+      <template lwc:if={isLoading}>
+        <div class="slds-is-relative slds-p-around_large">
+          <lightning-spinner
+            alternative-text="Loading configuration..."
+            size="small"
+          ></lightning-spinner>
         </div>
+      </template>
 
-        <div class="slds-p-horizontal_medium slds-p-vertical_small">
-            <!-- Loading Spinner -->
-            <template lwc:if={isLoading}>
-                <div class="slds-is-relative slds-p-around_large">
-                    <lightning-spinner alternative-text="Loading configuration..." size="small"></lightning-spinner>
+      <template lwc:else>
+        <!-- Missing/Deleted Profile Error View -->
+        <template lwc:if={isProfileMissing}>
+          <div
+            class="missing-profile-box slds-p-around_medium slds-m-bottom_small"
+          >
+            <div class="slds-media slds-media_center">
+              <div class="slds-media__figure">
+                <lightning-icon
+                  icon-name="utility:warning"
+                  variant="warning"
+                  size="medium"
+                ></lightning-icon>
+              </div>
+              <div class="slds-media__body">
+                <div class="slds-text-heading_small slds-text-color_error">
+                  <strong>Configuration Profile Deleted or Missing</strong>
                 </div>
-            </template>
+                <p class="slds-text-body_regular slds-m-top_xx-small">
+                  The assigned profile
+                  <code class="missing-code">{configName}</code> was deleted
+                  from the Setup Wizard or does not exist.
+                </p>
+                <p
+                  class="slds-text-body_small slds-text-color_weak slds-m-top_x-small"
+                >
+                  Please select an active profile in
+                  <strong>Lightning App Builder</strong> or create
+                  <strong>{configName}</strong> in the
+                  <strong>Agent Assist Setup Wizard</strong> tab.
+                </p>
+              </div>
+            </div>
+          </div>
+        </template>
 
-            <template lwc:else>
-                <!-- Configuration State Banner -->
-                <div class="state-banner slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                    <div class="slds-grid slds-grid_vertical-align-center">
-                        <lightning-icon icon-name="utility:settings" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                        <div class="slds-text-body_small">
-                            <span class="slds-text-title_bold">Profile:</span> {activeProfileName} 
-                            <span class="slds-text-color_weak slds-m-left_xx-small">({resolutionSource})</span>
-                        </div>
-                    </div>
-                    <button class="slds-button slds-text-link slds-text-body_small" onclick={toggleConfigDetails}>
-                        {toggleDetailsLabel}
-                    </button>
+        <!-- Normal Active Profile View -->
+        <template lwc:else>
+          <!-- Configuration State Banner -->
+          <div
+            class="state-banner slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+          >
+            <div class="slds-grid slds-grid_vertical-align-center">
+              <lightning-icon
+                icon-name="utility:settings"
+                size="x-small"
+                class="slds-m-right_x-small"
+              ></lightning-icon>
+              <div class="slds-text-body_small">
+                <span class="slds-text-title_bold">Profile:</span>
+                {activeProfileName}
+                <span class="slds-text-color_weak slds-m-left_xx-small"
+                  >({resolutionSource})</span
+                >
+              </div>
+            </div>
+            <button
+              class="slds-button slds-text-link slds-text-body_small"
+              onclick={toggleConfigDetails}
+            >
+              {toggleDetailsLabel}
+            </button>
+          </div>
+
+          <!-- Expanded State Details Accordion -->
+          <template lwc:if={showConfigDetails}>
+            <div
+              class="slds-box slds-p-around_small slds-m-bottom_small slds-theme_default slds-border_top"
+            >
+              <div class="slds-text-title_caps slds-m-bottom_xx-small">
+                Shared State & XML Resolution
+              </div>
+              <dl class="slds-list_horizontal slds-wrap slds-text-body_small">
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="XML Config Name"
+                >
+                  XML configName:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">{configName}</dd>
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Endpoint URL"
+                >
+                  Backend Endpoint:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {resolvedEndpoint}
+                </dd>
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Auto Assist"
+                >
+                  Auto-Assist Status:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {autoAssistStatusText}
+                </dd>
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Suggestions"
+                >
+                  Suggestions Status:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {suggestionsStatusText}
+                </dd>
+              </dl>
+            </div>
+          </template>
+
+          <!-- Auto-Assist Active Widget -->
+          <template lwc:if={resolvedEnableAutoAssist}>
+            <div
+              class="assist-active-box slds-p-around_small slds-m-bottom_small slds-grid slds-grid_vertical-align-center"
+            >
+              <div class="pulse-dot slds-m-right_small"></div>
+              <div class="slds-col">
+                <div class="slds-text-heading_small slds-text-color_success">
+                  AI Real-Time Assist Active
                 </div>
+                <div class="slds-text-body_small slds-text-color_weak">
+                  Listening for context on
+                  <strong class="slds-text-color_default"
+                    >{activeContextDescription}</strong
+                  >
+                </div>
+              </div>
+              <lightning-button
+                label="Trigger Assist"
+                variant="brand"
+                size="small"
+                onclick={handleTriggerAssist}
+              ></lightning-button>
+            </div>
+          </template>
 
-                <!-- Expanded State Details Accordion -->
-                <template lwc:if={showConfigDetails}>
-                    <div class="slds-box slds-p-around_small slds-m-bottom_small slds-theme_default slds-border_top">
-                        <div class="slds-text-title_caps slds-m-bottom_xx-small">Shared State & XML Resolution</div>
-                        <dl class="slds-list_horizontal slds-wrap slds-text-body_small">
-                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="XML Config Name">XML configName:</dt>
-                            <dd class="slds-item_detail slds-truncate">{configName}</dd>
-                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Endpoint URL">Backend Endpoint:</dt>
-                            <dd class="slds-item_detail slds-truncate">{resolvedEndpoint}</dd>
-                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Auto Assist">Auto-Assist Status:</dt>
-                            <dd class="slds-item_detail slds-truncate">{autoAssistStatusText}</dd>
-                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Suggestions">Suggestions Status:</dt>
-                            <dd class="slds-item_detail slds-truncate">{suggestionsStatusText}</dd>
-                        </dl>
+          <!-- Suggestions Section -->
+          <template lwc:if={resolvedShowSuggestions}>
+            <div class="slds-m-top_small">
+              <div
+                class="slds-text-title_caps slds-m-bottom_x-small slds-grid slds-grid_align-spread"
+              >
+                <span>Recommended Actions & Articles</span>
+                <span class="slds-badge slds-badge_lightest">3 Available</span>
+              </div>
+
+              <!-- Card 1 -->
+              <article
+                class="slds-card slds-card_boundary slds-m-bottom_x-small suggestion-card"
+              >
+                <div class="slds-card__body slds-card__body_inner">
+                  <div class="slds-grid slds-grid_align-spread">
+                    <div class="slds-text-title_bold slds-truncate">
+                      KB00921: Resolving Authentication Issues
                     </div>
-                </template>
+                    <span class="slds-badge slds-theme_success">98% Match</span>
+                  </div>
+                  <p
+                    class="slds-text-body_small slds-m-top_xx-small slds-text-color_weak"
+                  >
+                    Based on recent session transcripts and case history.
+                  </p>
+                  <div class="slds-m-top_x-small">
+                    <lightning-button
+                      label="Insert Article Link"
+                      size="x-small"
+                      variant="neutral"
+                    ></lightning-button>
+                  </div>
+                </div>
+              </article>
 
-                <!-- Auto-Assist Active Widget -->
-                <template lwc:if={resolvedEnableAutoAssist}>
-                    <div class="assist-active-box slds-p-around_small slds-m-bottom_small slds-grid slds-grid_vertical-align-center">
-                        <div class="pulse-dot slds-m-right_small"></div>
-                        <div class="slds-col">
-                            <div class="slds-text-heading_small slds-text-color_success">AI Real-Time Assist Active</div>
-                            <div class="slds-text-body_small slds-text-color_weak">
-                                Listening for context on <strong class="slds-text-color_default">{activeContextDescription}</strong>
-                            </div>
-                        </div>
-                        <lightning-button label="Trigger Assist" variant="brand" size="small" onclick={handleTriggerAssist}></lightning-button>
+              <!-- Card 2 -->
+              <article
+                class="slds-card slds-card_boundary slds-m-bottom_x-small suggestion-card"
+              >
+                <div class="slds-card__body slds-card__body_inner">
+                  <div class="slds-grid slds-grid_align-spread">
+                    <div class="slds-text-title_bold slds-truncate">
+                      Suggested Response Draft
                     </div>
-                </template>
+                    <span class="slds-badge slds-theme_info">AI Draft</span>
+                  </div>
+                  <p
+                    class="slds-text-body_small slds-m-top_xx-small slds-text-color_weak"
+                  >
+                    "I understand you are experiencing difficulties with the
+                    login flow. Let me guide you through the reset steps..."
+                  </p>
+                  <div
+                    class="slds-m-top_x-small slds-grid slds-gutters_xx-small"
+                  >
+                    <lightning-button
+                      label="Copy to Chat"
+                      size="x-small"
+                      variant="brand"
+                    ></lightning-button>
+                    <lightning-button
+                      label="Edit Response"
+                      size="x-small"
+                      variant="neutral"
+                    ></lightning-button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </template>
 
-                <!-- Suggestions Section -->
-                <template lwc:if={resolvedShowSuggestions}>
-                    <div class="slds-m-top_small">
-                        <div class="slds-text-title_caps slds-m-bottom_x-small slds-grid slds-grid_align-spread">
-                            <span>Recommended Actions & Articles</span>
-                            <span class="slds-badge slds-badge_lightest">3 Available</span>
-                        </div>
-
-                        <!-- Card 1 -->
-                        <article class="slds-card slds-card_boundary slds-m-bottom_x-small suggestion-card">
-                            <div class="slds-card__body slds-card__body_inner">
-                                <div class="slds-grid slds-grid_align-spread">
-                                    <div class="slds-text-title_bold slds-truncate">KB00921: Resolving Authentication Issues</div>
-                                    <span class="slds-badge slds-theme_success">98% Match</span>
-                                </div>
-                                <p class="slds-text-body_small slds-m-top_xx-small slds-text-color_weak">
-                                    Based on recent session transcripts and case history.
-                                </p>
-                                <div class="slds-m-top_x-small">
-                                    <lightning-button label="Insert Article Link" size="x-small" variant="neutral"></lightning-button>
-                                </div>
-                            </div>
-                        </article>
-
-                        <!-- Card 2 -->
-                        <article class="slds-card slds-card_boundary slds-m-bottom_x-small suggestion-card">
-                            <div class="slds-card__body slds-card__body_inner">
-                                <div class="slds-grid slds-grid_align-spread">
-                                    <div class="slds-text-title_bold slds-truncate">Suggested Response Draft</div>
-                                    <span class="slds-badge slds-theme_info">AI Draft</span>
-                                </div>
-                                <p class="slds-text-body_small slds-m-top_xx-small slds-text-color_weak">
-                                    "I understand you are experiencing difficulties with the login flow. Let me guide you through the reset steps..."
-                                </p>
-                                <div class="slds-m-top_x-small slds-grid slds-gutters_xx-small">
-                                    <lightning-button label="Copy to Chat" size="x-small" variant="brand"></lightning-button>
-                                    <lightning-button label="Edit Response" size="x-small" variant="neutral"></lightning-button>
-                                </div>
-                            </div>
-                        </article>
-                    </div>
-                </template>
-
-                <template lwc:if={noFeaturesEnabled}>
-                    <div class="slds-illustration slds-illustration_small slds-p-around_medium slds-text-align_center">
-                        <div class="slds-text-heading_small slds-m-top_small">Suggestions and Auto-Assist are disabled</div>
-                        <div class="slds-text-body_small slds-text-color_weak">Enable them in Setup Wizard or via XML design properties.</div>
-                    </div>
-                </template>
-            </template>
-        </div>
-    </lightning-card>
+          <template lwc:if={noFeaturesEnabled}>
+            <div
+              class="slds-illustration slds-illustration_small slds-p-around_medium slds-text-align_center"
+            >
+              <div class="slds-text-heading_small slds-m-top_small">
+                Suggestions and Auto-Assist are disabled
+              </div>
+              <div class="slds-text-body_small slds-text-color_weak">
+                Enable them in Setup Wizard for this profile.
+              </div>
+            </div>
+          </template>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
 </template>

@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Show_Suggestions__c</fullName>
     <defaultValue>true</defaultValue>
-    <description>Controls whether real-time recommendation cards are displayed in the container.</description>
+    <description
+  >Controls whether real-time recommendation cards are displayed in the container.</description>
     <externalId>false</externalId>
     <label>Show Suggestions</label>
     <trackTrending>false</trackTrending>

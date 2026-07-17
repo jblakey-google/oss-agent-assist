@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Enable_Auto_Assist__c</fullName>
     <defaultValue>true</defaultValue>
-    <description>Controls whether background automated assist is enabled.</description>
+    <description
+  >Controls whether background automated assist is enabled.</description>
     <externalId>false</externalId>
     <label>Enable Auto Assist</label>
     <trackTrending>false</trackTrending>
