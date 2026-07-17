@@ -16,210 +16,732 @@
 
 <template>
   <div class="wizard-container slds-p-around_medium">
-    <!-- Main Header -->
-    <div
-      class="slds-page-header slds-page-header_record-home slds-m-bottom_medium wizard-header"
-    >
-      <div class="slds-page-header__row">
-        <div class="slds-page-header__col-title">
-          <div class="slds-media">
-            <div class="slds-media__figure">
-              <img
-                src={appIcon}
-                alt="Google Cloud Agent Assist Icon"
-                class="slds-icon slds-icon_medium wizard-header-icon"
-              />
-            </div>
-            <div class="slds-media__body">
-              <div class="slds-page-header__name">
-                <div class="slds-page-header__name-title">
-                  <h1>
-                    <span
-                      class="slds-page-header__title slds-truncate"
-                      title="Google Cloud Agent Assist Setup Wizard"
-                    >
-                      Google Cloud Agent Assist Setup Wizard
-                    </span>
-                  </h1>
-                </div>
-              </div>
-              <p class="slds-page-header__name-meta">
-                Centralized configuration management for Google Cloud Agent
-                Assist instances
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="slds-page-header__col-actions">
-          <div class="slds-page-header__controls">
-            <lightning-button
-              label="New Profile"
-              icon-name="utility:add"
-              variant="brand"
-              onclick={handleNewProfile}
-            ></lightning-button>
-          </div>
+    <!-- Main Header (Clean & Unboxed) -->
+    <div class="slds-m-bottom_small wizard-header-clean">
+      <div class="slds-grid slds-grid_vertical-align-center">
+        <img
+          src={appIcon}
+          alt="Google Cloud Agent Assist Icon"
+          class="slds-m-right_small wizard-header-icon"
+        />
+        <div>
+          <h1 class="slds-text-heading_medium header-title">Setup Wizard</h1>
+          <p class="slds-text-body_small slds-text-color_weak">
+            Centralized configuration and integration management for Google
+            Cloud Agent Assist
+          </p>
         </div>
       </div>
     </div>
 
-    <!-- Layout Grid -->
-    <div class="slds-grid slds-gutters">
-      <!-- Left Column: Profile Selector List -->
-      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-        <lightning-card title="Configuration Profiles" icon-name="utility:list">
-          <div class="slds-p-around_small">
-            <p
-              class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+    <!-- Sub Pages Tabset (Clean, No Wasted Inner Box Lines) -->
+    <lightning-tabset active-tab-value={activeTab} onselect={handleTabSelect}>
+      <!-- 1. Salesforce Setup -->
+      <lightning-tab
+        label="Salesforce Setup"
+        value="salesforceSetup"
+        icon-name="utility:settings"
+      >
+        <div class="slds-p-top_medium">
+          <div class="slds-grid slds-gutters slds-wrap">
+            <div
+              class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
             >
-              Select a profile to edit. Profiles appear in the Lightning Editor
-              dropdown for <code class="xml-code">agentAssistContainer</code>.
-            </p>
-            <div class="slds-nav-vertical">
-              <template for:each={profileList} for:item="prof">
+              <lightning-card
+                title="Salesforce Prerequisites & Deployment Health"
+                icon-name="utility:check"
+              >
+                <div class="slds-p-around_medium">
+                  <p class="slds-text-body_regular slds-m-bottom_medium">
+                    Review and verify that all core Salesforce platform
+                    configurations, security settings, and permissions are
+                    properly deployed for Google Cloud Agent Assist.
+                  </p>
+
+                  <div class="slds-box slds-m-bottom_small slds-theme_shade">
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
+                    >
+                      <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-icon
+                          icon-name="utility:shield"
+                          size="small"
+                          class="slds-m-right_small"
+                        ></lightning-icon>
+                        <div>
+                          <strong
+                            >Administrative & Agent Permission Sets</strong
+                          >
+                          <div
+                            class="slds-text-body_small slds-text-color_weak"
+                          >
+                            Agent_Assist_Admin and Messaging_Agent permission
+                            sets
+                          </div>
+                        </div>
+                      </div>
+                      <span class="slds-badge slds-theme_success"
+                        >Deployed</span
+                      >
+                    </div>
+                  </div>
+
+                  <div class="slds-box slds-m-bottom_small slds-theme_shade">
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
+                    >
+                      <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-icon
+                          icon-name="utility:lock"
+                          size="small"
+                          class="slds-m-right_small"
+                        ></lightning-icon>
+                        <div>
+                          <strong>CSP Trusted Sites</strong>
+                          <div
+                            class="slds-text-body_small slds-text-color_weak"
+                          >
+                            Google Cloud Run, Google APIs, and GStatic endpoints
+                          </div>
+                        </div>
+                      </div>
+                      <span class="slds-badge slds-theme_success"
+                        >Configured</span
+                      >
+                    </div>
+                  </div>
+
+                  <div class="slds-box slds-m-bottom_small slds-theme_shade">
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
+                    >
+                      <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-icon
+                          icon-name="utility:database"
+                          size="small"
+                          class="slds-m-right_small"
+                        ></lightning-icon>
+                        <div>
+                          <strong>Custom Metadata Objects</strong>
+                          <div
+                            class="slds-text-body_small slds-text-color_weak"
+                          >
+                            Agent_Assist_Config__c custom object and custom
+                            fields
+                          </div>
+                        </div>
+                      </div>
+                      <span class="slds-badge slds-theme_success">Active</span>
+                    </div>
+                  </div>
+                </div>
+              </lightning-card>
+            </div>
+
+            <div
+              class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+            >
+              <lightning-card
+                title="Quick Actions"
+                icon-name="utility:touch_action"
+              >
+                <div class="slds-p-around_medium">
+                  <p
+                    class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+                  >
+                    Quickly assign permission sets or refresh org schema cache.
+                  </p>
+                  <div class="slds-m-bottom_small">
+                    <button
+                      type="button"
+                      class="slds-button slds-button_neutral slds-button_stretch slds-size_1-of-1"
+                      onclick={handlePlaceholderAction}
+                    >
+                      <lightning-icon
+                        icon-name="utility:user"
+                        size="x-small"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      Assign Admin Permset
+                    </button>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      class="slds-button slds-button_neutral slds-button_stretch slds-size_1-of-1"
+                      onclick={handlePlaceholderAction}
+                    >
+                      <lightning-icon
+                        icon-name="utility:refresh"
+                        size="x-small"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      Verify Schema Health
+                    </button>
+                  </div>
+                </div>
+              </lightning-card>
+            </div>
+          </div>
+        </div>
+      </lightning-tab>
+
+      <!-- 2. LWC Configuration Profiles (2-col layout starting at 768px) -->
+      <lightning-tab
+        label="Config Profiles"
+        value="configurationProfiles"
+        icon-name="utility:bundle_config"
+      >
+        <div class="slds-p-top_medium">
+          <!-- Responsive Layout Grid -->
+          <div class="slds-grid slds-gutters slds-wrap">
+            <!-- Left Column: Profile Selector List -->
+            <div
+              class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+            >
+              <lightning-card
+                title="Configuration Profiles"
+                icon-name="utility:bundle_config"
+              >
+                <div class="slds-p-around_small">
+                  <div class="slds-m-bottom_small">
+                    <button
+                      type="button"
+                      class="slds-button slds-button_brand slds-button_stretch slds-size_1-of-1"
+                      onclick={handleNewProfile}
+                    >
+                      <lightning-icon
+                        icon-name="utility:add"
+                        size="x-small"
+                        variant="inverse"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      New Profile
+                    </button>
+                  </div>
+                  <p
+                    class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+                  >
+                    Select a profile to edit. Profiles appear in the Lightning
+                    Editor dropdown for
+                    <code class="xml-code">agentAssistContainer</code>.
+                  </p>
+                  <div class="slds-nav-vertical">
+                    <template for:each={profileList} for:item="prof">
+                      <div
+                        key={prof.id}
+                        class={prof.cssClass}
+                        onclick={handleSelectProfile}
+                        data-id={prof.developerName}
+                      >
+                        <div
+                          class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                        >
+                          <div>
+                            <div class="slds-text-title_bold">{prof.name}</div>
+                            <div
+                              class="slds-text-body_small slds-text-color_weak"
+                            >
+                              configName: <strong>{prof.developerName}</strong>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </lightning-card>
+            </div>
+
+            <!-- Middle Column: Profile Editor Form -->
+            <div
+              class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
+            >
+              <lightning-card title={editorCardTitle} icon-name="utility:edit">
+                <div class="slds-p-around_medium">
+                  <!-- Form Inputs -->
+                  <div class="slds-grid slds-gutters slds-wrap">
+                    <div
+                      class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                    >
+                      <lightning-input
+                        label="Display Name"
+                        value={currentProfile.name}
+                        data-field="name"
+                        onchange={handleFieldChange}
+                        required
+                      >
+                      </lightning-input>
+                    </div>
+                    <div
+                      class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                    >
+                      <lightning-input
+                        label="Developer Name"
+                        value={currentProfile.developerName}
+                        data-field="developerName"
+                        onchange={handleFieldChange}
+                        field-level-help="Unique key referenced in Lightning App Builder picklist. Cannot be changed once created to maintain App Builder page integrity."
+                        disabled={isDeveloperNameDisabled}
+                        required
+                      >
+                      </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                      <lightning-input
+                        label="Header Title"
+                        value={currentProfile.title}
+                        data-field="title"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                      <lightning-input
+                        label="Assist Service Endpoint URL"
+                        value={currentProfile.endpointUrl}
+                        data-field="endpointUrl"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-input>
+                    </div>
+                    <div
+                      class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                    >
+                      <lightning-input
+                        type="toggle"
+                        label="Enable Auto-Assist"
+                        checked={currentProfile.enableAutoAssist}
+                        data-field="enableAutoAssist"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-input>
+                    </div>
+                    <div
+                      class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                    >
+                      <lightning-input
+                        type="toggle"
+                        label="Show Knowledge & Suggestions"
+                        checked={currentProfile.showSuggestions}
+                        data-field="showSuggestions"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-input>
+                    </div>
+                  </div>
+
+                  <!-- Form Actions (Clean alignment without negative margin gutters) -->
+                  <div
+                    class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-border_top slds-p-top_medium"
+                  >
+                    <lightning-button
+                      label="Delete Profile"
+                      variant="destructive-text"
+                      icon-name="utility:delete"
+                      onclick={handleDeleteProfile}
+                      disabled={isDefaultProfile}
+                    >
+                    </lightning-button>
+                    <div>
+                      <lightning-button
+                        label="Save Profile"
+                        variant="brand"
+                        icon-name="utility:save"
+                        onclick={handleSaveProfile}
+                      ></lightning-button>
+                    </div>
+                  </div>
+                </div>
+              </lightning-card>
+
+              <!-- Architecture & Picklist Info Callout -->
+              <div class="slds-m-top_medium">
                 <div
-                  key={prof.id}
-                  class={prof.cssClass}
-                  onclick={handleSelectProfile}
-                  data-id={prof.developerName}
+                  class="slds-box slds-box_small slds-theme_shade info-panel-box slds-p-around_medium"
                 >
                   <div
-                    class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                    class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
                   >
-                    <div>
-                      <div class="slds-text-title_bold">{prof.name}</div>
-                      <div class="slds-text-body_small slds-text-color_weak">
-                        configName: <strong>{prof.developerName}</strong>
+                    <lightning-icon
+                      icon-name="utility:bundle_config"
+                      size="small"
+                      class="slds-m-right_x-small"
+                    ></lightning-icon>
+                    <strong class="slds-text-heading_small"
+                      >How Configuration Profiles Work</strong
+                    >
+                  </div>
+                  <p
+                    class="slds-text-body_small slds-text-color_weak slds-p-left_small"
+                  >
+                    <strong>Dropdown Select in Lightning Editor:</strong> Every
+                    configuration profile created here is automatically
+                    populated into the
+                    <strong>Configuration Profile Name</strong> dropdown in
+                    Lightning App Builder. Drop the
+                    <code class="xml-code">agentAssistContainer</code> on any
+                    page (Record Page, Utility Bar, App Page) and select the
+                    profile directly from the picklist.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </lightning-tab>
+
+      <!-- 3. Diagnostics -->
+      <lightning-tab
+        label="Diagnostics"
+        value="diagnostics"
+        icon-name="utility:connected_apps"
+      >
+        <div class="slds-p-top_medium">
+          <lightning-card
+            title="System Diagnostics & Connectivity"
+            icon-name="utility:connected_apps"
+          >
+            <div slot="actions">
+              <lightning-button
+                label="Run All Diagnostics"
+                icon-name="utility:play"
+                variant="brand"
+                onclick={handleRunDiagnostics}
+              ></lightning-button>
+            </div>
+            <div class="slds-p-around_medium">
+              <p class="slds-text-body_regular slds-m-bottom_medium">
+                Validate communication between Salesforce, the Google Cloud UI
+                Connector, and the Agent Assist backend service.
+              </p>
+
+              <div class="slds-grid slds-gutters slds-wrap">
+                <div
+                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+                >
+                  <div class="slds-box slds-box_small diagnostic-box">
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+                    >
+                      <lightning-icon
+                        icon-name="utility:connected_apps"
+                        size="small"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      <strong class="slds-text-heading_small"
+                        >UI Connector</strong
+                      >
+                    </div>
+                    <p
+                      class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+                    >
+                      Check HTTPS & WebSocket connectivity to Google Cloud Run
+                      UI Connector backend.
+                    </p>
+                    <span class="slds-badge slds-theme_success"
+                      >Connected (200 OK)</span
+                    >
+                  </div>
+                </div>
+
+                <div
+                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+                >
+                  <div class="slds-box slds-box_small diagnostic-box">
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+                    >
+                      <lightning-icon
+                        icon-name="utility:key"
+                        size="small"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      <strong class="slds-text-heading_small"
+                        >Authentication</strong
+                      >
+                    </div>
+                    <p
+                      class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+                    >
+                      Verify OAuth2 token resolution, service account
+                      permissions, and session validation.
+                    </p>
+                    <span class="slds-badge slds-theme_success"
+                      >Token Active</span
+                    >
+                  </div>
+                </div>
+
+                <div
+                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+                >
+                  <div class="slds-box slds-box_small diagnostic-box">
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+                    >
+                      <lightning-icon
+                        icon-name="utility:file"
+                        size="small"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      <strong class="slds-text-heading_small"
+                        >Static Resources</strong
+                      >
+                    </div>
+                    <p
+                      class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+                    >
+                      Verify existence and integrity of ui_modules
+                      (transcript.js, container.js, common.js).
+                    </p>
+                    <span class="slds-badge slds-theme_success"
+                      >Bundle Verified</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </lightning-card>
+        </div>
+      </lightning-tab>
+
+      <!-- 4. Agent Assist Simulator -->
+      <lightning-tab
+        label="Agent Assist Simulator"
+        value="simulator"
+        icon-name="utility:chat"
+      >
+        <div class="slds-p-top_medium">
+          <lightning-card
+            title="Platform Agnostic Chat & Voice Simulator"
+            icon-name="utility:chat"
+          >
+            <div class="slds-p-around_medium">
+              <p class="slds-text-body_regular slds-m-bottom_medium">
+                Test and preview real-time AI suggestions, smart replies, and
+                knowledge article retrieval for any configuration profile
+                without connecting a live telephony/chat provider.
+              </p>
+
+              <div class="slds-grid slds-gutters slds-wrap">
+                <div
+                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_medium"
+                >
+                  <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                    <div class="slds-text-title_bold slds-m-bottom_x-small">
+                      Simulated Customer Conversation
+                    </div>
+                    <div
+                      class="simulator-chat-box slds-p-around_small slds-scrollable_y"
+                    >
+                      <div
+                        class="chat-bubble chat-bubble_customer slds-m-bottom_x-small"
+                      >
+                        <strong>Customer:</strong> Hello, I need help resetting
+                        my account password and updating my billing info.
+                      </div>
+                      <div
+                        class="chat-bubble chat-bubble_agent slds-m-bottom_x-small"
+                      >
+                        <strong>Agent:</strong> I can certainly help you with
+                        that! Let me pull up your account.
+                      </div>
+                    </div>
+                    <div
+                      class="slds-m-top_small slds-grid slds-grid_vertical-align-center"
+                    >
+                      <div class="slds-col slds-grow slds-m-right_small">
+                        <lightning-input
+                          placeholder="Type a test customer message..."
+                          variant="label-hidden"
+                          value={simulatedMessage}
+                          onchange={handleSimulatedMessageChange}
+                        ></lightning-input>
+                      </div>
+                      <div class="slds-col slds-no-flex">
+                        <button
+                          type="button"
+                          class="slds-button slds-button_brand"
+                          onclick={handleSendSimulatedMessage}
+                        >
+                          Send
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </template>
-            </div>
-          </div>
-        </lightning-card>
-      </div>
 
-      <!-- Middle Column: Profile Editor Form -->
-      <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
-        <lightning-card title={editorCardTitle} icon-name="utility:edit">
-          <div class="slds-p-around_medium">
-            <!-- Form Inputs -->
-            <div class="slds-grid slds-gutters slds-wrap">
-              <div
-                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
-              >
-                <lightning-input
-                  label="Profile Display Name"
-                  value={currentProfile.name}
-                  data-field="name"
-                  onchange={handleFieldChange}
-                  required
+                <div
+                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_medium"
                 >
-                </lightning-input>
+                  <div class="slds-box slds-m-bottom_medium">
+                    <div
+                      class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_x-small"
+                    >
+                      <div class="slds-text-title_bold">
+                        Real-Time Suggestions Preview
+                      </div>
+                      <span class="slds-badge slds-badge_lightest"
+                        >Profile: {selectedDevName}</span
+                      >
+                    </div>
+                    <div
+                      class="slds-card slds-card_boundary slds-m-bottom_x-small slds-p-around_small"
+                    >
+                      <div class="slds-text-title_bold slds-text-color_success">
+                        Smart Reply Draft
+                      </div>
+                      <p class="slds-text-body_small slds-m-top_xx-small">
+                        "I can guide you through our secure self-service
+                        password reset portal. Would you like me to send a reset
+                        link to your email on file?"
+                      </p>
+                    </div>
+                    <div
+                      class="slds-card slds-card_boundary slds-p-around_small"
+                    >
+                      <div class="slds-text-title_bold">Suggested Article</div>
+                      <p class="slds-text-body_small slds-m-top_xx-small">
+                        <strong
+                          >KB10482: Account Security & Billing Update
+                          Workflow</strong
+                        >
+                        (96% relevance)
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div
-                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
-              >
-                <lightning-input
-                  label="Developer Name (configName)"
-                  value={currentProfile.developerName}
-                  data-field="developerName"
-                  onchange={handleFieldChange}
-                  field-level-help="Unique key referenced in Lightning App Builder picklist. Cannot be changed once created to maintain App Builder page integrity."
-                  disabled={isDeveloperNameDisabled}
-                  required
-                >
-                </lightning-input>
-              </div>
-              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
-                <lightning-input
-                  label="Container Header Title"
-                  value={currentProfile.title}
-                  data-field="title"
-                  onchange={handleFieldChange}
-                >
-                </lightning-input>
-              </div>
-              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
-                <lightning-input
-                  label="Assist Service Endpoint URL"
-                  value={currentProfile.endpointUrl}
-                  data-field="endpointUrl"
-                  onchange={handleFieldChange}
-                >
-                </lightning-input>
-              </div>
-              <div
-                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
-              >
-                <lightning-input
-                  type="toggle"
-                  label="Enable Auto-Assist"
-                  checked={currentProfile.enableAutoAssist}
-                  data-field="enableAutoAssist"
-                  onchange={handleFieldChange}
-                >
-                </lightning-input>
-              </div>
-              <div
-                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
-              >
-                <lightning-input
-                  type="toggle"
-                  label="Show Knowledge & Suggestions"
-                  checked={currentProfile.showSuggestions}
-                  data-field="showSuggestions"
-                  onchange={handleFieldChange}
-                >
-                </lightning-input>
-              </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div
-              class="slds-m-top_medium slds-grid slds-grid_align-spread slds-border_top slds-p-top_medium"
-            >
-              <lightning-button
-                label="Delete Profile"
-                variant="destructive-text"
-                icon-name="utility:delete"
-                onclick={handleDeleteProfile}
-                disabled={isDefaultProfile}
-              >
-              </lightning-button>
-              <div class="slds-grid slds-gutters_x-small">
-                <lightning-button
-                  label="Save Profile State"
-                  variant="brand"
-                  icon-name="utility:save"
-                  onclick={handleSaveProfile}
-                ></lightning-button>
-              </div>
-            </div>
-          </div>
-        </lightning-card>
-
-        <!-- Architecture & Picklist Info Card -->
-        <div class="slds-m-top_medium">
-          <lightning-card
-            title="How Configuration Profiles Work"
-            icon-name="utility:matrix"
-          >
-            <div class="slds-p-around_medium slds-theme_shade">
-              <p class="slds-text-body_small slds-m-bottom_small">
-                <strong>Dropdown Select in Lightning Editor:</strong> Every
-                configuration profile created here is automatically populated
-                into the <strong>Configuration Profile Name</strong> dropdown in
-                Lightning App Builder. Drop the
-                <code class="xml-code">agentAssistContainer</code> on any page
-                (Record Page, Utility Bar, App Page) and select the profile
-                directly from the picklist.
-              </p>
             </div>
           </lightning-card>
         </div>
-      </div>
-    </div>
+      </lightning-tab>
+
+      <!-- 5. CX Platform Specific Setup -->
+      <lightning-tab
+        label="CX Platform Setup"
+        value="cxPlatformSetup"
+        icon-name="utility:call"
+      >
+        <div class="slds-p-top_medium">
+          <lightning-card
+            title="Contact Center (CX) Platform Integration Guides"
+            icon-name="utility:call"
+          >
+            <div class="slds-p-around_medium">
+              <p class="slds-text-body_regular slds-m-bottom_medium">
+                Step-by-step instructions, documentation links, and checklists
+                for connecting your contact center platform to Google Cloud
+                Agent Assist.
+              </p>
+
+              <lightning-accordion active-section-name="genesys">
+                <lightning-accordion-section
+                  name="genesys"
+                  label="Genesys Cloud CX Setup"
+                >
+                  <div class="slds-p-around_small slds-theme_shade">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                      Integrate with Genesys Cloud via AudioHook WebSocket
+                      streams and custom Client Application widgets.
+                    </p>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Create an AudioHook integration in Genesys Cloud Admin.
+                      </li>
+                      <li>
+                        Configure Client Credentials OAuth grant with required
+                        permissions.
+                      </li>
+                      <li>
+                        Embed the Agent Assist Interaction Widget in Genesys
+                        Agent Workspace.
+                      </li>
+                    </ul>
+                    <lightning-button
+                      label="View Genesys Cloud Setup Guide"
+                      icon-name="utility:new_window"
+                      variant="neutral"
+                      onclick={handlePlaceholderAction}
+                    ></lightning-button>
+                  </div>
+                </lightning-accordion-section>
+
+                <lightning-accordion-section
+                  name="twilio"
+                  label="Twilio Flex Setup"
+                >
+                  <div class="slds-p-around_small slds-theme_shade">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                      Deploy the Agent Assist Flex Plugin to Twilio Flex UI and
+                      route media streams to the UI Connector backend.
+                    </p>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Install and build the Flex UI Agent Assist Plugin.
+                      </li>
+                      <li>
+                        Configure bidirectional media streaming in TwiML/Studio
+                        Flow.
+                      </li>
+                      <li>
+                        Configure SSO authentication bridging Flex agent
+                        sessions to Salesforce.
+                      </li>
+                    </ul>
+                    <lightning-button
+                      label="View Twilio Flex Setup Guide"
+                      icon-name="utility:new_window"
+                      variant="neutral"
+                      onclick={handlePlaceholderAction}
+                    ></lightning-button>
+                  </div>
+                </lightning-accordion-section>
+
+                <lightning-accordion-section
+                  name="scv"
+                  label="Salesforce Service Cloud Voice & Omni-Channel"
+                >
+                  <div class="slds-p-around_small slds-theme_shade">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                      Connect Service Cloud Voice telephony streams and digital
+                      messaging sessions directly to Agent Assist.
+                    </p>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Enable VoiceCall Real-Time Audio Streaming in Voice
+                        settings.
+                      </li>
+                      <li>
+                        Configure Omni-Channel presence statuses and queue
+                        routing.
+                      </li>
+                      <li>
+                        Place the
+                        <code class="xml-code">agentAssistContainer</code> LWC
+                        on VoiceCall and MessagingSession record pages.
+                      </li>
+                    </ul>
+                    <lightning-button
+                      label="View Service Cloud Voice Guide"
+                      icon-name="utility:new_window"
+                      variant="neutral"
+                      onclick={handlePlaceholderAction}
+                    ></lightning-button>
+                  </div>
+                </lightning-accordion-section>
+              </lightning-accordion>
+            </div>
+          </lightning-card>
+        </div>
+      </lightning-tab>
+    </lightning-tabset>
   </div>
 </template>

@@ -18,7 +18,7 @@
 
     <description
   >Setup and profile configuration for Google Cloud Agent Assist containers</description>
-    <label>Google Cloud Agent Assist Setup</label>
+    <label>Setup Wizard</label>
     <lwcComponent>agentAssistSetupWizard</lwcComponent>
     <motif>Custom67: Gears</motif>
 </CustomTab>

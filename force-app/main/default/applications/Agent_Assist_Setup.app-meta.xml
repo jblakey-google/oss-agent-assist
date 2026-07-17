@@ -28,7 +28,7 @@
     <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
     <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
     <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
-    <label>Google Cloud Agent Assist Setup</label>
+    <label>Google Cloud Agent Assist</label>
     <navType>Standard</navType>
     <tabs>Agent_Assist_Setup</tabs>
     <uiType>Lightning</uiType>

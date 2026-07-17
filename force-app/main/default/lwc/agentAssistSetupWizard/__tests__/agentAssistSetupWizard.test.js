@@ -24,7 +24,7 @@ describe("c-agent-assist-setup-wizard", () => {
     }
   });
 
-  it("renders setup wizard header and cards", () => {
+  it("renders setup wizard header and tabset", () => {
     const element = createElement("c-agent-assist-setup-wizard", {
       is: AgentAssistSetupWizard
     });
@@ -32,8 +32,10 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
 
     return Promise.resolve().then(() => {
-      const header = element.shadowRoot.querySelector(".wizard-header");
+      const header = element.shadowRoot.querySelector(".wizard-header-clean");
       expect(header).not.toBeNull();
+      const tabset = element.shadowRoot.querySelector("lightning-tabset");
+      expect(tabset).not.toBeNull();
     });
   });
 });
