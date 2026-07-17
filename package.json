@@ -18,6 +18,7 @@
     "prod:login": "sf org login web --alias prod --instance-url https://login.salesforce.com --set-default",
     "scratch:create": "sf org create scratch --alias scratch --edition developer --target-dev-hub DevHub --definition-file config/project-scratch-def.json --set-default && npm run deploy && npm run assign && npm run open",
     "scratch:delete": "sf org delete scratch --target-org scratch --no-prompt",
+    "predeploy": "node scripts/check-static-resources.js",
     "deploy": "sf project deploy start --source-dir force-app",
     "assign": "sf apex run --file scripts/apex/assignPermsets.apex | grep 'USER_DEBUG' | sed 's/.*|DEBUG|/[Apex Log] /' || true",
     "open": "sf org open",

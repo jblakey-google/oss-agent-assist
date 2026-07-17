@@ -16,6 +16,9 @@
   - Salesforce Setup
   - Agent Assist LWC Configuration Profiles
   - Diagnostics & Platform Agnostic Chat Simulator
+    - Check connectivity with the UI Connector
+    - Check authentication with the UI Connector
+    - Check static resources have been generated
   - Platform Specific Setup
     - This can point to documentation, 3rd party links, etc. Accordion for each platform. Checklist (Is app installed, permission sets assigned, etc. But less hand holding to avoid introducing brittleness.)
 
