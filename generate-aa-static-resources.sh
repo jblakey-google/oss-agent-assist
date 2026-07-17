@@ -16,7 +16,7 @@
 # generate-aa-static-resources.sh
 #
 # Fetches the latest Google Cloud Agent Assist UI Modules JavaScript libraries
-# (container.js, transcript.js, and common.js) from gstatic.com and packages
+# (container.js, transcript.js, common.js, and companion_agent.js) and packages
 # them into a zipped Salesforce Static Resource (ui_modules.resource).
 #
 # Read More:
@@ -38,6 +38,7 @@
 #      1. transcript.js
 #      2. container.js
 #      3. common.js
+#      4. companion_agent.js
 #    Altering or changing this load order is strongly discouraged and is likely to cause
 #    breaking runtime errors or failure to initialize the UI components.
 #
@@ -45,7 +46,7 @@
 UIM_TRANSCRIPT_VERSION='v1.5'
 UIM_CONTAINER_VERSION='v2.7'
 UIM_COMMON_VERSION='v1.14'
-
+UIM_COMPANION_AGENT_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/companion_agent.js'
 
 # create ui_modules directory
 dir_path=force-app/main/default/staticresources/ui_modules
@@ -64,12 +65,7 @@ file='container'
 file_path=${dir_path}/${file}.js
 rm -f ${file_path} # delete file if exists
 rm -f ${file_path}.resource-meta.xml # delete file if exists
-# pin the UIM container version to a version
 curl --silent https://www.gstatic.com/agent-assist-ui-modules/${UIM_CONTAINER_VERSION}/${file}.js > $file_path
-# or, use a localized version of the UIM container, e.g. 'it' for Italian, 'de' for German:
-# curl --silent https://www.gstatic.com/agent-assist-ui-modules/it/${UIM_CONTAINER_VERSION}/${file}.js
-# or, try the latest UIM v2 changes (auto updates)
-# curl --silent https://www.gstatic.com/agent-assist-ui-modules/v2/${file}.js > $file_path
 echo downloaded js and wrote ${file_path}
 
 # download common.js
@@ -78,6 +74,14 @@ file_path=${dir_path}/${file}.js
 rm -f ${file_path} # delete file if exists
 rm -f ${file_path}.resource-meta.xml # delete file if exists
 curl --silent https://www.gstatic.com/agent-assist-ui-modules/${UIM_COMMON_VERSION}/${file}.js > $file_path
+echo downloaded js and wrote ${file_path}
+
+# download companion_agent.js
+file='companion_agent'
+file_path=${dir_path}/${file}.js
+rm -f ${file_path} # delete file if exists
+rm -f ${file_path}.resource-meta.xml # delete file if exists
+curl --silent ${UIM_COMPANION_AGENT_URL} > $file_path
 echo downloaded js and wrote ${file_path}
 
 # create a zip of the ui_modules directory. This avoids Salesforce size limits.

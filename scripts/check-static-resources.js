@@ -28,7 +28,12 @@ const uiModulesDir = path.join(
   "ui_modules"
 );
 
-const requiredFiles = ["transcript.js", "container.js", "common.js"];
+const requiredFiles = [
+  "transcript.js",
+  "container.js",
+  "common.js",
+  "companion_agent.js"
+];
 
 function hasValidJsFiles() {
   if (!fs.existsSync(uiModulesDir)) {

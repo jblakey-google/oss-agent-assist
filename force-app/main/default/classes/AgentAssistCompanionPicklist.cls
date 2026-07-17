@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-public with sharing class AgentAssistConfigPicklist extends VisualEditor.DynamicPickList {
+public with sharing class AgentAssistCompanionPicklist extends VisualEditor.DynamicPickList {
   VisualEditor.DesignTimePageContext context;
 
-  public AgentAssistConfigPicklist() {
+  public AgentAssistCompanionPicklist() {
   }
 
-  public AgentAssistConfigPicklist(VisualEditor.DesignTimePageContext context) {
+  public AgentAssistCompanionPicklist(
+    VisualEditor.DesignTimePageContext context
+  ) {
     this.context = context;
   }
 
   public override VisualEditor.DataRow getDefaultValue() {
-    return new VisualEditor.DataRow('Default Profile (Default)', 'Default');
+    return new VisualEditor.DataRow(
+      'Default Companion Agent (Default_Companion)',
+      'Default_Companion'
+    );
   }
 
   public override VisualEditor.DynamicPickListRows getValues() {
@@ -40,9 +45,10 @@ public with sharing class AgentAssistConfigPicklist extends VisualEditor.Dynamic
           String.isNotBlank(cfg.Developer_Name__c) &&
           !addedDevNames.contains(cfg.Developer_Name__c)
         ) {
-          Boolean isContainer = (cfg.Profile_Type__c != 'Companion Agent' ||
-          cfg.Developer_Name__c == 'Default');
-          if (isContainer) {
+          // If profile type is explicitly Companion Agent or matches Default_Companion
+          Boolean isCompanion = (cfg.Profile_Type__c == 'Companion Agent' ||
+          cfg.Developer_Name__c == 'Default_Companion');
+          if (isCompanion) {
             String label = cfg.Name + ' (' + cfg.Developer_Name__c + ')';
             myValues.addRow(
               new VisualEditor.DataRow(label, cfg.Developer_Name__c)
@@ -52,6 +58,7 @@ public with sharing class AgentAssistConfigPicklist extends VisualEditor.Dynamic
         }
       }
 
+      // If no companion profiles found, fallback to all profiles or default companion
       if (myValues.size() == 0) {
         for (Agent_Assist_Config__c cfg : configs) {
           if (
@@ -67,14 +74,20 @@ public with sharing class AgentAssistConfigPicklist extends VisualEditor.Dynamic
         }
       }
 
-      if (!addedDevNames.contains('Default')) {
+      if (!addedDevNames.contains('Default_Companion')) {
         myValues.addRow(
-          new VisualEditor.DataRow('Default Profile (Default)', 'Default')
+          new VisualEditor.DataRow(
+            'Default Companion Agent (Default_Companion)',
+            'Default_Companion'
+          )
         );
       }
     } catch (Exception ex) {
       myValues.addRow(
-        new VisualEditor.DataRow('Default Profile (Default)', 'Default')
+        new VisualEditor.DataRow(
+          'Default Companion Agent (Default_Companion)',
+          'Default_Companion'
+        )
       );
     }
 

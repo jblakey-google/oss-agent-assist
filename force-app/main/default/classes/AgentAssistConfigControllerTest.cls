@@ -1,21 +1,51 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 @IsTest
 private class AgentAssistConfigControllerTest {
   @TestSetup
   static void setupTestData() {
-    Agent_Assist_Config__c defaultConfig = new Agent_Assist_Config__c(
-      Name = 'Default Profile',
-      Developer_Name__c = 'Default',
-      Title__c = 'Google Cloud Agent Assist',
-      Endpoint_URL__c = 'https://api.example.com/v1',
-      Show_Suggestions__c = true,
-      Enable_Auto_Assist__c = true,
-      Is_Active__c = true
-    );
-    insert defaultConfig;
+    List<Agent_Assist_Config__c> testConfigs = new List<Agent_Assist_Config__c>{
+      new Agent_Assist_Config__c(
+        Name = 'Default Profile',
+        Developer_Name__c = 'Default',
+        Profile_Type__c = 'Container',
+        Title__c = 'Google Cloud Agent Assist',
+        Endpoint_URL__c = 'https://api.example.com/v1',
+        Show_Suggestions__c = true,
+        Enable_Auto_Assist__c = true,
+        Is_Active__c = true
+      ),
+      new Agent_Assist_Config__c(
+        Name = 'Default Companion Agent',
+        Developer_Name__c = 'Default_Companion',
+        Profile_Type__c = 'Companion Agent',
+        Title__c = 'Google Cloud Companion Agent',
+        Endpoint_URL__c = 'https://api.example.com/v1',
+        Model_Name__c = 'gemini-1.5-pro',
+        Welcome_Message__c = 'Hello! I am your AI Companion Agent.',
+        Enable_Autonomous_Actions__c = true,
+        Is_Active__c = true
+      )
+    };
+    insert testConfigs;
   }
 
   @IsTest
-  static void testGetResolvedConfigByName() {
+  static void testGetResolvedConfigContainer() {
     Test.startTest();
     AgentAssistConfigController.ConfigWrapper res = AgentAssistConfigController.getResolvedConfig(
       'Default'
@@ -25,13 +55,48 @@ private class AgentAssistConfigControllerTest {
     Assert.areEqual(
       'Google Cloud Agent Assist',
       res.title,
-      'Should load Default title from DB profile'
+      'Should load Default title from Container DB profile'
+    );
+    Assert.areEqual(
+      'Container',
+      res.profileType,
+      'Should identify profileType as Container'
     );
     Assert.isTrue(
       res.enableAutoAssist,
       'Should load Default enableAutoAssist from DB profile'
     );
     Assert.isTrue(res.isFound, 'Default profile should be marked as found');
+  }
+
+  @IsTest
+  static void testGetResolvedConfigCompanionAgent() {
+    Test.startTest();
+    AgentAssistConfigController.ConfigWrapper res = AgentAssistConfigController.getResolvedConfig(
+      'Default_Companion'
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'Google Cloud Companion Agent',
+      res.title,
+      'Should load Companion Agent title'
+    );
+    Assert.areEqual(
+      'Companion Agent',
+      res.profileType,
+      'Should identify profileType as Companion Agent'
+    );
+    Assert.areEqual(
+      'gemini-1.5-pro',
+      res.modelName,
+      'Should load modelName for Companion Agent'
+    );
+    Assert.isTrue(
+      res.enableAutonomousActions,
+      'Should enable autonomous actions for Companion Agent'
+    );
+    Assert.isTrue(res.isFound, 'Companion profile should be marked as found');
   }
 
   @IsTest
@@ -58,18 +123,22 @@ private class AgentAssistConfigControllerTest {
     Test.startTest();
     List<Agent_Assist_Config__c> configs = AgentAssistConfigController.getAllConfigs();
     Assert.isTrue(
-      configs.size() >= 1,
-      'Should return at least the 1 default config'
+      configs.size() >= 2,
+      'Should return at least the 2 default configs'
     );
 
-    Agent_Assist_Config__c newCfg = new Agent_Assist_Config__c(
-      Name = 'Contact Sales Profile',
-      Developer_Name__c = 'Contact_Config',
-      Title__c = 'Contact Sales Assist',
+    Agent_Assist_Config__c newCompanion = new Agent_Assist_Config__c(
+      Name = 'Support Companion',
+      Developer_Name__c = 'Support_Companion',
+      Profile_Type__c = 'Companion Agent',
+      Title__c = 'Tier 2 Support Companion',
+      Model_Name__c = 'gemini-1.5-flash',
+      Welcome_Message__c = 'Welcome to Support Companion.',
+      Enable_Autonomous_Actions__c = true,
       Is_Active__c = true
     );
     Agent_Assist_Config__c saved = AgentAssistConfigController.saveConfig(
-      newCfg
+      newCompanion
     );
     Assert.isNotNull(saved.Id, 'Saved config should have an ID');
 
@@ -78,17 +147,27 @@ private class AgentAssistConfigControllerTest {
   }
 
   @IsTest
-  static void testDynamicPickList() {
+  static void testDynamicPickLists() {
     Test.startTest();
-    AgentAssistConfigPicklist picklist = new AgentAssistConfigPicklist();
-    VisualEditor.DataRow defaultVal = picklist.getDefaultValue();
-    VisualEditor.DynamicPickListRows rows = picklist.getValues();
+    AgentAssistConfigPicklist containerPicklist = new AgentAssistConfigPicklist();
+    VisualEditor.DataRow containerDefault = containerPicklist.getDefaultValue();
+    VisualEditor.DynamicPickListRows containerRows = containerPicklist.getValues();
+
+    AgentAssistCompanionPicklist companionPicklist = new AgentAssistCompanionPicklist();
+    VisualEditor.DataRow companionDefault = companionPicklist.getDefaultValue();
+    VisualEditor.DynamicPickListRows companionRows = companionPicklist.getValues();
     Test.stopTest();
 
-    Assert.isNotNull(defaultVal, 'Default value should not be null');
+    Assert.isNotNull(containerDefault, 'Container default should not be null');
     Assert.isTrue(
-      rows.size() >= 1,
-      'Should return picklist row for default config'
+      containerRows.size() >= 1,
+      'Should return picklist rows for container config'
+    );
+
+    Assert.isNotNull(companionDefault, 'Companion default should not be null');
+    Assert.isTrue(
+      companionRows.size() >= 1,
+      'Should return picklist rows for companion config'
     );
   }
 }

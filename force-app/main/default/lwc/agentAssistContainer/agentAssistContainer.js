@@ -49,6 +49,7 @@ export default class AgentAssistContainer extends LightningElement {
       this.resolvedState = {
         title: "Configuration Error",
         developerName: this.configName || "Default",
+        profileType: "Container",
         endpointUrl: "https://api.agentassist.example.com/v1",
         showSuggestions: true,
         enableAutoAssist: true,
@@ -87,6 +88,10 @@ export default class AgentAssistContainer extends LightningElement {
       this.configName ||
       "Default"
     );
+  }
+
+  get profileTypeLabel() {
+    return this.resolvedState?.profileType || "Container";
   }
 
   get resolutionSource() {

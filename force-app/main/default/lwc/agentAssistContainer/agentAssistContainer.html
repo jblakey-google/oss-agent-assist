@@ -107,6 +107,9 @@
               <div class="slds-text-body_small">
                 <span class="slds-text-title_bold">Profile:</span>
                 {activeProfileName}
+                <span class="slds-badge slds-badge_lightest slds-m-left_xx-small"
+                  >{profileTypeLabel}</span
+                >
                 <span class="slds-text-color_weak slds-m-left_xx-small"
                   >({resolutionSource})</span
                 >
@@ -126,9 +129,18 @@
               class="slds-box slds-p-around_small slds-m-bottom_small slds-theme_default slds-border_top"
             >
               <div class="slds-text-title_caps slds-m-bottom_xx-small">
-                Shared State & XML Resolution
+                Container Schema & XML Resolution Details
               </div>
               <dl class="slds-list_horizontal slds-wrap slds-text-body_small">
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Profile Type"
+                >
+                  Profile Type:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {profileTypeLabel}
+                </dd>
                 <dt
                   class="slds-item_label slds-text-color_weak slds-truncate"
                   title="XML Config Name"

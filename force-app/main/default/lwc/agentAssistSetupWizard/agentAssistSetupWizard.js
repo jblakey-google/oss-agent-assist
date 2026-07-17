@@ -27,10 +27,29 @@ const INITIAL_PROFILES = [
     id: "mock-1",
     name: "Default Profile",
     developerName: "Default",
+    profileType: "Container",
     title: "Google Cloud Agent Assist",
     endpointUrl: "https://api.agentassist.example.com/v1",
     enableAutoAssist: true,
     showSuggestions: true,
+    modelName: "gemini-1.5-pro",
+    welcomeMessage: "Hello! I am your AI Companion Agent.",
+    enableAutonomousActions: true,
+    isActive: true
+  },
+  {
+    id: "mock-2",
+    name: "Default Companion Agent",
+    developerName: "Default_Companion",
+    profileType: "Companion Agent",
+    title: "Google Cloud Companion Agent",
+    endpointUrl: "https://api.agentassist.example.com/v1",
+    enableAutoAssist: false,
+    showSuggestions: false,
+    modelName: "gemini-1.5-pro",
+    welcomeMessage:
+      "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
+    enableAutonomousActions: true,
     isActive: true
   }
 ];
@@ -38,7 +57,9 @@ const INITIAL_PROFILES = [
 export default class AgentAssistSetupWizard extends LightningElement {
   appIcon = sfAgentAssistIcon;
   @track activeTab = "configurationProfiles";
+  @track isTypeModalOpen = false;
   @track simulatedMessage = "";
+  @track simulatorProfileDevName = "Default";
   @track profiles = [...INITIAL_PROFILES];
   @track selectedDevName = "Default";
   @track currentProfile = { ...INITIAL_PROFILES[0] };
@@ -53,14 +74,26 @@ export default class AgentAssistSetupWizard extends LightningElement {
         id: item.Id,
         name: item.Name,
         developerName: item.Developer_Name__c,
+        profileType:
+          item.Profile_Type__c ||
+          (item.Developer_Name__c === "Default_Companion"
+            ? "Companion Agent"
+            : "Container"),
         title: item.Title__c,
         endpointUrl: item.Endpoint_URL__c,
         enableAutoAssist: item.Enable_Auto_Assist__c,
         showSuggestions: item.Show_Suggestions__c,
+        modelName: item.Model_Name__c || "gemini-1.5-pro",
+        welcomeMessage:
+          item.Welcome_Message__c ||
+          "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
+        enableAutonomousActions:
+          item.Enable_Autonomous_Actions__c !== undefined
+            ? item.Enable_Autonomous_Actions__c
+            : true,
         isActive: item.Is_Active__c
       }));
 
-      // Merge DB profiles with standard INITIAL_PROFILES so default never disappears
       const profileMap = new Map();
       INITIAL_PROFILES.forEach((p) =>
         profileMap.set(p.developerName, { ...p })
@@ -75,8 +108,14 @@ export default class AgentAssistSetupWizard extends LightningElement {
   get profileList() {
     return this.profiles.map((prof) => {
       const isSelected = prof.developerName === this.selectedDevName;
+      const isCompanion = prof.profileType === "Companion Agent";
       return {
         ...prof,
+        isCompanion,
+        typeLabel: isCompanion ? "Companion Agent" : "Container",
+        typeClass: isCompanion
+          ? "profile-type-pill type-pill_companion"
+          : "profile-type-pill type-pill_container",
         cssClass: `profile-item slds-p-around_small slds-m-bottom_x-small ${
           isSelected ? "profile-item_active" : ""
         }`
@@ -84,24 +123,117 @@ export default class AgentAssistSetupWizard extends LightningElement {
     });
   }
 
+  get isCompanionProfile() {
+    return this.currentProfile?.profileType === "Companion Agent";
+  }
+
+  get isContainerProfile() {
+    return !this.isCompanionProfile;
+  }
+
+  get companionTypeBtnClass() {
+    return this.isCompanionProfile
+      ? "slds-button slds-button_brand type-switch-btn"
+      : "slds-button slds-button_neutral type-switch-btn";
+  }
+
+  get containerTypeBtnClass() {
+    return this.isContainerProfile
+      ? "slds-button slds-button_brand type-switch-btn"
+      : "slds-button slds-button_neutral type-switch-btn";
+  }
+
   get editorCardTitle() {
     return `Edit Profile: ${this.currentProfile?.name || "New Profile"}`;
   }
 
   get isDefaultProfile() {
-    return this.currentProfile?.developerName === "Default";
+    return (
+      this.currentProfile?.developerName === "Default" ||
+      this.currentProfile?.developerName === "Default_Companion"
+    );
   }
 
   get isDeveloperNameDisabled() {
     if (!this.currentProfile) return true;
-    if (this.currentProfile.developerName === "Default") return true;
+    if (this.isDefaultProfile) return true;
     const id = this.currentProfile.id;
-    // Lock developer name if the profile has already been saved to the database
     return !!(id && !id.startsWith("temp-") && !id.startsWith("mock-"));
+  }
+
+  get simulatorProfileOptions() {
+    return this.profiles.map((prof) => {
+      const typeStr =
+        prof.profileType === "Companion Agent"
+          ? "Companion Agent"
+          : "Container";
+      return {
+        label: `${prof.name} [${typeStr}] (${prof.developerName})`,
+        value: prof.developerName
+      };
+    });
+  }
+
+  get simulatorProfile() {
+    return (
+      this.profiles.find(
+        (p) => p.developerName === this.simulatorProfileDevName
+      ) || this.profiles[0]
+    );
+  }
+
+  get isSimulatorCompanion() {
+    return this.simulatorProfile?.profileType === "Companion Agent";
+  }
+
+  get isSimulatorContainer() {
+    return !this.isSimulatorCompanion;
   }
 
   handleTabSelect(event) {
     this.activeTab = event.target.value;
+  }
+
+  handleOpenNewProfileModal() {
+    this.isTypeModalOpen = true;
+  }
+
+  handleCloseTypeModal() {
+    this.isTypeModalOpen = false;
+  }
+
+  handleSelectTypeFromModal(event) {
+    const selectedType = event.currentTarget.dataset.type;
+    this.isTypeModalOpen = false;
+    this.createNewProfile(selectedType);
+  }
+
+  handleTypeSwitch(event) {
+    const targetType = event.currentTarget.dataset.type;
+    if (this.currentProfile.profileType === targetType) return;
+
+    const updated = {
+      ...this.currentProfile,
+      profileType: targetType
+    };
+
+    if (
+      targetType === "Companion Agent" &&
+      (!updated.title || updated.title === "Google Cloud Agent Assist")
+    ) {
+      updated.title = "Google Cloud Companion Agent";
+    } else if (
+      targetType === "Container" &&
+      (!updated.title || updated.title === "Google Cloud Companion Agent")
+    ) {
+      updated.title = "Google Cloud Agent Assist";
+    }
+
+    this.currentProfile = updated;
+  }
+
+  handleSimulatorProfileChange(event) {
+    this.simulatorProfileDevName = event.detail.value;
   }
 
   handlePlaceholderAction() {
@@ -124,22 +256,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
         variant: "success"
       })
     );
-  }
-
-  handleSimulatedMessageChange(event) {
-    this.simulatedMessage = event.target.value;
-  }
-
-  handleSendSimulatedMessage() {
-    if (!this.simulatedMessage) return;
-    this.dispatchEvent(
-      new ShowToastEvent({
-        title: "Simulated Message Sent",
-        message: `Generated AI assistance preview for "${this.simulatedMessage}"`,
-        variant: "success"
-      })
-    );
-    this.simulatedMessage = "";
   }
 
   selectProfileByDevName(devName) {
@@ -169,11 +285,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
       [field]: value
     };
 
-    // Auto-generate Developer Name for new profiles when typing Display Name
     if (field === "name" && !this.isDeveloperNameDisabled && value) {
       if (
         !this.currentProfile.developerName ||
-        this.currentProfile.developerName.startsWith("Custom_Config_")
+        this.currentProfile.developerName.startsWith("Custom_Config_") ||
+        this.currentProfile.developerName.startsWith("Custom_Container_") ||
+        this.currentProfile.developerName.startsWith("Custom_Companion_")
       ) {
         updated.developerName = value.trim().replace(/[^a-zA-Z0-9]/g, "_");
       }
@@ -182,16 +299,27 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.currentProfile = updated;
   }
 
-  handleNewProfile() {
+  createNewProfile(profileType) {
     this.activeTab = "configurationProfiles";
+    const isCompanion = profileType === "Companion Agent";
+    const randomSuffix = Math.floor(Math.random() * 1000);
     const newProf = {
       id: "temp-" + Date.now(),
-      name: "New Custom Profile",
-      developerName: "Custom_Config_" + Math.floor(Math.random() * 1000),
-      title: "Custom Google Cloud Agent Assist",
+      name: isCompanion ? "New Companion Agent" : "New Container Profile",
+      developerName:
+        (isCompanion ? "Custom_Companion_" : "Custom_Container_") +
+        randomSuffix,
+      profileType: profileType,
+      title: isCompanion
+        ? "Google Cloud Companion Agent"
+        : "Google Cloud Agent Assist",
       endpointUrl: "https://api.agentassist.example.com/v1",
-      enableAutoAssist: true,
-      showSuggestions: true,
+      enableAutoAssist: !isCompanion,
+      showSuggestions: !isCompanion,
+      modelName: "gemini-1.5-pro",
+      welcomeMessage:
+        "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
+      enableAutonomousActions: true,
       isActive: true
     };
     this.profiles = [newProf, ...this.profiles];
@@ -204,10 +332,15 @@ export default class AgentAssistSetupWizard extends LightningElement {
         sobjectType: "Agent_Assist_Config__c",
         Name: this.currentProfile.name,
         Developer_Name__c: this.currentProfile.developerName,
+        Profile_Type__c: this.currentProfile.profileType || "Container",
         Title__c: this.currentProfile.title,
         Endpoint_URL__c: this.currentProfile.endpointUrl,
         Enable_Auto_Assist__c: this.currentProfile.enableAutoAssist,
         Show_Suggestions__c: this.currentProfile.showSuggestions,
+        Model_Name__c: this.currentProfile.modelName,
+        Welcome_Message__c: this.currentProfile.welcomeMessage,
+        Enable_Autonomous_Actions__c:
+          this.currentProfile.enableAutonomousActions,
         Is_Active__c: true
       };
 
@@ -221,7 +354,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
       const saved = await saveConfig({ configRecord: payload });
 
-      // Update local state immediately
       const idx = this.profiles.findIndex(
         (p) => p.developerName === this.currentProfile.developerName
       );
@@ -236,7 +368,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.dispatchEvent(
         new ShowToastEvent({
           title: "Configuration Saved",
-          message: `Profile state for "${this.currentProfile.name}" (${this.currentProfile.developerName}) was saved successfully.`,
+          message: `Profile "${this.currentProfile.name}" (${this.currentProfile.developerName}) [${this.currentProfile.profileType}] saved successfully.`,
           variant: "success"
         })
       );

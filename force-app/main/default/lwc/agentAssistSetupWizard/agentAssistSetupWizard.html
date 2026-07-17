@@ -16,7 +16,7 @@
 
 <template>
   <div class="wizard-container slds-p-around_medium">
-    <!-- Main Header (Clean & Unboxed) -->
+    <!-- Main Header -->
     <div class="slds-m-bottom_small wizard-header-clean">
       <div class="slds-grid slds-grid_vertical-align-center">
         <img
@@ -28,13 +28,13 @@
           <h1 class="slds-text-heading_medium header-title">Setup Wizard</h1>
           <p class="slds-text-body_small slds-text-color_weak">
             Centralized configuration and integration management for Google
-            Cloud Agent Assist
+            Cloud Agent Assist & Companion Agent
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Sub Pages Tabset (Clean, No Wasted Inner Box Lines) -->
+    <!-- Sub Pages Tabset -->
     <lightning-tabset active-tab-value={activeTab} onselect={handleTabSelect}>
       <!-- 1. Salesforce Setup -->
       <lightning-tab
@@ -55,7 +55,8 @@
                   <p class="slds-text-body_regular slds-m-bottom_medium">
                     Review and verify that all core Salesforce platform
                     configurations, security settings, and permissions are
-                    properly deployed for Google Cloud Agent Assist.
+                    properly deployed for Google Cloud Agent Assist and Companion
+                    Agent.
                   </p>
 
                   <div class="slds-box slds-m-bottom_small slds-theme_shade">
@@ -75,8 +76,7 @@
                           <div
                             class="slds-text-body_small slds-text-color_weak"
                           >
-                            Agent_Assist_Admin and Messaging_Agent permission
-                            sets
+                            Agent_Assist_Admin permission set
                           </div>
                         </div>
                       </div>
@@ -122,12 +122,12 @@
                           class="slds-m-right_small"
                         ></lightning-icon>
                         <div>
-                          <strong>Custom Metadata Objects</strong>
+                          <strong>Custom Metadata Objects & Schemas</strong>
                           <div
                             class="slds-text-body_small slds-text-color_weak"
                           >
-                            Agent_Assist_Config__c custom object and custom
-                            fields
+                            Agent_Assist_Config__c object supporting Container &
+                            Companion Agent schemas
                           </div>
                         </div>
                       </div>
@@ -186,7 +186,7 @@
         </div>
       </lightning-tab>
 
-      <!-- 2. LWC Configuration Profiles (2-col layout starting at 768px) -->
+      <!-- 2. Configuration Profiles -->
       <lightning-tab
         label="Config Profiles"
         value="configurationProfiles"
@@ -208,7 +208,7 @@
                     <button
                       type="button"
                       class="slds-button slds-button_brand slds-button_stretch slds-size_1-of-1"
-                      onclick={handleNewProfile}
+                      onclick={handleOpenNewProfileModal}
                     >
                       <lightning-icon
                         icon-name="utility:add"
@@ -219,13 +219,16 @@
                       New Profile
                     </button>
                   </div>
+
                   <p
                     class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
                   >
                     Select a profile to edit. Profiles appear in the Lightning
                     Editor dropdown for
-                    <code class="xml-code">agentAssistContainer</code>.
+                    <code class="xml-code">agentAssistContainer</code> or
+                    <code class="xml-code">agentAssistCompanionAgent</code>.
                   </p>
+
                   <div class="slds-nav-vertical">
                     <template for:each={profileList} for:item="prof">
                       <div
@@ -240,9 +243,15 @@
                           <div>
                             <div class="slds-text-title_bold">{prof.name}</div>
                             <div
-                              class="slds-text-body_small slds-text-color_weak"
+                              class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small"
                             >
                               configName: <strong>{prof.developerName}</strong>
+                            </div>
+                            <div
+                              class="slds-text-body_small slds-m-top_xxx-small slds-grid slds-grid_vertical-align-center"
+                            >
+                              <span class="slds-text-color_weak slds-m-right_xxx-small">type:</span>
+                              <span class={prof.typeClass}>{prof.typeLabel}</span>
                             </div>
                           </div>
                         </div>
@@ -259,8 +268,39 @@
             >
               <lightning-card title={editorCardTitle} icon-name="utility:edit">
                 <div class="slds-p-around_medium">
-                  <!-- Form Inputs -->
+                  <!-- Segmented Type Selector Bar: Type: Companion Agent || Container -->
+                  <div
+                    class="type-selector-bar slds-box slds-box_x-small slds-theme_shade slds-m-bottom_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                  >
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                      <span class="slds-text-title_bold slds-m-right_small">Type:</span>
+                      <div class="slds-button-group" role="group">
+                        <button
+                          type="button"
+                          class={companionTypeBtnClass}
+                          data-type="Companion Agent"
+                          onclick={handleTypeSwitch}
+                        >
+                          Companion Agent
+                        </button>
+                        <button
+                          type="button"
+                          class={containerTypeBtnClass}
+                          data-type="Container"
+                          onclick={handleTypeSwitch}
+                        >
+                          Container
+                        </button>
+                      </div>
+                    </div>
+                    <span class="slds-text-body_small slds-text-color_weak">
+                      Reflecting <strong>{currentProfile.profileType}</strong> schema
+                    </span>
+                  </div>
+
+                  <!-- Form Inputs Reflecting Correct Schema -->
                   <div class="slds-grid slds-gutters slds-wrap">
+                    <!-- Common Fields -->
                     <div
                       class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
                     >
@@ -281,12 +321,13 @@
                         value={currentProfile.developerName}
                         data-field="developerName"
                         onchange={handleFieldChange}
-                        field-level-help="Unique key referenced in Lightning App Builder picklist. Cannot be changed once created to maintain App Builder page integrity."
+                        field-level-help="Unique key referenced in Lightning App Builder picklist."
                         disabled={isDeveloperNameDisabled}
                         required
                       >
                       </lightning-input>
                     </div>
+
                     <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
                       <lightning-input
                         label="Header Title"
@@ -296,6 +337,7 @@
                       >
                       </lightning-input>
                     </div>
+
                     <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
                       <lightning-input
                         label="Assist Service Endpoint URL"
@@ -305,33 +347,84 @@
                       >
                       </lightning-input>
                     </div>
-                    <div
-                      class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
-                    >
-                      <lightning-input
-                        type="toggle"
-                        label="Enable Auto-Assist"
-                        checked={currentProfile.enableAutoAssist}
-                        data-field="enableAutoAssist"
-                        onchange={handleFieldChange}
-                      >
-                      </lightning-input>
-                    </div>
-                    <div
-                      class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
-                    >
-                      <lightning-input
-                        type="toggle"
-                        label="Show Knowledge & Suggestions"
-                        checked={currentProfile.showSuggestions}
-                        data-field="showSuggestions"
-                        onchange={handleFieldChange}
-                      >
-                      </lightning-input>
-                    </div>
+
+                    <!-- Container Schema Fields -->
+                    <template lwc:if={isContainerProfile}>
+                      <div class="slds-col slds-size_1-of-1 slds-m-top_x-small slds-m-bottom_small">
+                        <div class="slds-box slds-box_x-small slds-theme_shade">
+                          <div class="slds-text-title_caps slds-m-bottom_x-small">
+                            Container Schema Settings
+                          </div>
+                          <div class="slds-grid slds-gutters slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                              <lightning-input
+                                type="toggle"
+                                label="Enable Auto-Assist"
+                                checked={currentProfile.enableAutoAssist}
+                                data-field="enableAutoAssist"
+                                onchange={handleFieldChange}
+                              >
+                              </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                              <lightning-input
+                                type="toggle"
+                                label="Show Knowledge & Suggestions"
+                                checked={currentProfile.showSuggestions}
+                                data-field="showSuggestions"
+                                onchange={handleFieldChange}
+                              >
+                              </lightning-input>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+
+                    <!-- Companion Agent Schema Fields -->
+                    <template lwc:if={isCompanionProfile}>
+                      <div class="slds-col slds-size_1-of-1 slds-m-top_x-small slds-m-bottom_small">
+                        <div class="slds-box slds-box_x-small slds-theme_shade">
+                          <div class="slds-text-title_caps slds-m-bottom_x-small">
+                            Companion Agent Schema Settings
+                          </div>
+                          <div class="slds-grid slds-gutters slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-input
+                                label="AI Model Name"
+                                value={currentProfile.modelName}
+                                data-field="modelName"
+                                onchange={handleFieldChange}
+                                placeholder="gemini-1.5-pro"
+                              >
+                              </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-input
+                                type="toggle"
+                                label="Enable Autonomous Actions"
+                                checked={currentProfile.enableAutonomousActions}
+                                data-field="enableAutonomousActions"
+                                onchange={handleFieldChange}
+                              >
+                              </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1">
+                              <lightning-textarea
+                                label="Welcome Greeting & Instructions"
+                                value={currentProfile.welcomeMessage}
+                                data-field="welcomeMessage"
+                                onchange={handleFieldChange}
+                              >
+                              </lightning-textarea>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
                   </div>
 
-                  <!-- Form Actions (Clean alignment without negative margin gutters) -->
+                  <!-- Form Actions -->
                   <div
                     class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-border_top slds-p-top_medium"
                   >
@@ -373,16 +466,9 @@
                     >
                   </div>
                   <p
-                    class="slds-text-body_small slds-text-color_weak slds-p-left_small"
+                    class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
                   >
-                    <strong>Dropdown Select in Lightning Editor:</strong> Every
-                    configuration profile created here is automatically
-                    populated into the
-                    <strong>Configuration Profile Name</strong> dropdown in
-                    Lightning App Builder. Drop the
-                    <code class="xml-code">agentAssistContainer</code> on any
-                    page (Record Page, Utility Bar, App Page) and select the
-                    profile directly from the picklist.
+                    <strong>Dropdown Select in Lightning Editor:</strong> Every configuration profile created here is automatically populated into the <strong>Configuration Profile Name</strong> dropdown in Lightning App Builder. Drop the <code class="xml-code">agentAssistContainer</code> or <code class="xml-code">agentAssistCompanionAgent</code> on any page (Record Page, Utility Bar, App Page) and select the profile directly from the picklist.
                   </p>
                 </div>
               </div>
@@ -413,7 +499,7 @@
             <div class="slds-p-around_medium">
               <p class="slds-text-body_regular slds-m-bottom_medium">
                 Validate communication between Salesforce, the Google Cloud UI
-                Connector, and the Agent Assist backend service.
+                Connector, and the Agent Assist / Companion Agent backend service.
               </p>
 
               <div class="slds-grid slds-gutters slds-wrap">
@@ -506,113 +592,59 @@
         </div>
       </lightning-tab>
 
-      <!-- 4. Agent Assist Simulator -->
+      <!-- 4. Simulator -->
       <lightning-tab
-        label="Agent Assist Simulator"
+        label="Simulator"
         value="simulator"
         icon-name="utility:chat"
       >
         <div class="slds-p-top_medium">
           <lightning-card
-            title="Platform Agnostic Chat & Voice Simulator"
+            title="Live LWC Component Simulator"
             icon-name="utility:chat"
           >
             <div class="slds-p-around_medium">
               <p class="slds-text-body_regular slds-m-bottom_medium">
-                Test and preview real-time AI suggestions, smart replies, and
-                knowledge article retrieval for any configuration profile
-                without connecting a live telephony/chat provider.
+                Select any configuration profile to instantiate and test the live
+                <strong>agentAssistContainer</strong> or <strong>agentAssistCompanionAgent</strong> LWC component directly inside the simulator.
               </p>
 
-              <div class="slds-grid slds-gutters slds-wrap">
-                <div
-                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_medium"
-                >
-                  <div class="slds-box slds-theme_shade slds-m-bottom_medium">
-                    <div class="slds-text-title_bold slds-m-bottom_x-small">
-                      Simulated Customer Conversation
-                    </div>
-                    <div
-                      class="simulator-chat-box slds-p-around_small slds-scrollable_y"
+              <!-- Profile Selector for Simulator -->
+              <div class="slds-box slds-theme_shade slds-m-bottom_medium slds-p-around_medium">
+                <div class="slds-grid slds-gutters slds-grid_vertical-align-center slds-wrap">
+                  <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+                    <lightning-combobox
+                      label="Configuration Profile to Instantiate"
+                      value={simulatorProfileDevName}
+                      options={simulatorProfileOptions}
+                      onchange={handleSimulatorProfileChange}
+                      field-level-help="Select a configuration profile to preview the live LWC."
                     >
-                      <div
-                        class="chat-bubble chat-bubble_customer slds-m-bottom_x-small"
-                      >
-                        <strong>Customer:</strong> Hello, I need help resetting
-                        my account password and updating my billing info.
-                      </div>
-                      <div
-                        class="chat-bubble chat-bubble_agent slds-m-bottom_x-small"
-                      >
-                        <strong>Agent:</strong> I can certainly help you with
-                        that! Let me pull up your account.
-                      </div>
-                    </div>
-                    <div
-                      class="slds-m-top_small slds-grid slds-grid_vertical-align-center"
-                    >
-                      <div class="slds-col slds-grow slds-m-right_small">
-                        <lightning-input
-                          placeholder="Type a test customer message..."
-                          variant="label-hidden"
-                          value={simulatedMessage}
-                          onchange={handleSimulatedMessageChange}
-                        ></lightning-input>
-                      </div>
-                      <div class="slds-col slds-no-flex">
-                        <button
-                          type="button"
-                          class="slds-button slds-button_brand"
-                          onclick={handleSendSimulatedMessage}
-                        >
-                          Send
-                        </button>
-                      </div>
-                    </div>
+                    </lightning-combobox>
                   </div>
-                </div>
-
-                <div
-                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_medium"
-                >
-                  <div class="slds-box slds-m-bottom_medium">
-                    <div
-                      class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_x-small"
-                    >
-                      <div class="slds-text-title_bold">
-                        Real-Time Suggestions Preview
-                      </div>
-                      <span class="slds-badge slds-badge_lightest"
-                        >Profile: {selectedDevName}</span
-                      >
-                    </div>
-                    <div
-                      class="slds-card slds-card_boundary slds-m-bottom_x-small slds-p-around_small"
-                    >
-                      <div class="slds-text-title_bold slds-text-color_success">
-                        Smart Reply Draft
-                      </div>
-                      <p class="slds-text-body_small slds-m-top_xx-small">
-                        "I can guide you through our secure self-service
-                        password reset portal. Would you like me to send a reset
-                        link to your email on file?"
-                      </p>
-                    </div>
-                    <div
-                      class="slds-card slds-card_boundary slds-p-around_small"
-                    >
-                      <div class="slds-text-title_bold">Suggested Article</div>
-                      <p class="slds-text-body_small slds-m-top_xx-small">
-                        <strong
-                          >KB10482: Account Security & Billing Update
-                          Workflow</strong
-                        >
-                        (96% relevance)
-                      </p>
+                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-top_small slds-medium-m-top_none">
+                    <div class="slds-text-title_bold">Instantiated LWC Type:</div>
+                    <div class="slds-text-body_small slds-m-top_xxx-small">
+                      <span class="slds-badge slds-badge_inverse slds-m-right_xx-small">{simulatorProfile.profileType}</span>
+                      <code>{simulatorProfileDevName}</code>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <!-- Live Instantiated Container LWC -->
+              <template lwc:if={isSimulatorContainer}>
+                <div class="slds-m-top_medium">
+                  <c-agent-assist-container config-name={simulatorProfileDevName}></c-agent-assist-container>
+                </div>
+              </template>
+
+              <!-- Live Instantiated Companion Agent LWC -->
+              <template lwc:if={isSimulatorCompanion}>
+                <div class="slds-m-top_medium">
+                  <c-agent-assist-companion-agent config-name={simulatorProfileDevName}></c-agent-assist-companion-agent>
+                </div>
+              </template>
             </div>
           </lightning-card>
         </div>
@@ -633,7 +665,7 @@
               <p class="slds-text-body_regular slds-m-bottom_medium">
                 Step-by-step instructions, documentation links, and checklists
                 for connecting your contact center platform to Google Cloud
-                Agent Assist.
+                Agent Assist & Companion Agent.
               </p>
 
               <lightning-accordion active-section-name="genesys">
@@ -657,7 +689,7 @@
                         permissions.
                       </li>
                       <li>
-                        Embed the Agent Assist Interaction Widget in Genesys
+                        Embed the Agent Assist or Companion Agent Interaction Widget in Genesys
                         Agent Workspace.
                       </li>
                     </ul>
@@ -725,7 +757,8 @@
                       </li>
                       <li>
                         Place the
-                        <code class="xml-code">agentAssistContainer</code> LWC
+                        <code class="xml-code">agentAssistContainer</code> or
+                        <code class="xml-code">agentAssistCompanionAgent</code> LWC
                         on VoiceCall and MessagingSession record pages.
                       </li>
                     </ul>
@@ -743,5 +776,150 @@
         </div>
       </lightning-tab>
     </lightning-tabset>
+
+    <!-- Modal: Select Profile Type -->
+    <template lwc:if={isTypeModalOpen}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        class="slds-modal slds-fade-in-open slds-modal_medium"
+        aria-labelledby="modal-heading-01"
+        aria-modal="true"
+      >
+        <div class="slds-modal__container">
+          <!-- Modal Header -->
+          <header class="slds-modal__header">
+            <button
+              type="button"
+              class="slds-button slds-button_icon slds-modal__close"
+              title="Close"
+              onclick={handleCloseTypeModal}
+            >
+              <lightning-icon
+                icon-name="utility:close"
+                alternative-text="Close"
+                size="small"
+              ></lightning-icon>
+              <span class="slds-assistive-text">Close</span>
+            </button>
+            <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">
+              Select Profile Type
+            </h2>
+            <p class="slds-m-top_x-small slds-text-body_small slds-text-color_weak">
+              Choose a configuration profile type to create for your contact center agents.
+            </p>
+          </header>
+
+          <!-- Modal Body (Two Selection Cards) -->
+          <div class="slds-modal__content slds-p-around_large modal-content-bg">
+            <div class="slds-grid slds-gutters slds-wrap">
+              <!-- Option 1: Companion Agent -->
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <div
+                  class="type-selection-card slds-p-around_medium"
+                  data-type="Companion Agent"
+                  onclick={handleSelectTypeFromModal}
+                >
+                  <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                      <lightning-icon
+                        icon-name="standard:bot"
+                        size="medium"
+                        class="slds-m-right_small"
+                      ></lightning-icon>
+                      <div>
+                        <h3 class="slds-text-heading_small slds-text-title_bold card-main-title">
+                          Companion Agent
+                        </h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Agent Facing AI Chat
+                        </p>
+                      </div>
+                    </div>
+                    <span class="slds-badge slds-theme_info modal-badge-newer">Newer</span>
+                  </div>
+
+                  <ul class="type-feature-list slds-m-bottom_medium">
+                    <li><span class="check-icon">✓</span> Supports Most and Latest Features</li>
+                    <li><span class="check-icon">✓</span> Agent Facing AI Chat</li>
+                    <li><span class="check-icon">✓</span> Next Best Action Suggestions</li>
+                    <li><span class="check-icon">✓</span> Knowledge Search</li>
+                    <li><span class="check-icon">✓</span> Summarization</li>
+                    <li><span class="check-icon">✓</span> Real-time Transcription</li>
+                  </ul>
+
+                  <button
+                    type="button"
+                    class="slds-button slds-button_brand slds-button_stretch slds-m-top_medium"
+                    data-type="Companion Agent"
+                    onclick={handleSelectTypeFromModal}
+                  >
+                    Select Companion Agent
+                  </button>
+                </div>
+              </div>
+
+              <!-- Option 2: Container Module -->
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <div
+                  class="type-selection-card slds-p-around_medium"
+                  data-type="Container"
+                  onclick={handleSelectTypeFromModal}
+                >
+                  <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                      <lightning-icon
+                        icon-name="standard:service_crew_member"
+                        size="medium"
+                        class="slds-m-right_small"
+                      ></lightning-icon>
+                      <div>
+                        <h3 class="slds-text-heading_small slds-text-title_bold card-main-title">
+                          Container Module
+                        </h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Established Integration
+                        </p>
+                      </div>
+                    </div>
+                    <span class="slds-badge slds-theme_success modal-badge-established">Established</span>
+                  </div>
+
+                  <ul class="type-feature-list slds-m-bottom_medium">
+                    <li><span class="check-icon">✓</span> Supports all Existing Features</li>
+                    <li><span class="check-icon">✓</span> Well Documented, GA</li>
+                    <li><span class="check-icon">✓</span> AI Coach</li>
+                    <li><span class="check-icon">✓</span> Knowledge Search</li>
+                    <li><span class="check-icon">✓</span> Summarization</li>
+                    <li><span class="check-icon">✓</span> Real-time Transcription</li>
+                  </ul>
+
+                  <button
+                    type="button"
+                    class="slds-button slds-button_brand slds-button_stretch slds-m-top_medium"
+                    data-type="Container"
+                    onclick={handleSelectTypeFromModal}
+                  >
+                    Select Container Module
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <footer class="slds-modal__footer">
+            <button
+              type="button"
+              class="slds-button slds-button_neutral"
+              onclick={handleCloseTypeModal}
+            >
+              Cancel
+            </button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+    </template>
   </div>
 </template>

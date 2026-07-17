@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 public without sharing class AgentAssistConfigController {
   public class ConfigWrapper {
     @AuraEnabled
@@ -7,6 +23,8 @@ public without sharing class AgentAssistConfigController {
     @AuraEnabled
     public String developerName { get; set; }
     @AuraEnabled
+    public String profileType { get; set; } // 'Container' or 'Companion Agent'
+    @AuraEnabled
     public String title { get; set; }
     @AuraEnabled
     public String endpointUrl { get; set; }
@@ -14,6 +32,12 @@ public without sharing class AgentAssistConfigController {
     public Boolean showSuggestions { get; set; }
     @AuraEnabled
     public Boolean enableAutoAssist { get; set; }
+    @AuraEnabled
+    public String modelName { get; set; }
+    @AuraEnabled
+    public String welcomeMessage { get; set; }
+    @AuraEnabled
+    public Boolean enableAutonomousActions { get; set; }
     @AuraEnabled
     public Boolean isActive { get; set; }
     @AuraEnabled
@@ -25,8 +49,8 @@ public without sharing class AgentAssistConfigController {
   }
 
   /**
-   * Retrieves the resolved configuration state for a container instance.
-   * If the assigned profile has been deleted or cannot be found, returns isFound = false.
+   * Retrieves the resolved configuration state for a container or companion agent instance.
+   * Note: cacheable=true methods must be strictly read-only and cannot execute DML.
    */
   @AuraEnabled(cacheable=true)
   public static ConfigWrapper getResolvedConfig(String configName) {
@@ -36,10 +60,14 @@ public without sharing class AgentAssistConfigController {
       : 'Default';
     result.developerName = targetDevName;
     result.name = targetDevName;
+    result.profileType = 'Container';
     result.title = 'Google Cloud Agent Assist';
     result.endpointUrl = 'https://api.agentassist.example.com/v1';
     result.showSuggestions = true;
     result.enableAutoAssist = true;
+    result.modelName = 'gemini-1.5-pro';
+    result.welcomeMessage = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?';
+    result.enableAutonomousActions = true;
     result.isActive = true;
 
     try {
@@ -48,10 +76,14 @@ public without sharing class AgentAssistConfigController {
           Id,
           Name,
           Developer_Name__c,
+          Profile_Type__c,
           Title__c,
           Endpoint_URL__c,
           Show_Suggestions__c,
           Enable_Auto_Assist__c,
+          Model_Name__c,
+          Welcome_Message__c,
+          Enable_Autonomous_Actions__c,
           Is_Active__c,
           Additional_Config_JSON__c
         FROM Agent_Assist_Config__c
@@ -64,26 +96,58 @@ public without sharing class AgentAssistConfigController {
         result.id = cfg.Id;
         result.name = cfg.Name;
         result.developerName = cfg.Developer_Name__c;
-        if (String.isNotBlank(cfg.Title__c))
+        result.profileType = String.isNotBlank(cfg.Profile_Type__c)
+          ? cfg.Profile_Type__c
+          : (cfg.Developer_Name__c == 'Default_Companion'
+              ? 'Companion Agent'
+              : 'Container');
+
+        if (String.isNotBlank(cfg.Title__c)) {
           result.title = cfg.Title__c;
-        if (String.isNotBlank(cfg.Endpoint_URL__c))
+        } else if (result.profileType == 'Companion Agent') {
+          result.title = 'Google Cloud Companion Agent';
+        }
+
+        if (String.isNotBlank(cfg.Endpoint_URL__c)) {
           result.endpointUrl = cfg.Endpoint_URL__c;
-        if (cfg.Show_Suggestions__c != null)
+        }
+        if (cfg.Show_Suggestions__c != null) {
           result.showSuggestions = cfg.Show_Suggestions__c;
-        if (cfg.Enable_Auto_Assist__c != null)
+        }
+        if (cfg.Enable_Auto_Assist__c != null) {
           result.enableAutoAssist = cfg.Enable_Auto_Assist__c;
+        }
+        if (String.isNotBlank(cfg.Model_Name__c)) {
+          result.modelName = cfg.Model_Name__c;
+        }
+        if (String.isNotBlank(cfg.Welcome_Message__c)) {
+          result.welcomeMessage = cfg.Welcome_Message__c;
+        }
+        if (cfg.Enable_Autonomous_Actions__c != null) {
+          result.enableAutonomousActions = cfg.Enable_Autonomous_Actions__c;
+        }
+
         result.additionalConfigJson = cfg.Additional_Config_JSON__c;
         result.resolutionSource =
           'Database Record [' +
           cfg.Name +
           ' (' +
           cfg.Developer_Name__c +
-          ')]';
+          ') - ' +
+          result.profileType +
+          ']';
         result.isFound = true;
       } else if (targetDevName == 'Default') {
-        seedDefaultConfigs();
         result.name = 'Default Profile';
-        result.resolutionSource = 'Built-in Default';
+        result.profileType = 'Container';
+        result.title = 'Google Cloud Agent Assist';
+        result.resolutionSource = 'Built-in Default Container';
+        result.isFound = true;
+      } else if (targetDevName == 'Default_Companion') {
+        result.name = 'Default Companion Agent';
+        result.profileType = 'Companion Agent';
+        result.title = 'Google Cloud Companion Agent';
+        result.resolutionSource = 'Built-in Default Companion Agent';
         result.isFound = true;
       } else {
         result.isFound = false;
@@ -103,7 +167,7 @@ public without sharing class AgentAssistConfigController {
 
   /**
    * Returns all configuration records for the Setup Wizard and Picklist.
-   * Seeds a single default profile if database table is empty.
+   * Note: cacheable=true methods must be strictly read-only and cannot execute DML.
    */
   @AuraEnabled(cacheable=true)
   public static List<Agent_Assist_Config__c> getAllConfigs() {
@@ -113,34 +177,45 @@ public without sharing class AgentAssistConfigController {
           Id,
           Name,
           Developer_Name__c,
+          Profile_Type__c,
           Title__c,
           Endpoint_URL__c,
           Show_Suggestions__c,
           Enable_Auto_Assist__c,
+          Model_Name__c,
+          Welcome_Message__c,
+          Enable_Autonomous_Actions__c,
           Is_Active__c,
           Additional_Config_JSON__c,
           LastModifiedDate
         FROM Agent_Assist_Config__c
-        ORDER BY Name ASC
+        ORDER BY Profile_Type__c ASC, Name ASC
       ];
 
       if (configs.isEmpty()) {
-        seedDefaultConfigs();
-        configs = [
-          SELECT
-            Id,
-            Name,
-            Developer_Name__c,
-            Title__c,
-            Endpoint_URL__c,
-            Show_Suggestions__c,
-            Enable_Auto_Assist__c,
-            Is_Active__c,
-            Additional_Config_JSON__c,
-            LastModifiedDate
-          FROM Agent_Assist_Config__c
-          ORDER BY Name ASC
-        ];
+        return new List<Agent_Assist_Config__c>{
+          new Agent_Assist_Config__c(
+            Name = 'Default Profile',
+            Developer_Name__c = 'Default',
+            Profile_Type__c = 'Container',
+            Title__c = 'Google Cloud Agent Assist',
+            Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+            Enable_Auto_Assist__c = true,
+            Show_Suggestions__c = true,
+            Is_Active__c = true
+          ),
+          new Agent_Assist_Config__c(
+            Name = 'Default Companion Agent',
+            Developer_Name__c = 'Default_Companion',
+            Profile_Type__c = 'Companion Agent',
+            Title__c = 'Google Cloud Companion Agent',
+            Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+            Model_Name__c = 'gemini-1.5-pro',
+            Welcome_Message__c = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?',
+            Enable_Autonomous_Actions__c = true,
+            Is_Active__c = true
+          )
+        };
       }
 
       return configs;
@@ -150,17 +225,30 @@ public without sharing class AgentAssistConfigController {
   }
 
   /**
-   * Seeds a single default configuration record into the database.
+   * Seeds default configuration records (Container and Companion Agent) into the database.
    */
+  @AuraEnabled
   public static void seedDefaultConfigs() {
     List<Agent_Assist_Config__c> defaults = new List<Agent_Assist_Config__c>{
       new Agent_Assist_Config__c(
         Name = 'Default Profile',
         Developer_Name__c = 'Default',
+        Profile_Type__c = 'Container',
         Title__c = 'Google Cloud Agent Assist',
         Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
         Enable_Auto_Assist__c = true,
         Show_Suggestions__c = true,
+        Is_Active__c = true
+      ),
+      new Agent_Assist_Config__c(
+        Name = 'Default Companion Agent',
+        Developer_Name__c = 'Default_Companion',
+        Profile_Type__c = 'Companion Agent',
+        Title__c = 'Google Cloud Companion Agent',
+        Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+        Model_Name__c = 'gemini-1.5-pro',
+        Welcome_Message__c = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?',
+        Enable_Autonomous_Actions__c = true,
         Is_Active__c = true
       )
     };
@@ -187,6 +275,9 @@ public without sharing class AgentAssistConfigController {
         '[^a-zA-Z0-9]',
         '_'
       );
+    }
+    if (String.isBlank(configRecord.Profile_Type__c)) {
+      configRecord.Profile_Type__c = 'Container';
     }
     if (configRecord.Id != null) {
       update configRecord;
