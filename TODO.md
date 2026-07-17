@@ -14,7 +14,7 @@
 - Separate LWC for Companion Agent (or toggle for main LWC)?
 - Wizard Sections
   - Salesforce Setup
-  - Agent Assist LWC Configuration Profiles
+  - Google Cloud Agent Assist LWC Configuration Profiles
   - Diagnostics & Platform Agnostic Chat Simulator
     - Check connectivity with the UI Connector
     - Check authentication with the UI Connector

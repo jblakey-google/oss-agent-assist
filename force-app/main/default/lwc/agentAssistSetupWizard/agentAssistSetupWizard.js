@@ -20,13 +20,14 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
+import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 
 const INITIAL_PROFILES = [
   {
     id: "mock-1",
     name: "Default Profile",
     developerName: "Default",
-    title: "Agent Assist",
+    title: "Google Cloud Agent Assist",
     endpointUrl: "https://api.agentassist.example.com/v1",
     enableAutoAssist: true,
     showSuggestions: true,
@@ -35,6 +36,7 @@ const INITIAL_PROFILES = [
 ];
 
 export default class AgentAssistSetupWizard extends LightningElement {
+  appIcon = sfAgentAssistIcon;
   @track profiles = [...INITIAL_PROFILES];
   @track selectedDevName = "Default";
   @track currentProfile = { ...INITIAL_PROFILES[0] };
@@ -141,7 +143,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       id: "temp-" + Date.now(),
       name: "New Custom Profile",
       developerName: "Custom_Config_" + Math.floor(Math.random() * 1000),
-      title: "Custom Agent Assist",
+      title: "Custom Google Cloud Agent Assist",
       endpointUrl: "https://api.agentassist.example.com/v1",
       enableAutoAssist: true,
       showSuggestions: true,

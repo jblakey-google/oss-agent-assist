@@ -49,7 +49,7 @@ function hasValidJsFiles() {
 
 if (!hasValidJsFiles()) {
   console.log(
-    "Static resource JS files missing or empty in staticresources/ui_modules. Generating static resources..."
+    "Static resource JS files missing or empty in staticresources/ui_modules. Generating Google Cloud Agent Assist static resources..."
   );
   try {
     execSync("npm run generate-aa-static-resources", {

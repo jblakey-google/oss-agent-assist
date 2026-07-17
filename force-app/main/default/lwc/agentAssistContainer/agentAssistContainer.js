@@ -42,7 +42,10 @@ export default class AgentAssistContainer extends LightningElement {
     if (data) {
       this.resolvedState = data;
     } else if (error) {
-      console.error("Error loading Agent Assist configuration:", error);
+      console.error(
+        "Error loading Google Cloud Agent Assist configuration:",
+        error
+      );
       this.resolvedState = {
         title: "Configuration Error",
         developerName: this.configName || "Default",
@@ -74,7 +77,7 @@ export default class AgentAssistContainer extends LightningElement {
     if (this.isProfileMissing) {
       return "Configuration Profile Deleted";
     }
-    return this.resolvedState?.title || "Agent Assist";
+    return this.resolvedState?.title || "Google Cloud Agent Assist";
   }
 
   get activeProfileName() {
@@ -160,7 +163,7 @@ export default class AgentAssistContainer extends LightningElement {
   handleTriggerAssist() {
     this.dispatchEvent(
       new ShowToastEvent({
-        title: "Agent Assist Triggered",
+        title: "Google Cloud Agent Assist Triggered",
         message: `Synthesizing assistance for ${this.activeContextDescription} using profile [${this.activeProfileName}]`,
         variant: "success"
       })

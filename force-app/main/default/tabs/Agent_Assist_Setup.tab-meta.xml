@@ -16,8 +16,8 @@
 -->
 <CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
     <description
-  >Setup and profile configuration for Agent Assist containers</description>
-    <label>Agent Assist Setup</label>
+  >Setup and profile configuration for Google Cloud Agent Assist containers</description>
+    <label>Google Cloud Agent Assist Setup</label>
     <lwcComponent>agentAssistSetupWizard</lwcComponent>
     <motif>Custom67: Gears</motif>
 </CustomTab>

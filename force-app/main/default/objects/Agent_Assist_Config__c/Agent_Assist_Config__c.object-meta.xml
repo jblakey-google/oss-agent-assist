@@ -59,7 +59,7 @@
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
     <description
-  >Stores configuration profiles managed by the Agent Assist Setup Wizard.</description>
+  >Stores configuration profiles managed by the Google Cloud Agent Assist Setup Wizard.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>
     <enableFeeds>false</enableFeeds>
@@ -70,12 +70,12 @@
     <enableSharing>true</enableSharing>
     <enableStreamingApi>true</enableStreamingApi>
     <externalSharingModel>Private</externalSharingModel>
-    <label>Agent Assist Config</label>
+    <label>Google Cloud Agent Assist Config</label>
     <nameField>
         <label>Profile Name</label>
         <type>Text</type>
     </nameField>
-    <pluralLabel>Agent Assist Configs</pluralLabel>
+    <pluralLabel>Google Cloud Agent Assist Configs</pluralLabel>
     <sharingModel>ReadWrite</sharingModel>
     <visibility>Public</visibility>
 </CustomObject>

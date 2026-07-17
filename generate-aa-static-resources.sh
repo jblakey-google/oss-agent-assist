@@ -15,7 +15,7 @@
 #
 # generate-aa-static-resources.sh
 #
-# Fetches the latest Google Agent Assist UI Modules JavaScript libraries
+# Fetches the latest Google Cloud Agent Assist UI Modules JavaScript libraries
 # (container.js, transcript.js, and common.js) from gstatic.com and packages
 # them into a zipped Salesforce Static Resource (ui_modules.resource).
 #

@@ -17,9 +17,9 @@
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Agent Assist Container</masterLabel>
+    <masterLabel>Google Cloud Agent Assist Container</masterLabel>
     <description
-  >Agent Assist Container for Record Pages and Utility Bar</description>
+  >Google Cloud Agent Assist Container for Record Pages and Utility Bar</description>
     <targets>
         <target>lightning__RecordPage</target>
         <target>lightning__UtilityBar</target>

@@ -19,7 +19,7 @@
     <canAccessMicrophone>false</canAccessMicrophone>
     <context>All</context>
     <description
-  >Google Cloud Run WebSocket endpoints for Agent Assist UI Connector</description>
+  >Google Cloud Run WebSocket endpoints for Google Cloud Agent Assist UI Connector</description>
     <endpointUrl>wss://*.run.app</endpointUrl>
     <isActive>true</isActive>
     <isApplicableToConnectSrc>true</isApplicableToConnectSrc>

@@ -32,7 +32,7 @@
         <enabled>true</enabled>
     </classAccesses>
     <description
-  >Grants full administrative access to Agent Assist Setup App, Tab, Configurations, and Apex Controller.</description>
+  >Grants full administrative access to Google Cloud Agent Assist Setup App, Tab, Configurations, and Apex Controller.</description>
     <fieldPermissions>
         <editable>true</editable>
         <field>Agent_Assist_Config__c.Additional_Config_JSON__c</field>
@@ -64,7 +64,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <hasActivationRequired>false</hasActivationRequired>
-    <label>Agent Assist Admin</label>
+    <label>Google Cloud Agent Assist Admin</label>
     <objectPermissions>
         <allowCreate>true</allowCreate>
         <allowDelete>true</allowDelete>

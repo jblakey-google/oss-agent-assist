@@ -24,6 +24,13 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.wizard-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
 .profile-item {
   border: 1px solid #e5e5e5;
   border-radius: 6px;

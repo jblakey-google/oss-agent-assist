@@ -19,7 +19,7 @@
     <canAccessMicrophone>false</canAccessMicrophone>
     <context>All</context>
     <description
-  >Google Cloud Run HTTPS endpoints for Agent Assist UI Connector</description>
+  >Google Cloud Run HTTPS endpoints for Google Cloud Agent Assist UI Connector</description>
     <endpointUrl>https://*.run.app</endpointUrl>
     <isActive>true</isActive>
     <isApplicableToConnectSrc>true</isApplicableToConnectSrc>

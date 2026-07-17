@@ -22,12 +22,12 @@
         <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
     </brand>
     <description
-  >Centralized configuration management and setup for Agent Assist.</description>
+  >Centralized configuration management and setup for Google Cloud Agent Assist.</description>
     <formFactors>Large</formFactors>
     <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
     <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
     <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
-    <label>Agent Assist Setup</label>
+    <label>Google Cloud Agent Assist Setup</label>
     <navType>Standard</navType>
     <tabs>Agent_Assist_Setup</tabs>
     <uiType>Lightning</uiType>
