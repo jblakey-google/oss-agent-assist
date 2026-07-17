@@ -1,13 +1,30 @@
 {
-  "orgName": "jblakey company",
+  "orgName": "Google",
   "edition": "Developer",
-  "features": ["EnableSetPasswordInApi"],
+  "features": [
+    "EnableSetPasswordInApi",
+    "ServiceCloud",
+    "LiveAgent",
+    "LiveMessage",
+    "ServiceCloudVoicePartnerTelephony:1",
+    "LightningServiceConsole",
+    "ServiceUser"
+  ],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
     },
+    "serviceCloudVoiceSettings": {
+      "enableSCVExternalTelephony": true
+    },
     "mobileSettings": {
       "enableS1EncryptedStoragePref2": false
+    },
+    "omniChannelSettings": {
+      "enableOmniChannel": true
+    },
+    "liveAgentSettings": {
+      "enableLiveAgent": true
     }
   }
 }
