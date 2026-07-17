@@ -25,8 +25,17 @@ private class AgentAssistConfigControllerTest {
         Profile_Type__c = 'Container',
         Title__c = 'Google Cloud Agent Assist',
         Endpoint_URL__c = 'https://api.example.com/v1',
-        Show_Suggestions__c = true,
-        Enable_Auto_Assist__c = true,
+        Conversation_Profile__c = 'projects/test-proj/locations/global/conversationProfiles/cp-123',
+        Channel__c = 'chat',
+        Platform__c = 'messaging',
+        Consumer_Key__c = 'ck_123',
+        Consumer_Secret__c = 'cs_123',
+        Container_Height__c = '530px',
+        Debug_Mode__c = true,
+        Show_Dark_Mode_Toggle__c = true,
+        Show_Header__c = false,
+        Show_Correctness_Feedback__c = false,
+        Disabled_Features__c = 'smart-reply',
         Is_Active__c = true
       ),
       new Agent_Assist_Config__c(
@@ -62,10 +71,14 @@ private class AgentAssistConfigControllerTest {
       res.profileType,
       'Should identify profileType as Container'
     );
-    Assert.isTrue(
-      res.enableAutoAssist,
-      'Should load Default enableAutoAssist from DB profile'
+    Assert.areEqual(
+      'projects/test-proj/locations/global/conversationProfiles/cp-123',
+      res.conversationProfile,
+      'Should load conversationProfile'
     );
+    Assert.areEqual('chat', res.channel, 'Should load channel');
+    Assert.areEqual('messaging', res.platform, 'Should load platform');
+    Assert.isTrue(res.debugMode, 'Should load debugMode');
     Assert.isTrue(res.isFound, 'Default profile should be marked as found');
   }
 

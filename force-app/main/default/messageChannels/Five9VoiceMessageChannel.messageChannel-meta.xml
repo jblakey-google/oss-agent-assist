@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Five9VoiceMessageChannel</masterLabel>
+    <isExposed>true</isExposed>
+    <description>Message Channel for Five9 Voice Message integration</description>
+    <lightningMessageFields>
+        <fieldName>message</fieldName>
+        <description>Message payload</description>
+    </lightningMessageFields>
+</LightningMessageChannel>

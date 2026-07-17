@@ -30,8 +30,17 @@ const INITIAL_PROFILES = [
     profileType: "Container",
     title: "Google Cloud Agent Assist",
     endpointUrl: "https://api.agentassist.example.com/v1",
-    enableAutoAssist: true,
-    showSuggestions: true,
+    conversationProfile: "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
+    channel: "chat",
+    platform: "messaging",
+    consumerKey: "",
+    consumerSecret: "",
+    containerHeight: "530px",
+    debugMode: true,
+    showDarkModeToggle: true,
+    showHeader: false,
+    showCorrectnessFeedback: false,
+    disabledFeatures: "",
     modelName: "gemini-1.5-pro",
     welcomeMessage: "Hello! I am your AI Companion Agent.",
     enableAutonomousActions: true,
@@ -44,8 +53,17 @@ const INITIAL_PROFILES = [
     profileType: "Companion Agent",
     title: "Google Cloud Companion Agent",
     endpointUrl: "https://api.agentassist.example.com/v1",
-    enableAutoAssist: false,
-    showSuggestions: false,
+    conversationProfile: "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
+    channel: "chat",
+    platform: "messaging",
+    consumerKey: "",
+    consumerSecret: "",
+    containerHeight: "530px",
+    debugMode: true,
+    showDarkModeToggle: true,
+    showHeader: false,
+    showCorrectnessFeedback: false,
+    disabledFeatures: "",
     modelName: "gemini-1.5-pro",
     welcomeMessage:
       "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -65,6 +83,18 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track currentProfile = { ...INITIAL_PROFILES[0] };
   wiredConfigsResult;
 
+  channelOptions = [
+    { label: "Chat (Digital Messaging)", value: "chat" },
+    { label: "Voice (Telephony)", value: "voice" }
+  ];
+
+  platformOptions = [
+    { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" },
+    { label: "Twilio Flex", value: "twilioflex" },
+    { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
+    { label: "Service Cloud Voice (BYOT Five9)", value: "servicecloudvoice-byot-five9" }
+  ];
+
   @wire(getAllConfigs)
   wiredConfigs(result) {
     this.wiredConfigsResult = result;
@@ -81,8 +111,27 @@ export default class AgentAssistSetupWizard extends LightningElement {
             : "Container"),
         title: item.Title__c,
         endpointUrl: item.Endpoint_URL__c,
-        enableAutoAssist: item.Enable_Auto_Assist__c,
-        showSuggestions: item.Show_Suggestions__c,
+        conversationProfile:
+          item.Conversation_Profile__c ||
+          "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
+        channel: item.Channel__c || "chat",
+        platform: item.Platform__c || "messaging",
+        consumerKey: item.Consumer_Key__c || "",
+        consumerSecret: item.Consumer_Secret__c || "",
+        containerHeight: item.Container_Height__c || "530px",
+        debugMode:
+          item.Debug_Mode__c !== undefined ? item.Debug_Mode__c : true,
+        showDarkModeToggle:
+          item.Show_Dark_Mode_Toggle__c !== undefined
+            ? item.Show_Dark_Mode_Toggle__c
+            : true,
+        showHeader:
+          item.Show_Header__c !== undefined ? item.Show_Header__c : false,
+        showCorrectnessFeedback:
+          item.Show_Correctness_Feedback__c !== undefined
+            ? item.Show_Correctness_Feedback__c
+            : false,
+        disabledFeatures: item.Disabled_Features__c || "",
         modelName: item.Model_Name__c || "gemini-1.5-pro",
         welcomeMessage:
           item.Welcome_Message__c ||
@@ -277,7 +326,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   handleFieldChange(event) {
     const field = event.target.dataset.field;
     const value =
-      event.target.type === "toggle"
+      event.target.type === "toggle" || event.target.type === "checkbox"
         ? event.target.checked
         : event.target.value;
     const updated = {
@@ -314,8 +363,18 @@ export default class AgentAssistSetupWizard extends LightningElement {
         ? "Google Cloud Companion Agent"
         : "Google Cloud Agent Assist",
       endpointUrl: "https://api.agentassist.example.com/v1",
-      enableAutoAssist: !isCompanion,
-      showSuggestions: !isCompanion,
+      conversationProfile:
+        "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
+      channel: "chat",
+      platform: "messaging",
+      consumerKey: "",
+      consumerSecret: "",
+      containerHeight: "530px",
+      debugMode: true,
+      showDarkModeToggle: true,
+      showHeader: false,
+      showCorrectnessFeedback: false,
+      disabledFeatures: "",
       modelName: "gemini-1.5-pro",
       welcomeMessage:
         "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -335,8 +394,17 @@ export default class AgentAssistSetupWizard extends LightningElement {
         Profile_Type__c: this.currentProfile.profileType || "Container",
         Title__c: this.currentProfile.title,
         Endpoint_URL__c: this.currentProfile.endpointUrl,
-        Enable_Auto_Assist__c: this.currentProfile.enableAutoAssist,
-        Show_Suggestions__c: this.currentProfile.showSuggestions,
+        Conversation_Profile__c: this.currentProfile.conversationProfile,
+        Channel__c: this.currentProfile.channel,
+        Platform__c: this.currentProfile.platform,
+        Consumer_Key__c: this.currentProfile.consumerKey,
+        Consumer_Secret__c: this.currentProfile.consumerSecret,
+        Container_Height__c: this.currentProfile.containerHeight,
+        Debug_Mode__c: this.currentProfile.debugMode,
+        Show_Dark_Mode_Toggle__c: this.currentProfile.showDarkModeToggle,
+        Show_Header__c: this.currentProfile.showHeader,
+        Show_Correctness_Feedback__c: this.currentProfile.showCorrectnessFeedback,
+        Disabled_Features__c: this.currentProfile.disabledFeatures,
         Model_Name__c: this.currentProfile.modelName,
         Welcome_Message__c: this.currentProfile.welcomeMessage,
         Enable_Autonomous_Actions__c:

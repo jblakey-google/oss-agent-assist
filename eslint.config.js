@@ -22,6 +22,22 @@ const lwcConfig = require("@salesforce/eslint-config-lwc/recommended");
 const globals = require("globals");
 
 module.exports = defineConfig([
+  {
+    ignores: [
+      "**/agentAssistContainerLegacy/**",
+      "**/agentAssistContainerModule/**",
+      "**/platformServices/**",
+      "**/data/**",
+      "**/test-mocks/**",
+      "**/agentAssistContainer/*Platform*.js",
+      "**/agentAssistContainer/*Handler.js",
+      "**/agentAssistContainer/agentAssistEventNames.js",
+      "**/agentAssistContainer/sampleContext.js",
+      "**/agentAssistContainer/scvEventNames.js",
+      "**/agentAssistContainer/config.js"
+    ]
+  },
+
   // Aura configuration
   {
     files: ["**/aura/**/*.js"],

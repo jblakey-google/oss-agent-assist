@@ -356,25 +356,133 @@
                             Container Schema Settings
                           </div>
                           <div class="slds-grid slds-gutters slds-wrap">
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
                               <lightning-input
-                                type="toggle"
-                                label="Enable Auto-Assist"
-                                checked={currentProfile.enableAutoAssist}
-                                data-field="enableAutoAssist"
+                                label="Conversation Profile Resource Name"
+                                value={currentProfile.conversationProfile}
+                                data-field="conversationProfile"
                                 onchange={handleFieldChange}
+                                placeholder="projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}"
+                                field-level-help="The full resource name of the Conversation Profile in Google Cloud."
+                                required
                               >
                               </lightning-input>
                             </div>
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-                              <lightning-input
-                                type="toggle"
-                                label="Show Knowledge & Suggestions"
-                                checked={currentProfile.showSuggestions}
-                                data-field="showSuggestions"
+
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-combobox
+                                label="Conversation Channel"
+                                value={currentProfile.channel}
+                                options={channelOptions}
+                                data-field="channel"
                                 onchange={handleFieldChange}
+                                field-level-help="The conversation channel, either chat or voice."
+                              >
+                              </lightning-combobox>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-combobox
+                                label="Platform Integration"
+                                value={currentProfile.platform}
+                                options={platformOptions}
+                                data-field="platform"
+                                onchange={handleFieldChange}
+                                field-level-help="Salesforce platform integration type."
+                              >
+                              </lightning-combobox>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-input
+                                label="Connected App Consumer Key"
+                                value={currentProfile.consumerKey}
+                                data-field="consumerKey"
+                                onchange={handleFieldChange}
+                                field-level-help="Consumer Key from your Salesforce Connected App for authentication."
                               >
                               </lightning-input>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-input
+                                type="password"
+                                label="Connected App Consumer Secret"
+                                value={currentProfile.consumerSecret}
+                                data-field="consumerSecret"
+                                onchange={handleFieldChange}
+                                field-level-help="Consumer Secret from your Salesforce Connected App."
+                              >
+                              </lightning-input>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-input
+                                label="Container Height"
+                                value={currentProfile.containerHeight}
+                                data-field="containerHeight"
+                                onchange={handleFieldChange}
+                                placeholder="530px"
+                                field-level-help="The height of the Agent Assist container (e.g. 530px)."
+                              >
+                              </lightning-input>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                              <lightning-input
+                                label="Disabled Features"
+                                value={currentProfile.disabledFeatures}
+                                data-field="disabledFeatures"
+                                onchange={handleFieldChange}
+                                placeholder="smart-reply,knowledge-search"
+                                field-level-help="Comma-separated list of features to disable in UI Modules."
+                              >
+                              </lightning-input>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-1 slds-m-top_xx-small">
+                              <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-m-bottom_small">
+                                  <lightning-input
+                                    type="toggle"
+                                    label="Debug Mode"
+                                    checked={currentProfile.debugMode}
+                                    data-field="debugMode"
+                                    onchange={handleFieldChange}
+                                  >
+                                  </lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-m-bottom_small">
+                                  <lightning-input
+                                    type="toggle"
+                                    label="Dark Mode Toggle"
+                                    checked={currentProfile.showDarkModeToggle}
+                                    data-field="showDarkModeToggle"
+                                    onchange={handleFieldChange}
+                                  >
+                                  </lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-m-bottom_small">
+                                  <lightning-input
+                                    type="toggle"
+                                    label="Show Header"
+                                    checked={currentProfile.showHeader}
+                                    data-field="showHeader"
+                                    onchange={handleFieldChange}
+                                  >
+                                  </lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-m-bottom_small">
+                                  <lightning-input
+                                    type="toggle"
+                                    label="Correctness Feedback"
+                                    checked={currentProfile.showCorrectnessFeedback}
+                                    data-field="showCorrectnessFeedback"
+                                    onchange={handleFieldChange}
+                                  >
+                                  </lightning-input>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>

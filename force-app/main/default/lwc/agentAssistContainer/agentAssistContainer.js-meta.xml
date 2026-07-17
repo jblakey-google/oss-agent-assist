@@ -19,25 +19,25 @@
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Google Cloud Agent Assist Container</masterLabel>
-    <description
-  >Google Cloud Agent Assist Container for Record Pages and Utility Bar</description>
+    <description>Google Cloud Agent Assist Container for Record Pages and Utility Bar</description>
     <targets>
         <target>lightning__RecordPage</target>
         <target>lightning__UtilityBar</target>
         <target>lightning__AppPage</target>
     </targets>
     <targetConfigs>
-        <targetConfig
-      targets="lightning__RecordPage,lightning__UtilityBar,lightning__AppPage"
-    >
+        <targetConfig targets="lightning__RecordPage,lightning__UtilityBar,lightning__AppPage">
             <property
-        name="configName"
-        type="String"
-        label="Configuration Profile Name"
-        datasource="apex://AgentAssistConfigPicklist"
-        default="Default"
-        description="Select a configuration profile managed in the Setup Wizard."
-      />
+                name="configName"
+                type="String"
+                label="Configuration Profile Name"
+                datasource="apex://AgentAssistConfigPicklist"
+                default="Default"
+                description="Select a configuration profile managed in the Setup Wizard."
+            />
         </targetConfig>
     </targetConfigs>
+    <capabilities>
+        <capability>lightning__ServiceCloudVoiceToolkitApi</capability>
+    </capabilities>
 </LightningComponentBundle>

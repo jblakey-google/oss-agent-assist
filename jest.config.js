@@ -18,5 +18,11 @@ const { jestConfig } = require("@salesforce/sfdx-lwc-jest/config");
 
 module.exports = {
   ...jestConfig,
-  modulePathIgnorePatterns: ["<rootDir>/.localdevserver"]
+  modulePathIgnorePatterns: ["<rootDir>/.localdevserver"],
+  moduleNameMapper: {
+    ...jestConfig.moduleNameMapper,
+    "^lightning/conversationToolkitApi$": "<rootDir>/test-mocks/lightningToolkitApi.js",
+    "^lightning/serviceCloudVoiceToolkitApi$": "<rootDir>/test-mocks/lightningToolkitApi.js",
+    "^c/agentAssistContainerModule$": "<rootDir>/force-app/main/default/lwc/agentAssistContainerModule/agentAssistContainerModule.js"
+  }
 };

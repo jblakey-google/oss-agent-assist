@@ -28,16 +28,40 @@ public without sharing class AgentAssistConfigController {
     public String title { get; set; }
     @AuraEnabled
     public String endpointUrl { get; set; }
+    
+    // Container Schema Fields
     @AuraEnabled
-    public Boolean showSuggestions { get; set; }
+    public String conversationProfile { get; set; }
     @AuraEnabled
-    public Boolean enableAutoAssist { get; set; }
+    public String channel { get; set; }
+    @AuraEnabled
+    public String platform { get; set; }
+    @AuraEnabled
+    public String consumerKey { get; set; }
+    @AuraEnabled
+    public String consumerSecret { get; set; }
+    @AuraEnabled
+    public String containerHeight { get; set; }
+    @AuraEnabled
+    public Boolean debugMode { get; set; }
+    @AuraEnabled
+    public Boolean showDarkModeToggle { get; set; }
+    @AuraEnabled
+    public Boolean showHeader { get; set; }
+    @AuraEnabled
+    public Boolean showCorrectnessFeedback { get; set; }
+    @AuraEnabled
+    public String disabledFeatures { get; set; }
+    
+    // Companion Agent Schema Fields
     @AuraEnabled
     public String modelName { get; set; }
     @AuraEnabled
     public String welcomeMessage { get; set; }
     @AuraEnabled
     public Boolean enableAutonomousActions { get; set; }
+    
+    // Shared / System Fields
     @AuraEnabled
     public Boolean isActive { get; set; }
     @AuraEnabled
@@ -63,8 +87,21 @@ public without sharing class AgentAssistConfigController {
     result.profileType = 'Container';
     result.title = 'Google Cloud Agent Assist';
     result.endpointUrl = 'https://api.agentassist.example.com/v1';
-    result.showSuggestions = true;
-    result.enableAutoAssist = true;
+    
+    // Container Defaults
+    result.conversationProfile = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}';
+    result.channel = 'chat';
+    result.platform = 'messaging';
+    result.consumerKey = '';
+    result.consumerSecret = '';
+    result.containerHeight = '530px';
+    result.debugMode = true;
+    result.showDarkModeToggle = true;
+    result.showHeader = false;
+    result.showCorrectnessFeedback = false;
+    result.disabledFeatures = '';
+    
+    // Companion Agent Defaults
     result.modelName = 'gemini-1.5-pro';
     result.welcomeMessage = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?';
     result.enableAutonomousActions = true;
@@ -79,8 +116,17 @@ public without sharing class AgentAssistConfigController {
           Profile_Type__c,
           Title__c,
           Endpoint_URL__c,
-          Show_Suggestions__c,
-          Enable_Auto_Assist__c,
+          Conversation_Profile__c,
+          Channel__c,
+          Platform__c,
+          Consumer_Key__c,
+          Consumer_Secret__c,
+          Container_Height__c,
+          Debug_Mode__c,
+          Show_Dark_Mode_Toggle__c,
+          Show_Header__c,
+          Show_Correctness_Feedback__c,
+          Disabled_Features__c,
           Model_Name__c,
           Welcome_Message__c,
           Enable_Autonomous_Actions__c,
@@ -111,12 +157,43 @@ public without sharing class AgentAssistConfigController {
         if (String.isNotBlank(cfg.Endpoint_URL__c)) {
           result.endpointUrl = cfg.Endpoint_URL__c;
         }
-        if (cfg.Show_Suggestions__c != null) {
-          result.showSuggestions = cfg.Show_Suggestions__c;
+        
+        // Populate Container Schema Fields
+        if (String.isNotBlank(cfg.Conversation_Profile__c)) {
+          result.conversationProfile = cfg.Conversation_Profile__c;
         }
-        if (cfg.Enable_Auto_Assist__c != null) {
-          result.enableAutoAssist = cfg.Enable_Auto_Assist__c;
+        if (String.isNotBlank(cfg.Channel__c)) {
+          result.channel = cfg.Channel__c;
         }
+        if (String.isNotBlank(cfg.Platform__c)) {
+          result.platform = cfg.Platform__c;
+        }
+        if (String.isNotBlank(cfg.Consumer_Key__c)) {
+          result.consumerKey = cfg.Consumer_Key__c;
+        }
+        if (String.isNotBlank(cfg.Consumer_Secret__c)) {
+          result.consumerSecret = cfg.Consumer_Secret__c;
+        }
+        if (String.isNotBlank(cfg.Container_Height__c)) {
+          result.containerHeight = cfg.Container_Height__c;
+        }
+        if (cfg.Debug_Mode__c != null) {
+          result.debugMode = cfg.Debug_Mode__c;
+        }
+        if (cfg.Show_Dark_Mode_Toggle__c != null) {
+          result.showDarkModeToggle = cfg.Show_Dark_Mode_Toggle__c;
+        }
+        if (cfg.Show_Header__c != null) {
+          result.showHeader = cfg.Show_Header__c;
+        }
+        if (cfg.Show_Correctness_Feedback__c != null) {
+          result.showCorrectnessFeedback = cfg.Show_Correctness_Feedback__c;
+        }
+        if (String.isNotBlank(cfg.Disabled_Features__c)) {
+          result.disabledFeatures = cfg.Disabled_Features__c;
+        }
+
+        // Populate Companion Agent Schema Fields
         if (String.isNotBlank(cfg.Model_Name__c)) {
           result.modelName = cfg.Model_Name__c;
         }
@@ -180,8 +257,17 @@ public without sharing class AgentAssistConfigController {
           Profile_Type__c,
           Title__c,
           Endpoint_URL__c,
-          Show_Suggestions__c,
-          Enable_Auto_Assist__c,
+          Conversation_Profile__c,
+          Channel__c,
+          Platform__c,
+          Consumer_Key__c,
+          Consumer_Secret__c,
+          Container_Height__c,
+          Debug_Mode__c,
+          Show_Dark_Mode_Toggle__c,
+          Show_Header__c,
+          Show_Correctness_Feedback__c,
+          Disabled_Features__c,
           Model_Name__c,
           Welcome_Message__c,
           Enable_Autonomous_Actions__c,
@@ -200,8 +286,15 @@ public without sharing class AgentAssistConfigController {
             Profile_Type__c = 'Container',
             Title__c = 'Google Cloud Agent Assist',
             Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
-            Enable_Auto_Assist__c = true,
-            Show_Suggestions__c = true,
+            Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
+            Channel__c = 'chat',
+            Platform__c = 'messaging',
+            Container_Height__c = '530px',
+            Debug_Mode__c = true,
+            Show_Dark_Mode_Toggle__c = true,
+            Show_Header__c = false,
+            Show_Correctness_Feedback__c = false,
+            Disabled_Features__c = '',
             Is_Active__c = true
           ),
           new Agent_Assist_Config__c(
@@ -236,8 +329,15 @@ public without sharing class AgentAssistConfigController {
         Profile_Type__c = 'Container',
         Title__c = 'Google Cloud Agent Assist',
         Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
-        Enable_Auto_Assist__c = true,
-        Show_Suggestions__c = true,
+        Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
+        Channel__c = 'chat',
+        Platform__c = 'messaging',
+        Container_Height__c = '530px',
+        Debug_Mode__c = true,
+        Show_Dark_Mode_Toggle__c = true,
+        Show_Header__c = false,
+        Show_Correctness_Feedback__c = false,
+        Disabled_Features__c = '',
         Is_Active__c = true
       ),
       new Agent_Assist_Config__c(

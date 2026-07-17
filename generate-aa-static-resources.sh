@@ -46,6 +46,13 @@
 UIM_TRANSCRIPT_VERSION='v1.5'
 UIM_CONTAINER_VERSION='v2.7'
 UIM_COMMON_VERSION='v1.14'
+UIM_COMPANION_AGENT_VERSION=''
+
+# Override default version for transcript.js, container.js, common.js, and companion_agent.js
+# Useful for development and bug fixing. Not reccomended for production.
+UIM_TRANSCRIPT_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/transcript.js'
+# UIM_CONTAINER_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/container.js'
+# UIM_COMMON_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/common.js'
 UIM_COMPANION_AGENT_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/companion_agent.js'
 
 # create ui_modules directory

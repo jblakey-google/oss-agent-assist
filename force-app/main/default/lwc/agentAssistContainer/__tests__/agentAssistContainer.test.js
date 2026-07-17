@@ -16,6 +16,18 @@
 
 import { createElement } from "@lwc/engine-dom";
 import AgentAssistContainer from "c/agentAssistContainer";
+import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getResolvedConfig";
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.getResolvedConfig",
+  () => {
+    const { createApexTestWireAdapter } = require("@salesforce/sfdx-lwc-jest");
+    return {
+      default: createApexTestWireAdapter()
+    };
+  },
+  { virtual: true }
+);
 
 describe("c-agent-assist-container", () => {
   afterEach(() => {
@@ -24,18 +36,33 @@ describe("c-agent-assist-container", () => {
     }
   });
 
-  it("renders agent assist container with default properties", () => {
+  it("renders agent assist container and resolves config", () => {
     const element = createElement("c-agent-assist-container", {
       is: AgentAssistContainer
     });
-    element.configName = "Case_Config";
-    element.title = "Case Assist Test";
+    element.configName = "Default";
 
     document.body.appendChild(element);
 
+    getResolvedConfig.emit({
+      id: "mock-1",
+      name: "Default Profile",
+      developerName: "Default",
+      profileType: "Container",
+      title: "Google Cloud Agent Assist",
+      endpointUrl: "https://api.example.com/v1",
+      conversationProfile: "projects/p/locations/l/conversationProfiles/cp",
+      channel: "chat",
+      platform: "messaging",
+      containerHeight: "530px",
+      debugMode: true,
+      showDarkModeToggle: true,
+      isFound: true
+    });
+
     return Promise.resolve().then(() => {
-      const card = element.shadowRoot.querySelector("lightning-card");
-      expect(card).not.toBeNull();
+      const container = element.shadowRoot.querySelector(".agent-assist-component");
+      expect(container).not.toBeNull();
     });
   });
 });

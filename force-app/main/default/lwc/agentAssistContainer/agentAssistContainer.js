@@ -15,163 +15,280 @@
  */
 
 import { LightningElement, api, wire, track } from "lwc";
-import { refreshApex } from "@salesforce/apex";
-import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { loadScript } from "lightning/platformResourceLoader";
+import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { MessageContext } from "lightning/messageService";
 import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getResolvedConfig";
+
+// Static Resources
+import ui_modules from "@salesforce/resourceUrl/ui_modules";
+import google_logo from "@salesforce/resourceUrl/google_logo";
+
+// Platform Services & Config
+import MessagingPlatformService from "./platformServices/MessagingPlatformService";
+import TwilioFlexPlatformService from "./platformServices/TwilioFlexPlatformService";
+import ServiceCloudVoicePlatformService from "./platformServices/ServiceCloudVoicePlatformService";
+import sampleContext from "./data/sampleContext";
+import {
+  DIALOGFLOW_API_VERSION,
+  TOKEN_REFRESH_CHECK_INTERVAL_MS,
+  CONTEXT_INJECTION_DELAY_MS
+} from "./config";
+
+const VENDOR_CALL_KEY_FIELD = "VoiceCall.VendorCallKey";
+
+// Prevent Zone.js monkey patching for Lightning Web Security (LWS)
+window.__Zone_disable_on_property = true;
 
 export default class AgentAssistContainer extends LightningElement {
   @api recordId;
   @api objectApiName;
-
-  // XML App Builder Design Property
   @api configName = "Default";
 
-  // Component Reactive State
+  // Runtime reactive state properties
+  @track loadError = null;
+  @track conversationId = null;
+  @track conversationName = null;
+  @track cancelSummarizationTimeout = null;
+  @track token = null;
+  @track showTranscript = false;
+  @track voiceCallData;
   @track resolvedState = {};
   @track isLoading = true;
-  @track showConfigDetails = false;
-  wiredConfigResult;
 
-  @wire(getResolvedConfig, {
-    configName: "$configName"
-  })
-  wiredConfig(result) {
-    this.wiredConfigResult = result;
-    const { data, error } = result;
-    this.isLoading = false;
-    if (data) {
-      this.resolvedState = data;
-    } else if (error) {
-      console.error(
-        "Error loading Google Cloud Agent Assist configuration:",
-        error
-      );
-      this.resolvedState = {
-        title: "Configuration Error",
-        developerName: this.configName || "Default",
-        profileType: "Container",
-        endpointUrl: "https://api.agentassist.example.com/v1",
-        showSuggestions: true,
-        enableAutoAssist: true,
-        isFound: false,
-        resolutionSource: "Error Loading Configuration"
-      };
+  platformService = null;
+  _heightApplied = false;
+  tokenRefreshInterval = null;
+  conversationNamePollingInterval = null;
+  googleLogoUrl = google_logo;
+
+  @wire(MessageContext) messageContext;
+  @wire(getRecord, { recordId: "$recordId", fields: ["Contact.Phone"] })
+  contact;
+
+  // Getters resolving from Apex configuration profile state
+  @api get endpoint() {
+    const ep = this.resolvedState?.endpointUrl || "https://api.agentassist.example.com/v1";
+    return ep.endsWith("/") ? ep.slice(0, -1) : ep;
+  }
+  @api get conversationProfile() {
+    return this.resolvedState?.conversationProfile || "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}";
+  }
+  @api get channel() {
+    return this.resolvedState?.channel || "chat";
+  }
+  @api get platform() {
+    return this.resolvedState?.platform || "messaging";
+  }
+  @api get consumerKey() {
+    return this.resolvedState?.consumerKey || "";
+  }
+  @api get consumerSecret() {
+    return this.resolvedState?.consumerSecret || "";
+  }
+  @api get containerHeight() {
+    return this.resolvedState?.containerHeight || "530px";
+  }
+  @api get debugMode() {
+    return this.resolvedState?.debugMode !== undefined ? this.resolvedState.debugMode : true;
+  }
+  @api get showDarkModeToggle() {
+    return this.resolvedState?.showDarkModeToggle !== undefined ? this.resolvedState.showDarkModeToggle : true;
+  }
+  @api get showHeader() {
+    return this.resolvedState?.showHeader !== undefined ? this.resolvedState.showHeader : false;
+  }
+  @api get showCorrectnessFeedback() {
+    return this.resolvedState?.showCorrectnessFeedback !== undefined ? this.resolvedState.showCorrectnessFeedback : false;
+  }
+  @api get disabledFeatures() {
+    return this.resolvedState?.disabledFeatures || "";
+  }
+
+  get voiceCallFields() {
+    if (this.objectApiName !== "VoiceCall") {
+      return undefined;
     }
+    const fields = [VENDOR_CALL_KEY_FIELD];
+    if (this.platformService) {
+      fields.push(...this.platformService.getVoiceCallFields());
+    }
+    return fields;
+  }
+
+  @wire(getRecord, {
+    recordId: "$recordId",
+    fields: "$voiceCallFields"
+  })
+  wiredVoiceCall({ error, data }) {
+    if (data) {
+      this.voiceCallData = data;
+      this.debugLog(`Wired VoiceCall record updated: ${JSON.stringify(data)}`);
+      const sessionId = this.sessionId;
+      if (sessionId && this.platformService) {
+        this.platformService.handleSessionIdUpdated(sessionId);
+      }
+    } else if (error) {
+      this.debugLog(`Error wiring VoiceCall record: ${JSON.stringify(error)}`);
+    }
+  }
+
+  @api get contactPhone() {
+    return getFieldValue(this.contact?.data, "Contact.Phone");
+  }
+  @api get vendorCallKey() {
+    return getFieldValue(this.voiceCallData, VENDOR_CALL_KEY_FIELD);
+  }
+  @api get sessionId() {
+    if (this.platformService) {
+      return this.platformService.getSessionId(this.voiceCallData);
+    }
+    return null;
+  }
+  @api get projectLocationName() {
+    if (this.conversationProfile && this.conversationProfile.includes("/conversationProfiles")) {
+      return this.conversationProfile.split("/conversationProfiles")[0];
+    }
+    return "projects/default-project/locations/global";
   }
 
   get isProfileMissing() {
     return this.resolvedState && this.resolvedState.isFound === false;
   }
 
-  get isUtilityBar() {
-    return !this.recordId && !this.objectApiName;
-  }
-
-  get contextBadgeLabel() {
-    if (this.objectApiName) {
-      return `${this.objectApiName} Record`;
+  @wire(getResolvedConfig, { configName: "$configName" })
+  wiredConfig(result) {
+    const { data, error } = result;
+    this.isLoading = false;
+    if (data) {
+      this.resolvedState = data;
+      if (data.isFound) {
+        this.showTranscript = this.channel === "voice" || this.debugMode;
+      }
+    } else if (error) {
+      console.error("Error loading Agent Assist Container configuration:", error);
+      this.resolvedState = { isFound: false };
     }
-    return "Utility Bar";
   }
 
-  get resolvedTitle() {
-    if (this.isProfileMissing) {
-      return "Configuration Profile Deleted";
+  connectedCallback() {
+    this.debugLog("connectedCallback called");
+    this.showTranscript = this.channel === "voice" || this.debugMode;
+  }
+
+  async renderedCallback() {
+    this.debugLog("renderedCallback called");
+    if (this.containerHeight && !this._heightApplied) {
+      this.applyHeightOverride();
+      this._heightApplied = true;
     }
-    return this.resolvedState?.title || "Google Cloud Agent Assist";
-  }
 
-  get activeProfileName() {
-    return (
-      this.resolvedState?.name ||
-      this.resolvedState?.developerName ||
-      this.configName ||
-      "Default"
-    );
-  }
-
-  get profileTypeLabel() {
-    return this.resolvedState?.profileType || "Container";
-  }
-
-  get resolutionSource() {
-    return this.resolvedState?.resolutionSource || "Loading Configuration...";
-  }
-
-  get resolvedEndpoint() {
-    return (
-      this.resolvedState?.endpointUrl ||
-      "https://api.agentassist.example.com/v1"
-    );
-  }
-
-  get resolvedShowSuggestions() {
-    if (
-      this.resolvedState &&
-      this.resolvedState.showSuggestions !== undefined
-    ) {
-      return this.resolvedState.showSuggestions;
+    if (this.resolvedState?.isFound && !this.platformService && this.refs.agentAssistContainer) {
+      await this.initPlatformService();
     }
-    return true;
   }
 
-  get resolvedEnableAutoAssist() {
-    if (
-      this.resolvedState &&
-      this.resolvedState.enableAutoAssist !== undefined
-    ) {
-      return this.resolvedState.enableAutoAssist;
-    }
-    return true;
-  }
+  async initPlatformService() {
+    const refs = {
+      conversationToolkitApi: this.refs.conversationToolkitApi,
+      serviceCloudVoiceToolkitApi: this.refs.serviceCloudVoiceToolkitApi
+    };
 
-  get autoAssistStatusText() {
-    return this.resolvedEnableAutoAssist ? "Enabled" : "Disabled";
-  }
-
-  get suggestionsStatusText() {
-    return this.resolvedShowSuggestions ? "Enabled" : "Disabled";
-  }
-
-  get activeContextDescription() {
-    if (this.objectApiName && this.recordId) {
-      return `${this.objectApiName} (${this.recordId.substring(0, 8)}...)`;
-    }
-    return "Global Utility Session";
-  }
-
-  get noFeaturesEnabled() {
-    return !this.resolvedShowSuggestions && !this.resolvedEnableAutoAssist;
-  }
-
-  get toggleDetailsLabel() {
-    return this.showConfigDetails
-      ? "Hide Architecture Details"
-      : "View Architecture Details";
-  }
-
-  toggleConfigDetails() {
-    this.showConfigDetails = !this.showConfigDetails;
-  }
-
-  handleRefresh() {
-    this.isLoading = true;
-    if (this.wiredConfigResult) {
-      refreshApex(this.wiredConfigResult).finally(() => {
-        this.isLoading = false;
-      });
+    if (this.platform === "messaging") {
+      this.platformService = new MessagingPlatformService(this, refs);
+    } else if (this.platform === "twilioflex") {
+      this.platformService = new TwilioFlexPlatformService(this, refs);
+    } else if (this.platform && this.platform.includes("servicecloudvoice")) {
+      this.platformService = new ServiceCloudVoicePlatformService(this, refs);
     } else {
-      this.isLoading = false;
+      this.platformService = new MessagingPlatformService(this, refs);
+    }
+
+    if (this.platformService && !this.platformService.initialized) {
+      this.platformService.initialized = true;
+
+      try {
+        this.token = await this.platformService.registerAuthToken();
+
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this.tokenRefreshInterval = setInterval(async () => {
+          if (this.platformService) {
+            await this.platformService.checkAndRefreshToken();
+          }
+        }, TOKEN_REFRESH_CHECK_INTERVAL_MS);
+
+        await this.platformService.checkAndRefreshToken();
+
+        this.debugLog("Loading UI Modules scripts...");
+        await loadScript(this, ui_modules + "/transcript.js");
+        await loadScript(this, ui_modules + "/container.js");
+        await loadScript(this, ui_modules + "/common.js");
+        this.debugLog("UI Modules scripts loaded.");
+
+        if (this.debugMode) this.platformService.initEventDragnet();
+      } catch (err) {
+        this.loadError = err;
+        this.debugLog(`Container init error: ${err.message}`);
+      }
     }
   }
 
-  handleTriggerAssist() {
-    this.dispatchEvent(
-      new ShowToastEvent({
-        title: "Google Cloud Agent Assist Triggered",
-        message: `Synthesizing assistance for ${this.activeContextDescription} using profile [${this.activeProfileName}]`,
-        variant: "success"
-      })
+  applyHeightOverride() {
+    if (!this.containerHeight || isNaN(parseInt(this.containerHeight, 10))) {
+      return;
+    }
+    this.template.host?.style.setProperty(
+      "--aa-container-height",
+      this.containerHeight
     );
+  }
+
+  @api
+  debugLog(message) {
+    if (this.debugMode) {
+      console.log(
+        `%c[AgentAssist]%c ${message}`,
+        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+        ""
+      );
+    }
+  }
+
+  @api
+  triggerSummarization() {
+    const uiModulesElement = this.template.querySelector("agent-assist-ui-modules-v2");
+    if (uiModulesElement) {
+      const summarizationButton = uiModulesElement.querySelector('[data-test-id="generate-summary-button"]');
+      if (summarizationButton && !summarizationButton.disabled) {
+        summarizationButton.dispatchEvent(new CustomEvent("click"));
+      }
+    }
+  }
+
+  @api
+  ingestDemoContextReferences() {
+    if (!this.platformService || !this.conversationName) return;
+    const injectContext = () => {
+      let url = `${this.endpoint}/${DIALOGFLOW_API_VERSION}/${this.conversationName}:ingestContextReferences`;
+      let body = JSON.stringify({
+        contextReferences: {
+          context: {
+            contextContents: [{ content: sampleContext, contentFormat: "JSON" }],
+            languageCode: "en-us",
+            updateMode: "OVERWRITE"
+          }
+        }
+      });
+      fetch(url, this.platformService.createRequestOptions("POST", body))
+        .then((res) => res.text())
+        .then(() => {
+          this.debugLog("ingestDemoContextReferences ran successfully");
+        })
+        .catch((err) => {
+          this.debugLog(`ingestDemoContextReferences failed: ${err.message}`);
+        });
+    };
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    setTimeout(injectContext, CONTEXT_INJECTION_DELAY_MS);
   }
 }
