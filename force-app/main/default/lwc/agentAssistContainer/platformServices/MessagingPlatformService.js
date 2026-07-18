@@ -160,7 +160,7 @@ export default class MessagingPlatformService extends BasePlatformService {
     // Generate a Dialogflow conversation name.
     // Works when the Dialogflow conversation isn't created outside SF.
     let prefix = this.lwc.projectLocationName;
-    this.lwc.conversationId = `SF-${this.lwc.recordId}`;
+    this.lwc.conversationId = `SF-${this.lwc.recordId || Date.now()}`;
     this.lwc.conversationName = `${prefix}/conversations/${this.lwc.conversationId}`;
     this.lwc.debugLog(
       `this.lwc.conversationName - ${this.lwc.conversationName}`

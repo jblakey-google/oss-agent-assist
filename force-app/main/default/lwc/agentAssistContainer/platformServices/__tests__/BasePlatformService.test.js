@@ -206,7 +206,22 @@ describe("BasePlatformService", () => {
       };
     });
 
-    it("initializes UI modules correctly", () => {
+    it("initializes UI modules correctly and sets namespace when recordId is present", () => {
+      const mockContainerEl = {
+        setAttribute: jest.fn(),
+        classList: { add: jest.fn() },
+        generalConfig: {}
+      };
+      const mockTranscriptEl = {
+        setAttribute: jest.fn(),
+        classList: { add: jest.fn() }
+      };
+      global.document.createElement = jest.fn((tagName) => {
+        if (tagName === "agent-assist-transcript") return mockTranscriptEl;
+        if (tagName === "agent-assist-ui-modules-v2") return mockContainerEl;
+        return {};
+      });
+
       basePlatformService.initUIModules();
 
       expect(global.document.createElement).toHaveBeenCalledWith(
@@ -215,7 +230,45 @@ describe("BasePlatformService", () => {
       expect(global.document.createElement).toHaveBeenCalledWith(
         "agent-assist-ui-modules-v2"
       );
+      expect(mockTranscriptEl.setAttribute).toHaveBeenCalledWith(
+        "namespace",
+        "test-record-id"
+      );
+      expect(mockContainerEl.setAttribute).toHaveBeenCalledWith(
+        "namespace",
+        "test-record-id"
+      );
       expect(mockLwc.refs.agentAssistContainer.appendChild).toHaveBeenCalled();
+    });
+
+    it("omits namespace attribute on DOM elements when recordId is undefined", () => {
+      mockLwc.recordId = undefined;
+      const mockContainerEl = {
+        setAttribute: jest.fn(),
+        classList: { add: jest.fn() },
+        generalConfig: {}
+      };
+      const mockTranscriptEl = {
+        setAttribute: jest.fn(),
+        classList: { add: jest.fn() }
+      };
+      global.document.createElement = jest.fn((tagName) => {
+        if (tagName === "agent-assist-transcript") return mockTranscriptEl;
+        if (tagName === "agent-assist-ui-modules-v2") return mockContainerEl;
+        return {};
+      });
+
+      basePlatformService = new BasePlatformService(mockLwc, mockRefs);
+      basePlatformService.initUIModules();
+
+      expect(mockTranscriptEl.setAttribute).not.toHaveBeenCalledWith(
+        "namespace",
+        expect.anything()
+      );
+      expect(mockContainerEl.setAttribute).not.toHaveBeenCalledWith(
+        "namespace",
+        expect.anything()
+      );
     });
 
     it("does not create transcript if showTranscript is false", () => {

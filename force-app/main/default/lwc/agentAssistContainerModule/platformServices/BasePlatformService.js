@@ -220,7 +220,9 @@ export default class BasePlatformService {
       if (transcriptContainerEl) {
         transcriptContainerEl.innerHTML = "";
         const transcriptEl = document.createElement("agent-assist-transcript");
-        transcriptEl.setAttribute("namespace", this.lwc.recordId);
+        if (this.lwc.recordId) {
+          transcriptEl.setAttribute("namespace", this.lwc.recordId);
+        }
         transcriptContainerEl.appendChild(transcriptEl);
       }
     }
@@ -232,7 +234,9 @@ export default class BasePlatformService {
 
     // Required attributes for UI Modules
     containerEl.setAttribute("use-configured-features", true);
-    containerEl.setAttribute("namespace", this.lwc.recordId);
+    if (this.lwc.recordId) {
+      containerEl.setAttribute("namespace", this.lwc.recordId);
+    }
 
     // Optional attributes for UI Modules
     containerEl.setAttribute(
