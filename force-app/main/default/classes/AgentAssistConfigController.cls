@@ -41,6 +41,8 @@ public without sharing class AgentAssistConfigController {
     @AuraEnabled
     public String consumerSecret { get; set; }
     @AuraEnabled
+    public String clientCredentialsUser { get; set; }
+    @AuraEnabled
     public String containerHeight { get; set; }
     @AuraEnabled
     public Boolean debugMode { get; set; }
@@ -94,6 +96,7 @@ public without sharing class AgentAssistConfigController {
     result.platform = 'messaging';
     result.consumerKey = '';
     result.consumerSecret = '';
+    result.clientCredentialsUser = '';
     result.containerHeight = '530px';
     result.debugMode = true;
     result.showDarkModeToggle = true;
@@ -121,6 +124,7 @@ public without sharing class AgentAssistConfigController {
           Platform__c,
           Consumer_Key__c,
           Consumer_Secret__c,
+          Client_Credentials_User__c,
           Container_Height__c,
           Debug_Mode__c,
           Show_Dark_Mode_Toggle__c,
@@ -173,6 +177,9 @@ public without sharing class AgentAssistConfigController {
         }
         if (String.isNotBlank(cfg.Consumer_Secret__c)) {
           result.consumerSecret = cfg.Consumer_Secret__c;
+        }
+        if (String.isNotBlank(cfg.Client_Credentials_User__c)) {
+          result.clientCredentialsUser = cfg.Client_Credentials_User__c;
         }
         if (String.isNotBlank(cfg.Container_Height__c)) {
           result.containerHeight = cfg.Container_Height__c;
@@ -262,6 +269,7 @@ public without sharing class AgentAssistConfigController {
           Platform__c,
           Consumer_Key__c,
           Consumer_Secret__c,
+          Client_Credentials_User__c,
           Container_Height__c,
           Debug_Mode__c,
           Show_Dark_Mode_Toggle__c,
@@ -395,5 +403,30 @@ public without sharing class AgentAssistConfigController {
     if (configId != null) {
       delete [SELECT Id FROM Agent_Assist_Config__c WHERE Id = :configId];
     }
+  }
+
+  /**
+   * Retrieves active users in the org for the OAuth Client Credentials user picklist.
+   */
+  @AuraEnabled(cacheable=true)
+  public static List<Map<String, String>> getActiveUsers() {
+    List<Map<String, String>> options = new List<Map<String, String>>();
+    try {
+      for (User u : [
+        SELECT Id, Name, Username 
+        FROM User 
+        WHERE IsActive = TRUE 
+        ORDER BY Name ASC 
+        LIMIT 1000
+      ]) {
+        options.add(new Map<String, String>{
+          'label' => u.Name + ' (' + u.Username + ')',
+          'value' => u.Username
+        });
+      }
+    } catch (Exception ex) {
+      // Return empty list if user cannot query User object
+    }
+    return options;
   }
 }

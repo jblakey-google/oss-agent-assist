@@ -18,6 +18,7 @@ import { LightningElement, track, wire } from "lwc";
 import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
+import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
@@ -30,17 +31,18 @@ const INITIAL_PROFILES = [
     profileType: "Container",
     title: "Google Cloud Agent Assist",
     endpointUrl: "https://api.agentassist.example.com/v1",
-    conversationProfile: "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
+    conversationProfile:
+      "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
     channel: "chat",
     platform: "messaging",
     consumerKey: "",
     consumerSecret: "",
+    clientCredentialsUser: "",
     containerHeight: "530px",
     debugMode: true,
     showDarkModeToggle: true,
     showHeader: false,
     showCorrectnessFeedback: false,
-    disabledFeatures: "",
     modelName: "gemini-1.5-pro",
     welcomeMessage: "Hello! I am your AI Companion Agent.",
     enableAutonomousActions: true,
@@ -53,17 +55,18 @@ const INITIAL_PROFILES = [
     profileType: "Companion Agent",
     title: "Google Cloud Companion Agent",
     endpointUrl: "https://api.agentassist.example.com/v1",
-    conversationProfile: "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
+    conversationProfile:
+      "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
     channel: "chat",
     platform: "messaging",
     consumerKey: "",
     consumerSecret: "",
+    clientCredentialsUser: "",
     containerHeight: "530px",
     debugMode: true,
     showDarkModeToggle: true,
     showHeader: false,
     showCorrectnessFeedback: false,
-    disabledFeatures: "",
     modelName: "gemini-1.5-pro",
     welcomeMessage:
       "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -81,7 +84,20 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track profiles = [...INITIAL_PROFILES];
   @track selectedDevName = "Default";
   @track currentProfile = { ...INITIAL_PROFILES[0] };
+  @track userOptions = [];
   wiredConfigsResult;
+
+  @wire(getActiveUsers)
+  wiredActiveUsers({ data, error }) {
+    if (data) {
+      this.userOptions = [
+        { label: "-- None (Use App Default) --", value: "" },
+        ...data
+      ];
+    } else if (error) {
+      console.error("Error loading active users for picklist:", error);
+    }
+  }
 
   channelOptions = [
     { label: "Chat (Digital Messaging)", value: "chat" },
@@ -92,7 +108,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
     { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" },
     { label: "Twilio Flex", value: "twilioflex" },
     { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
-    { label: "Service Cloud Voice (BYOT Five9)", value: "servicecloudvoice-byot-five9" }
+    {
+      label: "Service Cloud Voice (BYOT Five9)",
+      value: "servicecloudvoice-byot-five9"
+    }
   ];
 
   @wire(getAllConfigs)
@@ -118,9 +137,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
         platform: item.Platform__c || "messaging",
         consumerKey: item.Consumer_Key__c || "",
         consumerSecret: item.Consumer_Secret__c || "",
+        clientCredentialsUser: item.Client_Credentials_User__c || "",
         containerHeight: item.Container_Height__c || "530px",
-        debugMode:
-          item.Debug_Mode__c !== undefined ? item.Debug_Mode__c : true,
+        debugMode: item.Debug_Mode__c !== undefined ? item.Debug_Mode__c : true,
         showDarkModeToggle:
           item.Show_Dark_Mode_Toggle__c !== undefined
             ? item.Show_Dark_Mode_Toggle__c
@@ -131,7 +150,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
           item.Show_Correctness_Feedback__c !== undefined
             ? item.Show_Correctness_Feedback__c
             : false,
-        disabledFeatures: item.Disabled_Features__c || "",
         modelName: item.Model_Name__c || "gemini-1.5-pro",
         welcomeMessage:
           item.Welcome_Message__c ||
@@ -231,12 +249,17 @@ export default class AgentAssistSetupWizard extends LightningElement {
     );
   }
 
+  @track isSimulatorMounted = true;
+
   get isSimulatorCompanion() {
-    return this.simulatorProfile?.profileType === "Companion Agent";
+    return (
+      this.isSimulatorMounted &&
+      this.simulatorProfile?.profileType === "Companion Agent"
+    );
   }
 
   get isSimulatorContainer() {
-    return !this.isSimulatorCompanion;
+    return this.isSimulatorMounted && !this.isSimulatorCompanion;
   }
 
   handleTabSelect(event) {
@@ -281,8 +304,24 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.currentProfile = updated;
   }
 
+  handleReloadSimulator() {
+    this.isSimulatorMounted = false;
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    setTimeout(() => {
+      this.isSimulatorMounted = true;
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Simulator Reloaded",
+          message: `Re-mounted "${this.simulatorProfileDevName}" component in simulator.`,
+          variant: "success"
+        })
+      );
+    }, 50);
+  }
+
   handleSimulatorProfileChange(event) {
     this.simulatorProfileDevName = event.detail.value;
+    this.handleReloadSimulator();
   }
 
   handlePlaceholderAction() {
@@ -369,12 +408,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
       platform: "messaging",
       consumerKey: "",
       consumerSecret: "",
+      clientCredentialsUser: "",
       containerHeight: "530px",
       debugMode: true,
       showDarkModeToggle: true,
       showHeader: false,
       showCorrectnessFeedback: false,
-      disabledFeatures: "",
       modelName: "gemini-1.5-pro",
       welcomeMessage:
         "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -399,12 +438,13 @@ export default class AgentAssistSetupWizard extends LightningElement {
         Platform__c: this.currentProfile.platform,
         Consumer_Key__c: this.currentProfile.consumerKey,
         Consumer_Secret__c: this.currentProfile.consumerSecret,
+        Client_Credentials_User__c: this.currentProfile.clientCredentialsUser,
         Container_Height__c: this.currentProfile.containerHeight,
         Debug_Mode__c: this.currentProfile.debugMode,
         Show_Dark_Mode_Toggle__c: this.currentProfile.showDarkModeToggle,
         Show_Header__c: this.currentProfile.showHeader,
-        Show_Correctness_Feedback__c: this.currentProfile.showCorrectnessFeedback,
-        Disabled_Features__c: this.currentProfile.disabledFeatures,
+        Show_Correctness_Feedback__c:
+          this.currentProfile.showCorrectnessFeedback,
         Model_Name__c: this.currentProfile.modelName,
         Welcome_Message__c: this.currentProfile.welcomeMessage,
         Enable_Autonomous_Actions__c:

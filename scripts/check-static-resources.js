@@ -17,6 +17,10 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const { updateEcaExecutionUser } = require("./configure-eca-user");
+
+// Update ECA execution user for the target Salesforce org before deployment
+updateEcaExecutionUser();
 
 const projectRoot = path.resolve(__dirname, "..");
 const uiModulesDir = path.join(

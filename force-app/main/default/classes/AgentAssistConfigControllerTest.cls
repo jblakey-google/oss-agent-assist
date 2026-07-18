@@ -183,4 +183,13 @@ private class AgentAssistConfigControllerTest {
       'Should return picklist rows for companion config'
     );
   }
+
+  @IsTest
+  static void testGetActiveUsers() {
+    Test.startTest();
+    List<Map<String, String>> users = AgentAssistConfigController.getActiveUsers();
+    Test.stopTest();
+
+    Assert.isNotNull(users, 'Active users list should not be null');
+  }
 }

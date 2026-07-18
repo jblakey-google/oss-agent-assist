@@ -46,10 +46,10 @@
 UIM_TRANSCRIPT_VERSION='v1.5'
 UIM_CONTAINER_VERSION='v2.7'
 UIM_COMMON_VERSION='v1.14'
-UIM_COMPANION_AGENT_VERSION=''
+UIM_COMPANION_AGENT_VERSION='v0.0'
 
 # Override default version for transcript.js, container.js, common.js, and companion_agent.js
-# Useful for development and bug fixing. Not reccomended for production.
+# Useful for development and bug fixing. Not recommended for production.
 UIM_TRANSCRIPT_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/transcript.js'
 # UIM_CONTAINER_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/container.js'
 # UIM_COMMON_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/common.js'
@@ -59,37 +59,41 @@ UIM_COMPANION_AGENT_URL='https://storage.googleapis.com/jblakey-ui-modules-bugfi
 dir_path=force-app/main/default/staticresources/ui_modules
 mkdir -p ${dir_path}
 
+# Helper function to download UI module file supporting URL overrides
+download_module() {
+  local file="$1"
+  local version="$2"
+  local override_url="$3"
+  local file_path="${dir_path}/${file}.js"
+
+  rm -f "${file_path}"
+  rm -f "${file_path}.resource-meta.xml"
+
+  local target_url
+  if [ -n "${override_url}" ]; then
+    target_url="${override_url}"
+  elif [ -n "${version}" ]; then
+    target_url="https://www.gstatic.com/agent-assist-ui-modules/${version}/${file}.js"
+  else
+    target_url="https://www.gstatic.com/agent-assist-ui-modules/v1.0/${file}.js"
+  fi
+
+  echo "Downloading ${file}.js from ${target_url}..."
+  curl --silent --location "${target_url}" > "${file_path}"
+  echo "Downloaded js and wrote ${file_path}"
+}
+
 # download transcript.js
-file='transcript'
-file_path=${dir_path}/${file}.js
-rm -f ${file_path} # delete file if exists
-rm -f ${file_path}.resource-meta.xml # delete file if exists
-curl --silent https://www.gstatic.com/agent-assist-ui-modules/${UIM_TRANSCRIPT_VERSION}/${file}.js > $file_path
-echo downloaded js and wrote ${file_path}
+download_module "transcript" "${UIM_TRANSCRIPT_VERSION}" "${UIM_TRANSCRIPT_URL}"
 
 # download container.js
-file='container'
-file_path=${dir_path}/${file}.js
-rm -f ${file_path} # delete file if exists
-rm -f ${file_path}.resource-meta.xml # delete file if exists
-curl --silent https://www.gstatic.com/agent-assist-ui-modules/${UIM_CONTAINER_VERSION}/${file}.js > $file_path
-echo downloaded js and wrote ${file_path}
+download_module "container" "${UIM_CONTAINER_VERSION}" "${UIM_CONTAINER_URL}"
 
 # download common.js
-file='common'
-file_path=${dir_path}/${file}.js
-rm -f ${file_path} # delete file if exists
-rm -f ${file_path}.resource-meta.xml # delete file if exists
-curl --silent https://www.gstatic.com/agent-assist-ui-modules/${UIM_COMMON_VERSION}/${file}.js > $file_path
-echo downloaded js and wrote ${file_path}
+download_module "common" "${UIM_COMMON_VERSION}" "${UIM_COMMON_URL}"
 
 # download companion_agent.js
-file='companion_agent'
-file_path=${dir_path}/${file}.js
-rm -f ${file_path} # delete file if exists
-rm -f ${file_path}.resource-meta.xml # delete file if exists
-curl --silent ${UIM_COMPANION_AGENT_URL} > $file_path
-echo downloaded js and wrote ${file_path}
+download_module "companion_agent" "${UIM_COMPANION_AGENT_VERSION}" "${UIM_COMPANION_AGENT_URL}"
 
 # create a zip of the ui_modules directory. This avoids Salesforce size limits.
 sf static-resource generate \

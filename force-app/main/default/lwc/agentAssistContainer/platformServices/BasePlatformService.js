@@ -73,13 +73,18 @@ export default class BasePlatformService {
 
   async registerAuthToken() {
     // Get a UI Connector auth token using a SF External Client App id token.
+    const tokenParams = {
+      grant_type: "client_credentials",
+      client_id: this.lwc.consumerKey,
+      client_secret: this.lwc.consumerSecret
+    };
+    if (this.lwc.clientCredentialsUser) {
+      tokenParams.client_credentials_user = this.lwc.clientCredentialsUser;
+      tokenParams.username = this.lwc.clientCredentialsUser;
+    }
+
     const access_token = await fetch(
-      `/services/oauth2/token?` +
-        new URLSearchParams({
-          grant_type: "client_credentials",
-          client_id: this.lwc.consumerKey,
-          client_secret: this.lwc.consumerSecret
-        })
+      `/services/oauth2/token?` + new URLSearchParams(tokenParams)
     )
       .then((res) => {
         if (!res.ok)
@@ -222,7 +227,6 @@ export default class BasePlatformService {
       "show-correctness-feedback",
       this.lwc.showCorrectnessFeedback
     );
-    containerEl.setAttribute("disabled-features", this.lwc.disabledFeatures);
 
     // Create the UI Modules Connector.
     this.connector = new UiModulesConnector();
@@ -378,7 +382,11 @@ export default class BasePlatformService {
     return false;
   }
 
-  async fetchConversationName(conversationIntegrationKey, timeout = 5000, parentSignal = null) {
+  async fetchConversationName(
+    conversationIntegrationKey,
+    timeout = 5000,
+    parentSignal = null
+  ) {
     // Gets conversationName from Redis using conversationIntegrationKey.
     // Presence intended to trigger UI Module init for CTI add-on based integrations.
     const controller = new AbortController();

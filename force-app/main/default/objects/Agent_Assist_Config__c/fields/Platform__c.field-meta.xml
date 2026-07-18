@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Platform__c</fullName>
-    <description>The Salesforce platform integration (e.g., messaging, twilioflex, servicecloudvoice-nice, servicecloudvoice-byot-five9).</description>
+    <description
+  >The Salesforce platform integration (e.g., messaging, twilioflex, servicecloudvoice-nice, servicecloudvoice-byot-five9).</description>
     <externalId>false</externalId>
     <inlineHelpText>The platform integration type.</inlineHelpText>
     <label>Platform Integration</label>

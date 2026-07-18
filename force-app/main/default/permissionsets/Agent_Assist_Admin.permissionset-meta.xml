@@ -50,6 +50,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Agent_Assist_Config__c.Client_Credentials_User__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Agent_Assist_Config__c.Consumer_Key__c</field>
         <readable>true</readable>
     </fieldPermissions>

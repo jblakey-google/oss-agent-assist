@@ -138,7 +138,8 @@ export default class Five9PlatformHandler extends BasePlatformHandler {
 
     // Wait for sessionId to be populated by Five9 SDK events
     const waitIntervalMs = 100;
-    const maxAttempts = (SESSION_ID_WAIT_TIMEOUT_SECONDS * 1000) / waitIntervalMs;
+    const maxAttempts =
+      (SESSION_ID_WAIT_TIMEOUT_SECONDS * 1000) / waitIntervalMs;
     let attempts = 0;
     while (!cachedSessionId && attempts < maxAttempts) {
       await new Promise((resolve) => setTimeout(resolve, waitIntervalMs));

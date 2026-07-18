@@ -38,4 +38,18 @@ describe("c-agent-assist-setup-wizard", () => {
       expect(tabset).not.toBeNull();
     });
   });
+
+  it("renders Client Credentials User combobox", () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+
+    return Promise.resolve().then(() => {
+      const comboboxes =
+        element.shadowRoot.querySelectorAll("lightning-combobox");
+      expect(comboboxes.length).toBeGreaterThan(0);
+    });
+  });
 });

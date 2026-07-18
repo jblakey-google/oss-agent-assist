@@ -68,11 +68,16 @@ export default class AgentAssistContainer extends LightningElement {
 
   // Getters resolving from Apex configuration profile state
   @api get endpoint() {
-    const ep = this.resolvedState?.endpointUrl || "https://api.agentassist.example.com/v1";
+    const ep =
+      this.resolvedState?.endpointUrl ||
+      "https://api.agentassist.example.com/v1";
     return ep.endsWith("/") ? ep.slice(0, -1) : ep;
   }
   @api get conversationProfile() {
-    return this.resolvedState?.conversationProfile || "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}";
+    return (
+      this.resolvedState?.conversationProfile ||
+      "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}"
+    );
   }
   @api get channel() {
     return this.resolvedState?.channel || "chat";
@@ -86,23 +91,31 @@ export default class AgentAssistContainer extends LightningElement {
   @api get consumerSecret() {
     return this.resolvedState?.consumerSecret || "";
   }
+  @api get clientCredentialsUser() {
+    return this.resolvedState?.clientCredentialsUser || "";
+  }
   @api get containerHeight() {
     return this.resolvedState?.containerHeight || "530px";
   }
   @api get debugMode() {
-    return this.resolvedState?.debugMode !== undefined ? this.resolvedState.debugMode : true;
+    return this.resolvedState?.debugMode !== undefined
+      ? this.resolvedState.debugMode
+      : true;
   }
   @api get showDarkModeToggle() {
-    return this.resolvedState?.showDarkModeToggle !== undefined ? this.resolvedState.showDarkModeToggle : true;
+    return this.resolvedState?.showDarkModeToggle !== undefined
+      ? this.resolvedState.showDarkModeToggle
+      : true;
   }
   @api get showHeader() {
-    return this.resolvedState?.showHeader !== undefined ? this.resolvedState.showHeader : false;
+    return this.resolvedState?.showHeader !== undefined
+      ? this.resolvedState.showHeader
+      : false;
   }
   @api get showCorrectnessFeedback() {
-    return this.resolvedState?.showCorrectnessFeedback !== undefined ? this.resolvedState.showCorrectnessFeedback : false;
-  }
-  @api get disabledFeatures() {
-    return this.resolvedState?.disabledFeatures || "";
+    return this.resolvedState?.showCorrectnessFeedback !== undefined
+      ? this.resolvedState.showCorrectnessFeedback
+      : false;
   }
 
   get voiceCallFields() {
@@ -146,7 +159,10 @@ export default class AgentAssistContainer extends LightningElement {
     return null;
   }
   @api get projectLocationName() {
-    if (this.conversationProfile && this.conversationProfile.includes("/conversationProfiles")) {
+    if (
+      this.conversationProfile &&
+      this.conversationProfile.includes("/conversationProfiles")
+    ) {
       return this.conversationProfile.split("/conversationProfiles")[0];
     }
     return "projects/default-project/locations/global";
@@ -166,7 +182,10 @@ export default class AgentAssistContainer extends LightningElement {
         this.showTranscript = this.channel === "voice" || this.debugMode;
       }
     } else if (error) {
-      console.error("Error loading Agent Assist Container configuration:", error);
+      console.error(
+        "Error loading Agent Assist Container configuration:",
+        error
+      );
       this.resolvedState = { isFound: false };
     }
   }
@@ -183,7 +202,11 @@ export default class AgentAssistContainer extends LightningElement {
       this._heightApplied = true;
     }
 
-    if (this.resolvedState?.isFound && !this.platformService && this.refs.agentAssistContainer) {
+    if (
+      this.resolvedState?.isFound &&
+      !this.platformService &&
+      this.refs.agentAssistContainer
+    ) {
       await this.initPlatformService();
     }
   }
@@ -256,9 +279,13 @@ export default class AgentAssistContainer extends LightningElement {
 
   @api
   triggerSummarization() {
-    const uiModulesElement = this.template.querySelector("agent-assist-ui-modules-v2");
+    const uiModulesElement = this.template.querySelector(
+      "agent-assist-ui-modules-v2"
+    );
     if (uiModulesElement) {
-      const summarizationButton = uiModulesElement.querySelector('[data-test-id="generate-summary-button"]');
+      const summarizationButton = uiModulesElement.querySelector(
+        '[data-test-id="generate-summary-button"]'
+      );
       if (summarizationButton && !summarizationButton.disabled) {
         summarizationButton.dispatchEvent(new CustomEvent("click"));
       }
@@ -273,7 +300,9 @@ export default class AgentAssistContainer extends LightningElement {
       let body = JSON.stringify({
         contextReferences: {
           context: {
-            contextContents: [{ content: sampleContext, contentFormat: "JSON" }],
+            contextContents: [
+              { content: sampleContext, contentFormat: "JSON" }
+            ],
             languageCode: "en-us",
             updateMode: "OVERWRITE"
           }

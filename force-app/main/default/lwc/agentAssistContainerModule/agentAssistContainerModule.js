@@ -56,14 +56,14 @@ export default class AgentAssistContainerModule extends LightningElement {
   @api conversationProfile; // e.g. projects/your-gcp-project-id/locations/your-location/conversationProfiles/your-conversation-profile-id
   @api channel; // Either 'chat' or 'voice'
   @api platform; // One of 'messaging', 'twilioflex', 'servicecloudvoice-nice'
-  @api consumerKey; // SF Connected App Consumer Key
-  @api consumerSecret; // SF Connected App Consumer Secret
+  @api consumerKey; // SF External Client App Consumer Key
+  @api consumerSecret; // SF External Client App Consumer Secret
+  @api clientCredentialsUser; // SF Execution / Client Credentials User
   @api containerHeight;
   // UI Module optional attributes
   @api showDarkModeToggle = false;
   @api showHeader = false;
   @api showCorrectnessFeedback = false;
-  @api disabledFeatures = "";
 
   // LWC Public Properties - set at runtime by platform services
   // @api decorator allows external read and write

@@ -520,7 +520,9 @@ describe("BasePlatformService", () => {
       fetchConversationNameSpy = jest
         .spyOn(basePlatformService, "fetchConversationName")
         .mockResolvedValue(null);
-      jest.spyOn(basePlatformService, "isConversationCompleted").mockResolvedValue(false);
+      jest
+        .spyOn(basePlatformService, "isConversationCompleted")
+        .mockResolvedValue(false);
     });
 
     afterEach(() => {

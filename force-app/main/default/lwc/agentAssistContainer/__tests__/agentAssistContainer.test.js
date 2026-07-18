@@ -61,7 +61,9 @@ describe("c-agent-assist-container", () => {
     });
 
     return Promise.resolve().then(() => {
-      const container = element.shadowRoot.querySelector(".agent-assist-component");
+      const container = element.shadowRoot.querySelector(
+        ".agent-assist-component"
+      );
       expect(container).not.toBeNull();
     });
   });
