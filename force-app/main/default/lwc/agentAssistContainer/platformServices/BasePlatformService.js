@@ -38,8 +38,22 @@ export default class BasePlatformService {
     this.refs = refs;
   }
 
+  generateConversationName() {
+    // Generate a Dialogflow conversation name.
+    // Works when the Dialogflow conversation isn't created outside SF.
+    let prefix = this.lwc.projectLocationName;
+    this.lwc.conversationId = `SF-${this.lwc.recordId || Date.now()}`;
+    this.lwc.conversationName = `${prefix}/conversations/${this.lwc.conversationId}`;
+    this.lwc.debugLog(
+      `this.lwc.conversationName - ${this.lwc.conversationName}`
+    );
+  }
+
   init() {
-    // Base initialization logic, can be overridden by subclasses
+    // Base initialization logic for chat using raw api connector calls
+    if (!this.lwc.conversationName) {
+      this.generateConversationName();
+    }
   }
 
   handleSessionIdUpdated(sessionId) {
@@ -72,6 +86,9 @@ export default class BasePlatformService {
   ////////////////////////////////////////////////////////////////////////////
 
   async registerAuthToken() {
+    if (typeof fetch === "undefined") {
+      return null;
+    }
     // Get a UI Connector auth token using a SF External Client App id token.
     const tokenParams = {
       grant_type: "client_credentials",
@@ -299,6 +316,9 @@ export default class BasePlatformService {
 
   initAgentAssistEvents() {
     this.lwc.debugLog("initAgentAssistEvents called");
+    if (typeof addAgentAssistEventListener !== "function") {
+      return;
+    }
     // Add event listeners for Agent Assist UI Modules events.
     if (this.lwc.channel === "chat") {
       this.lwc.debugLog("initAgentAssistEvents - this.lwc.channel is 'chat'");
@@ -345,11 +365,13 @@ export default class BasePlatformService {
     }
 
     // Set the active conversation for UIM on connector initialization.
-    dispatchAgentAssistEvent(
-      "active-conversation-selected",
-      { detail: { conversationName: this.lwc.conversationName } },
-      { namespace: this.lwc.recordId }
-    );
+    if (typeof dispatchAgentAssistEvent === "function") {
+      dispatchAgentAssistEvent(
+        "active-conversation-selected",
+        { detail: { conversationName: this.lwc.conversationName } },
+        { namespace: this.lwc.recordId }
+      );
+    }
   }
 
   async pollDialogflowForConversationExistence(
@@ -552,6 +574,9 @@ export default class BasePlatformService {
   ////////////////////////////////////////////////////////////////////////////
 
   initEventDragnet() {
+    if (typeof addAgentAssistEventListener !== "function") {
+      return;
+    }
     // A debug utility to listen for and log every Agent Assist event type.
     this.lwc.debugLog(
       `InitEventDragnet - listening for ${agentAssistEventNames.length} event types...`

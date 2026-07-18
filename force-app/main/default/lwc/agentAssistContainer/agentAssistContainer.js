@@ -25,6 +25,7 @@ import ui_modules from "@salesforce/resourceUrl/ui_modules";
 import google_logo from "@salesforce/resourceUrl/google_logo";
 
 // Platform Services & Config
+import BasePlatformService from "./platformServices/BasePlatformService";
 import MessagingPlatformService from "./platformServices/MessagingPlatformService";
 import TwilioFlexPlatformService from "./platformServices/TwilioFlexPlatformService";
 import ServiceCloudVoicePlatformService from "./platformServices/ServiceCloudVoicePlatformService";
@@ -83,7 +84,7 @@ export default class AgentAssistContainer extends LightningElement {
     return this.resolvedState?.channel || "chat";
   }
   @api get platform() {
-    return this.resolvedState?.platform || "messaging";
+    return this.resolvedState?.platform || "base";
   }
   @api get consumerKey() {
     return this.resolvedState?.consumerKey || "";
@@ -212,19 +213,29 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   async initPlatformService() {
+    console.log("DEBUG: initPlatformService called");
     const refs = {
       conversationToolkitApi: this.refs.conversationToolkitApi,
       serviceCloudVoiceToolkitApi: this.refs.serviceCloudVoiceToolkitApi
     };
 
+    console.log("DEBUG: Platform: ", this.platform);
     if (this.platform === "messaging") {
       this.platformService = new MessagingPlatformService(this, refs);
     } else if (this.platform === "twilioflex") {
       this.platformService = new TwilioFlexPlatformService(this, refs);
     } else if (this.platform && this.platform.includes("servicecloudvoice")) {
       this.platformService = new ServiceCloudVoicePlatformService(this, refs);
+    } else if (
+      !this.platform ||
+      this.platform === "chat" ||
+      this.platform === "base" ||
+      this.platform === "custom"
+    ) {
+      this.platformService = new BasePlatformService(this, refs);
     } else {
-      this.platformService = new MessagingPlatformService(this, refs);
+      this.loadError = new Error(`Unsupported platform: ${this.platform}`);
+      this.debugLog(this.loadError.message);
     }
 
     if (this.platformService && !this.platformService.initialized) {
@@ -249,11 +260,61 @@ export default class AgentAssistContainer extends LightningElement {
         this.debugLog("UI Modules scripts loaded.");
 
         if (this.debugMode) this.platformService.initEventDragnet();
+
+        // Initialize Agent Assist UI Modules
+        this.platformService.initAgentAssistEvents();
+
+        // Initialize platform service logic
+        await this.platformService.init();
+
+        // Wait for a conversationName before initializing UI Modules
+        if (!this.conversationName) {
+          await this.waitForConversationName();
+        } else {
+          this.platformService.initUIModules();
+        }
       } catch (err) {
         this.loadError = err;
         this.debugLog(`Container init error: ${err.message}`);
       }
     }
+  }
+
+  disconnectedCallback() {
+    this.debugLog("disconnectedCallback called");
+
+    if (this.platformService) {
+      this.platformService.teardown();
+    }
+    if (this.conversationNamePollingInterval) {
+      clearInterval(this.conversationNamePollingInterval);
+    }
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval);
+    }
+
+    // Clears all listeners (_uiModuleEventTarget is not attached to the DOM)
+    if (window._uiModuleEventTarget) {
+      window._uiModuleEventTarget = window._uiModuleEventTarget.cloneNode(true);
+    }
+  }
+
+  async waitForConversationName() {
+    this.debugLog(`waiting for a conversationName to init UI Modules...`);
+    return new Promise((resolve) => {
+      this.conversationNamePollingInterval = setInterval(() => {
+        if (this.conversationName) {
+          clearInterval(this.conversationNamePollingInterval);
+          this.conversationNamePollingInterval = null;
+          this.debugLog(`this.conversationId: ${this.conversationId}`);
+          this.debugLog(`this.conversationName: ${this.conversationName}`);
+          if (this.platformService) {
+            this.platformService.initUIModules();
+          }
+          resolve();
+        }
+      }, 1000);
+    });
   }
 
   applyHeightOverride() {

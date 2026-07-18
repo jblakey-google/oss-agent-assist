@@ -93,7 +93,7 @@ public without sharing class AgentAssistConfigController {
     // Container Defaults
     result.conversationProfile = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}';
     result.channel = 'chat';
-    result.platform = 'messaging';
+    result.platform = 'base';
     result.consumerKey = '';
     result.consumerSecret = '';
     result.clientCredentialsUser = '';
@@ -296,7 +296,7 @@ public without sharing class AgentAssistConfigController {
             Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
             Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
             Channel__c = 'chat',
-            Platform__c = 'messaging',
+            Platform__c = 'base',
             Container_Height__c = '530px',
             Debug_Mode__c = true,
             Show_Dark_Mode_Toggle__c = true,
@@ -339,7 +339,7 @@ public without sharing class AgentAssistConfigController {
         Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
         Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
         Channel__c = 'chat',
-        Platform__c = 'messaging',
+        Platform__c = 'base',
         Container_Height__c = '530px',
         Debug_Mode__c = true,
         Show_Dark_Mode_Toggle__c = true,

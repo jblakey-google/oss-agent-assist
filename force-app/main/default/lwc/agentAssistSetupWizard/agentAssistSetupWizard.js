@@ -34,7 +34,7 @@ const INITIAL_PROFILES = [
     conversationProfile:
       "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
     channel: "chat",
-    platform: "messaging",
+    platform: "base",
     consumerKey: "",
     consumerSecret: "",
     clientCredentialsUser: "",
@@ -58,7 +58,7 @@ const INITIAL_PROFILES = [
     conversationProfile:
       "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
     channel: "chat",
-    platform: "messaging",
+    platform: "base",
     consumerKey: "",
     consumerSecret: "",
     clientCredentialsUser: "",
@@ -105,6 +105,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   ];
 
   platformOptions = [
+    { label: "Base Platform (Direct API Connector)", value: "base" },
     { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" },
     { label: "Twilio Flex", value: "twilioflex" },
     { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
@@ -405,7 +406,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       conversationProfile:
         "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
       channel: "chat",
-      platform: "messaging",
+      platform: "base",
       consumerKey: "",
       consumerSecret: "",
       clientCredentialsUser: "",

@@ -85,11 +85,25 @@ describe("BasePlatformService", () => {
     });
   });
 
+  describe("generateConversationName", () => {
+    it("generates conversation name with proper format", () => {
+      basePlatformService.generateConversationName();
+
+      expect(mockLwc.conversationId).toBe("SF-test-record-id");
+      expect(mockLwc.conversationName).toBe(
+        "projects/test/locations/test/conversations/SF-test-record-id"
+      );
+    });
+  });
+
   describe("init", () => {
-    it("executes without errors", () => {
-      expect(() => {
-        basePlatformService.init();
-      }).not.toThrow();
+    it("executes without errors and generates conversationName when not set", () => {
+      mockLwc.conversationName = null;
+      basePlatformService.init();
+
+      expect(mockLwc.conversationName).toBe(
+        "projects/test/locations/test/conversations/SF-test-record-id"
+      );
     });
   });
 

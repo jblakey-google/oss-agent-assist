@@ -27,7 +27,7 @@ private class AgentAssistConfigControllerTest {
         Endpoint_URL__c = 'https://api.example.com/v1',
         Conversation_Profile__c = 'projects/test-proj/locations/global/conversationProfiles/cp-123',
         Channel__c = 'chat',
-        Platform__c = 'messaging',
+        Platform__c = 'base',
         Consumer_Key__c = 'ck_123',
         Consumer_Secret__c = 'cs_123',
         Container_Height__c = '530px',
@@ -77,7 +77,7 @@ private class AgentAssistConfigControllerTest {
       'Should load conversationProfile'
     );
     Assert.areEqual('chat', res.channel, 'Should load channel');
-    Assert.areEqual('messaging', res.platform, 'Should load platform');
+    Assert.areEqual('base', res.platform, 'Should load platform');
     Assert.isTrue(res.debugMode, 'Should load debugMode');
     Assert.isTrue(res.isFound, 'Default profile should be marked as found');
   }

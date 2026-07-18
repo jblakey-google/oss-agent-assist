@@ -1,7 +1,7 @@
 ## Tasks
+- [ ] The simulator can probably only work with the base connector, since others depend on things like Voice Calls, Messaging Sessions, conversations created by telephony interacting with core-services, deployment, etc. If that's the case then the simulator should test the configured features for a profile, with the base connector, and a disclaimer. Though possibly they should use the Console simulator instead if they just want to test their profile...not sure.
 - [ ] Salesforce Setup and Diagnostics Panel can be merged. I like Diagnostics better.
 - [ ] Test with various SF licenses, using the scratch-def.json.
-- [ ] Support instantiating LWC in the Simulator, based on a configuration profile (select/search box). By default, it shows the default profile.
 - [ ] Build out Diagnostics & Platform Agnostic Chat Simulator (What features cannot be tested without voice?)
   - [ ] Check connectivity with the UI Connector
   - [ ] Check authentication with the UI Connector
@@ -10,6 +10,8 @@
 ## Doing
 
 ## Done
+- [x] Support instantiating LWC in the Simulator, based on a configuration profile (select/search box). By default, it shows the default profile.
+- [x] Implement the Base Platform Service to be fully initializable for chat using raw api connector calls, much like the messaging integration does. This means generating a conversationName.
 - [x] Support UIM_TRANSCRIPT_URL and URL overrides in static resource generation
 - [x] Refresh/Remount button in simulator
 - [x] Create Companion Agent LWC and Configuration type

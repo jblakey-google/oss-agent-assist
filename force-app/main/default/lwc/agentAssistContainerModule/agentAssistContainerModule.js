@@ -37,6 +37,7 @@ import {
 } from "./config";
 
 // Platform Services
+import BasePlatformService from "./platformServices/BasePlatformService";
 import MessagingPlatformService from "./platformServices/MessagingPlatformService";
 import TwilioFlexPlatformService from "./platformServices/TwilioFlexPlatformService";
 import ServiceCloudVoicePlatformService from "./platformServices/ServiceCloudVoicePlatformService";
@@ -179,8 +180,15 @@ export default class AgentAssistContainerModule extends LightningElement {
         this.platformService = new MessagingPlatformService(this, refs);
       } else if (this.platform === "twilioflex") {
         this.platformService = new TwilioFlexPlatformService(this, refs);
-      } else if (this.platform.includes("servicecloudvoice")) {
+      } else if (this.platform && this.platform.includes("servicecloudvoice")) {
         this.platformService = new ServiceCloudVoicePlatformService(this, refs);
+      } else if (
+        !this.platform ||
+        this.platform === "chat" ||
+        this.platform === "base" ||
+        this.platform === "custom"
+      ) {
+        this.platformService = new BasePlatformService(this, refs);
       } else {
         this.loadError = new Error(`Unsupported platform: ${this.platform}`);
         this.debugLog(this.loadError.message);
@@ -190,47 +198,48 @@ export default class AgentAssistContainerModule extends LightningElement {
     if (this.platformService && !this.platformService.initialized) {
       this.platformService.initialized = true; // Prevent re-initialization
 
-      // Get a UI Connector auth token
-      this.token = await this.platformService.registerAuthToken();
+      try {
+        // Get a UI Connector auth token
+        this.token = await this.platformService.registerAuthToken();
 
-      // Automatically check and refresh the token dynamically
-      this.tokenRefreshInterval = setInterval(async () => {
+        // Automatically check and refresh the token dynamically
+        this.tokenRefreshInterval = setInterval(async () => {
+          await this.platformService.checkAndRefreshToken();
+        }, TOKEN_REFRESH_CHECK_INTERVAL_MS);
+        // Run an initial check immediately
         await this.platformService.checkAndRefreshToken();
-      }, TOKEN_REFRESH_CHECK_INTERVAL_MS);
-      // Run an initial check immediately
-      await this.platformService.checkAndRefreshToken();
 
-      this.debugLog("UI Modules javascript loading...");
-      await loadScript(this, ui_modules + "/transcript.js");
-      await loadScript(this, ui_modules + "/container.js");
-      await loadScript(this, ui_modules + "/common.js");
-      this.debugLog("UI Modules javascript loaded.");
+        this.debugLog("UI Modules javascript loading...");
+        await loadScript(this, ui_modules + "/transcript.js");
+        await loadScript(this, ui_modules + "/container.js");
+        await loadScript(this, ui_modules + "/common.js");
+        this.debugLog("UI Modules javascript loaded.");
 
-      if (this.platform && this.platform.includes("five9")) {
-        this.debugLog("Loading Five9 SDK in main LWC...");
-        await loadScript(this, five9ByotSdk);
-        this.debugLog("Five9 SDK loaded in main LWC.");
+        if (this.platform && this.platform.includes("five9")) {
+          this.debugLog("Loading Five9 SDK in main LWC...");
+          await loadScript(this, five9ByotSdk);
+          this.debugLog("Five9 SDK loaded in main LWC.");
+        }
+
+        // Optionally, Log Agent Assist events
+        if (this.debugMode) this.platformService.initEventDragnet();
+
+        // Initialize Agent Assist UI Modules
+        this.platformService.initAgentAssistEvents();
+
+        // Initialize platform-specific logic
+        await this.platformService.init();
+
+        // Wait for a conversationName before initializing UI Modules
+        if (!this.conversationName) {
+          await this.waitForConversationName();
+        } else {
+          this.platformService.initUIModules();
+        }
+      } catch (err) {
+        this.loadError = err;
+        this.debugLog(`Container init error: ${err.message}`);
       }
-
-      // Optionally, Log Agent Assist events
-      if (this.debugMode) this.platformService.initEventDragnet();
-
-      // Initialize Agent Assist UI Modules
-      this.platformService.initAgentAssistEvents();
-
-      // Initialize platform-specific logic
-      await this.platformService.init();
-
-      // Wait for a conversationName before initializing UI Modules
-      if (!this.conversationName) {
-        await this.waitForConversationName();
-      } else {
-        this.platformService.initUIModules();
-      }
-
-      // For demo and testing purposes - read more:
-      // https://cloud.google.com/dialogflow/es/docs/reference/rest/v2/projects.locations.conversations/ingestContextReferences
-      // this.ingestDemoContextReferences();
     }
   }
 

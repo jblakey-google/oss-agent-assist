@@ -67,4 +67,23 @@ describe("c-agent-assist-container", () => {
       expect(container).not.toBeNull();
     });
   });
+
+  it("tears down platformService and resets _uiModuleEventTarget on disconnect", () => {
+    const element = createElement("c-agent-assist-container", {
+      is: AgentAssistContainer
+    });
+    element.configName = "Default";
+
+    const mockEventTarget = {
+      cloneNode: jest.fn().mockReturnValue({})
+    };
+    window._uiModuleEventTarget = mockEventTarget;
+
+    document.body.appendChild(element);
+    document.body.removeChild(element);
+
+    expect(mockEventTarget.cloneNode).toHaveBeenCalledWith(true);
+    delete window._uiModuleEventTarget;
+  });
 });
+

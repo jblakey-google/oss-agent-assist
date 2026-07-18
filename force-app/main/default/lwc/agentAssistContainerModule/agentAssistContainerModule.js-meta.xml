@@ -56,9 +56,9 @@
       <property
         name="platform"
         type="String"
-        default="messaging"
+        default="base"
         label="Platform"
-        description="The Salesforce platform integration (e.g., messaging, twilioflex, servicecloudvoice-nice). [Required]"
+        description="The platform integration type (e.g., base, messaging, twilioflex, servicecloudvoice-nice). [Required]"
       />
       <property
         name="consumerKey"
