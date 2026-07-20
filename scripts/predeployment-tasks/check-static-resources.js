@@ -17,12 +17,8 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const { updateEcaExecutionUser } = require("./configure-eca-user");
 
-// Update ECA execution user for the target Salesforce org before deployment
-updateEcaExecutionUser();
-
-const projectRoot = path.resolve(__dirname, "..");
+const projectRoot = path.resolve(__dirname, "../..");
 const uiModulesDir = path.join(
   projectRoot,
   "force-app",
@@ -56,17 +52,25 @@ function hasValidJsFiles() {
   return true;
 }
 
-if (!hasValidJsFiles()) {
-  console.log(
-    "Static resource JS files missing or empty in staticresources/ui_modules. Generating Google Cloud Agent Assist static resources..."
-  );
-  try {
-    execSync("npm run generate-aa-static-resources", {
-      cwd: projectRoot,
-      stdio: "inherit"
-    });
-  } catch (error) {
-    console.error("Failed to generate static resources:", error);
-    process.exit(1);
+function checkStaticResources() {
+  if (!hasValidJsFiles()) {
+    console.log(
+      "Static resource JS files missing or empty in staticresources/ui_modules. Generating Google Cloud Agent Assist static resources..."
+    );
+    try {
+      execSync("npm run generate-aa-static-resources", {
+        cwd: projectRoot,
+        stdio: "inherit"
+      });
+    } catch (error) {
+      console.error("Failed to generate static resources:", error);
+      process.exit(1);
+    }
   }
 }
+
+if (require.main === module) {
+  checkStaticResources();
+}
+
+module.exports = { checkStaticResources };

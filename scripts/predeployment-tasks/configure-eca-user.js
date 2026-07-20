@@ -18,7 +18,7 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-const projectRoot = path.resolve(__dirname, "..");
+const projectRoot = path.resolve(__dirname, "../..");
 const policyPath = path.join(
   projectRoot,
   "force-app",
@@ -50,24 +50,28 @@ function updateEcaExecutionUser() {
     if (username && fs.existsSync(policyPath)) {
       let content = fs.readFileSync(policyPath, "utf-8");
       const updated = content.replace(
-        /<clientCredentialsFlowUser>[\s\S]*?<\/clientCredentialsFlowUser>/,
+        /<clientCredentialsFlowUser\b[^>]*>[\s\S]*?<\/clientCredentialsFlowUser>/i,
         `<clientCredentialsFlowUser>${username}</clientCredentialsFlowUser>`
       );
       if (content !== updated) {
         fs.writeFileSync(policyPath, updated, "utf-8");
-        console.log(`[ECA] Dynamically set clientCredentialsFlowUser to active SF user: ${username}`);
+        console.log(
+          `[ECA] Dynamically set clientCredentialsFlowUser to active SF user: ${username}`
+        );
       }
     }
 
     if (email && fs.existsSync(appPath)) {
       let appContent = fs.readFileSync(appPath, "utf-8");
       const updatedApp = appContent.replace(
-        /<contactEmail>[\s\S]*?<\/contactEmail>/,
+        /<contactEmail\b[^>]*>[\s\S]*?<\/contactEmail>/i,
         `<contactEmail>${email}</contactEmail>`
       );
       if (appContent !== updatedApp) {
         fs.writeFileSync(appPath, updatedApp, "utf-8");
-        console.log(`[ECA] Dynamically set contactEmail to active SF user email: ${email}`);
+        console.log(
+          `[ECA] Dynamically set contactEmail to active SF user email: ${email}`
+        );
       }
     }
   } catch (error) {

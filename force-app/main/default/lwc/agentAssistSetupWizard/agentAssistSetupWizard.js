@@ -19,9 +19,185 @@ import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
 import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
+import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
+
+const DEFAULT_DIAGNOSTIC_SECTIONS = [
+  {
+    id: "ui_connector",
+    title: "UI Connector & Network Endpoints",
+    subtitle: "Verify HTTPS, WebSocket, and API allowlists in Trusted URLs.",
+    iconName: "utility:connected_apps",
+    statusBadge: "Checking...",
+    badgeVariant: "warning",
+    items: [
+      {
+        id: "check-ui-https",
+        label: "Cloud Run HTTPS Endpoint (cloud_run_https)",
+        subLabel: "Allowlisted in Trusted URLs (https://*.run.app)",
+        status: "pending",
+        errorMessage: "",
+        assignees: []
+      },
+      {
+        id: "check-ui-wss",
+        label: "Cloud Run WebSocket Streaming (cloud_run_wss)",
+        subLabel: "Allowlisted in Trusted URLs (wss://*.run.app)",
+        status: "pending",
+        errorMessage: "",
+        assignees: []
+      },
+      {
+        id: "check-ui-gapi",
+        label: "Google Cloud APIs Allowlist (googleapi)",
+        subLabel: "Allowlisted in Trusted URLs (https://*.googleapis.com)",
+        status: "pending",
+        errorMessage: "",
+        assignees: []
+      },
+      {
+        id: "check-ui-gstatic",
+        label: "Google Static UI Module CDN (gstatic)",
+        subLabel: "Allowlisted in Trusted URLs (https://www.gstatic.com)",
+        status: "pending",
+        errorMessage: "",
+        assignees: []
+      },
+      {
+        id: "check-ui-twilio",
+        label: "Twilio Flex Integration Allowlist (twilio_flex)",
+        subLabel: "Allowlisted in Trusted URLs (https://flex.twilio.com)",
+        status: "pending",
+        errorMessage: "",
+        assignees: []
+      }
+    ]
+  },
+  {
+    id: "auth_tokens",
+    title: "Authentication & Security Tokens",
+    subtitle:
+      "Enumerate administrator and agent permission sets and user assignees.",
+    iconName: "utility:key",
+    statusBadge: "Checking...",
+    badgeVariant: "warning",
+    setupUrl: "/lightning/setup/PermSets/home",
+    setupUrlLabel: "Permission Sets",
+    items: [
+      {
+        id: "check-perm-admin",
+        label: "Agent Assist Administrator (Agent_Assist_Admin)",
+        subLabel: "Administrative permission set deployed in org metadata.",
+        status: "pending",
+        errorMessage: "",
+        totalCount: 0,
+        assignees: []
+      },
+      {
+        id: "check-perm-agent",
+        label: "Messaging Agent Permission Set (Messaging_Agent)",
+        subLabel: "Contact center agent permission set deployed.",
+        status: "pending",
+        errorMessage: "",
+        totalCount: 0,
+        assignees: []
+      }
+    ]
+  },
+  {
+    id: "static_resources",
+    title: "Static Resources & UI Module Bundles",
+    subtitle:
+      "Verify static resource packages for container, transcript, and asset bundles.",
+    iconName: "utility:file",
+    statusBadge: "Checking...",
+    badgeVariant: "warning",
+    setupUrl: "/lightning/setup/StaticResources/home",
+    setupUrlLabel: "Static Resources",
+    items: [
+      {
+        id: "check-sr-modules",
+        label: "UI Modules Bundle (ui_modules.zip)",
+        subLabel:
+          "Verified JavaScript bundle (container.js, transcript.js, common.js, companion_agent.js).",
+        status: "pending",
+        errorMessage: "",
+        setupUrl: "/lightning/setup/StaticResources/home",
+        assignees: []
+      }
+    ]
+  },
+  {
+    id: "omnichannel",
+    title: "Omni-Channel Presence & Routing",
+    subtitle:
+      "Presence statuses and queue routing configurations for agent dispatch.",
+    iconName: "utility:user",
+    statusBadge: "Checking...",
+    badgeVariant: "warning",
+    setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
+    setupUrlLabel: "Omni-Channel",
+    items: [
+      {
+        id: "check-presence-messaging",
+        label: "Online Messaging Status (Online_Messaging)",
+        subLabel: "Deployed Omni-Channel presence status active in org.",
+        status: "pending",
+        errorMessage: "",
+        setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
+        assignees: []
+      },
+      {
+        id: "check-presence-busy",
+        label: "Busy Presence Status (Busy)",
+        subLabel: "Deployed Omni-Channel presence status active in org.",
+        status: "pending",
+        errorMessage: "",
+        setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
+        assignees: []
+      },
+      {
+        id: "check-qrc-messaging",
+        label: "Messaging Routing Config (Messaging_Routing_Configuration)",
+        subLabel: "Deployed Omni-Channel routing configuration active.",
+        status: "pending",
+        errorMessage: "",
+        setupUrl: "/lightning/setup/QueueRoutingConfigSettings/home",
+        assignees: []
+      },
+      {
+        id: "check-queues-messaging",
+        label: "Messaging Queue (Messaging_Queue)",
+        subLabel: "Deployed Omni-Channel messaging queue active in org.",
+        status: "pending",
+        errorMessage: "",
+        setupUrl: "/lightning/setup/Queues/home",
+        assignees: []
+      }
+    ]
+  },
+  {
+    id: "schema",
+    title: "Custom Metadata Objects & Schemas",
+    subtitle:
+      "Agent_Assist_Config__c database storage and active profile records.",
+    iconName: "utility:database",
+    statusBadge: "Checking...",
+    badgeVariant: "warning",
+    items: [
+      {
+        id: "check-db-schema",
+        label: "Agent_Assist_Config__c Custom Object",
+        subLabel: "Active database schema supporting configuration profiles.",
+        status: "pending",
+        errorMessage: "",
+        assignees: []
+      }
+    ]
+  }
+];
 
 const INITIAL_PROFILES = [
   {
@@ -85,7 +261,275 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track selectedDevName = "Default";
   @track currentProfile = { ...INITIAL_PROFILES[0] };
   @track userOptions = [];
+  @track diagnosticsState = "pending"; // 'pending', 'healthy', 'error'
+  @track diagnosticSections = [];
   wiredConfigsResult;
+  wiredDiagnosticsResult;
+
+  connectedCallback() {
+    this.initPendingDiagnostics();
+  }
+
+  initPendingDiagnostics() {
+    this.diagnosticsState = "pending";
+    this.diagnosticSections = DEFAULT_DIAGNOSTIC_SECTIONS.map((sec) => ({
+      ...sec,
+      secPillClass: "status-pill status-pill_pending",
+      secStatusText: "Checking...",
+      secLedClass: "status-led status-led_pending",
+      setupUrl: sec.setupUrl || "",
+      setupUrlLabel: sec.setupUrlLabel || "",
+      items: sec.items.map((item) => ({
+        ...item,
+        statusPillClass: "status-pill status-pill_pending",
+        ledClass: "status-led status-led_pending",
+        statusLabel: "Checking...",
+        isPending: true,
+        isPass: false,
+        isFail: false,
+        isWarn: false,
+        hasAssignees: false
+      }))
+    }));
+  }
+
+  @wire(getOrgDiagnostics)
+  wiredDiagnostics(result) {
+    this.wiredDiagnosticsResult = result;
+    const { data, error } = result;
+    if (data) {
+      this.processDiagnosticsData(data, false);
+    } else if (error) {
+      console.error("[AgentAssist Diagnostics] ❌ Apex query error:", error);
+      this.processDiagnosticsData(null, false, error);
+    }
+  }
+
+  processDiagnosticsData(data, isManualRun = false, queryError = null) {
+    console.log(
+      "%c[AgentAssist Diagnostics] ========================================================",
+      "color: #0176d3; font-weight: bold; font-size: 14px;"
+    );
+    console.log(
+      `%c[AgentAssist Diagnostics] 🚀 ${isManualRun ? "Manual Refresh" : "Live Evaluation"} - Running Diagnostic Instrument Suite...`,
+      "color: #0176d3; font-weight: bold; font-size: 13px;"
+    );
+    console.log(
+      "%c[AgentAssist Diagnostics] ⏱️ Timestamp: " +
+        new Date().toLocaleString(),
+      "color: #54698d; font-size: 11px;"
+    );
+
+    if (queryError) {
+      console.error(
+        "%c[AgentAssist Diagnostics] 💥 Apex Diagnostic Controller Error: " +
+          (queryError.body ? queryError.body.message : queryError.message),
+        "color: #ea001e; font-weight: bold;"
+      );
+    }
+
+    const rawSections = data?.sections || DEFAULT_DIAGNOSTIC_SECTIONS;
+    let totalPass = 0;
+    let totalFail = 0;
+    let totalWarn = 0;
+
+    this.diagnosticSections = rawSections.map((sec) => {
+      const defaultSec = DEFAULT_DIAGNOSTIC_SECTIONS.find(
+        (d) => d.id === sec.id
+      );
+      const setupUrl = sec.setupUrl || defaultSec?.setupUrl || "";
+      const setupUrlLabel =
+        sec.setupUrlLabel || defaultSec?.setupUrlLabel || "";
+
+      console.group(
+        `%c🔍 [Instrument Section] ${sec.title}`,
+        "color: #0176d3; font-weight: bold;"
+      );
+
+      const items = (sec.items || []).map((item) => {
+        let status = item.status;
+        if (queryError) status = "fail";
+
+        let statusPillClass = "status-pill status-pill_pass";
+        let ledClass = "status-led status-led_pass";
+        let statusLabel = "OK";
+        const isFail = status === "fail";
+        const isWarn = status === "warning";
+        const isPending = status === "pending";
+        const isPass = status === "pass" || (!isFail && !isWarn && !isPending);
+
+        if (isFail) {
+          totalFail++;
+          statusPillClass = "status-pill status-pill_fail";
+          ledClass = "status-led status-led_fail";
+          statusLabel = "Fail";
+          console.error(
+            `%c❌ [FAIL] ${item.label}\n   └─ Reason: ${item.errorMessage || item.subLabel || "Check failed in org metadata."}`,
+            "color: #ea001e; font-weight: bold;"
+          );
+        } else if (isWarn) {
+          totalWarn++;
+          statusPillClass = "status-pill status-pill_warn";
+          ledClass = "status-led status-led_warn";
+          statusLabel = "Warning";
+          console.warn(
+            `%c⚠️ [WARN] ${item.label}\n   └─ Note: ${item.errorMessage || item.subLabel}`,
+            "color: #fe9339; font-weight: bold;"
+          );
+        } else if (isPending) {
+          statusPillClass = "status-pill status-pill_pending";
+          ledClass = "status-led status-led_pending";
+          statusLabel = "Checking...";
+          console.log(`%c⏳ [CHECKING] ${item.label}...`, "color: #eab308;");
+        } else {
+          totalPass++;
+          console.log(
+            `%c✅ [OK] ${item.label} ─ ${item.subLabel}`,
+            "color: #2e844a; font-weight: bold;"
+          );
+          if (item.assignees && item.assignees.length > 0) {
+            console.log("   └─ Active Assignees:", item.assignees.join(", "));
+          }
+        }
+
+        const totalCount =
+          item.totalCount || (item.assignees ? item.assignees.length : 0);
+        const hasAssignees = item.assignees && item.assignees.length > 0;
+        const hasMore =
+          totalCount > (item.assignees ? item.assignees.length : 0);
+        const moreCount =
+          totalCount - (item.assignees ? item.assignees.length : 0);
+        const countBadgeText = totalCount > 0 ? `${totalCount} Total` : "";
+        const itemSetupUrl = item.setupUrl || setupUrl || "";
+
+        return {
+          ...item,
+          statusPillClass,
+          ledClass,
+          statusLabel,
+          isFail,
+          isWarn,
+          isPass,
+          isPending,
+          hasAssignees,
+          hasMore,
+          moreCount,
+          countBadgeText,
+          setupUrl: itemSetupUrl
+        };
+      });
+
+      console.groupEnd();
+
+      const secHasFail = items.some((i) => i.isFail);
+      const secHasWarn = items.some((i) => i.isWarn);
+      const secHasPending = items.some((i) => i.isPending);
+      const secPassCount = items.filter((i) => i.isPass).length;
+      const secTotalCount = items.length;
+
+      let secPillClass = "status-pill status-pill_pass";
+      let secStatusText = "OK";
+      let secLedClass = "status-led status-led_pass";
+
+      if (secHasFail) {
+        secPillClass = "status-pill status-pill_fail";
+        secStatusText = "Action Required";
+        secLedClass = "status-led status-led_fail";
+      } else if (secHasWarn) {
+        secPillClass = "status-pill status-pill_warn";
+        secStatusText = "Attention Needed";
+        secLedClass = "status-led status-led_warn";
+      } else if (secHasPending) {
+        secPillClass = "status-pill status-pill_pending";
+        secStatusText = "Checking...";
+        secLedClass = "status-led status-led_pending";
+      }
+
+      const summaryMetricText = secHasPending
+        ? "Evaluating..."
+        : `${secPassCount} of ${secTotalCount} OK`;
+
+      return {
+        ...sec,
+        setupUrl,
+        setupUrlLabel,
+        secPillClass,
+        secStatusText,
+        secLedClass,
+        summaryMetricText,
+        items
+      };
+    });
+
+    console.log(
+      `%c[AgentAssist Diagnostics] 🏁 Diagnostic Suite Summary: ${totalPass} Checks OK | ${totalFail} Failed | ${totalWarn} Warnings`,
+      `color: ${totalFail > 0 ? "#ea001e" : "#2e844a"}; font-weight: bold; font-size: 13px;`
+    );
+    console.log(
+      "%c[AgentAssist Diagnostics] ========================================================",
+      "color: #0176d3; font-weight: bold; font-size: 14px;"
+    );
+
+    if (totalFail > 0) {
+      this.diagnosticsState = "error";
+    } else if (totalWarn > 0) {
+      this.diagnosticsState = "warning";
+    } else {
+      this.diagnosticsState = "healthy";
+    }
+  }
+
+  get diagnosticsTabLabel() {
+    return "Integration Diagnostics";
+  }
+
+  get diagnosticsTabIcon() {
+    if (this.diagnosticsState === "pending") return "utility:sync";
+    if (this.diagnosticsState === "error") return "utility:error";
+    if (this.diagnosticsState === "warning") return "utility:warning";
+    return "utility:success";
+  }
+
+  get masterStatusLedClass() {
+    if (this.diagnosticsState === "pending")
+      return "status-led status-led_pending";
+    if (this.diagnosticsState === "error") return "status-led status-led_fail";
+    if (this.diagnosticsState === "warning")
+      return "status-led status-led_warn";
+    return "status-led status-led_pass";
+  }
+
+  get masterStatusPillClass() {
+    if (this.diagnosticsState === "pending")
+      return "status-pill status-pill_pending";
+    if (this.diagnosticsState === "error")
+      return "status-pill status-pill_fail";
+    if (this.diagnosticsState === "warning")
+      return "status-pill status-pill_warn";
+    return "status-pill status-pill_pass";
+  }
+
+  get masterStatusLabel() {
+    if (this.diagnosticsState === "pending") return "Checking...";
+    if (this.diagnosticsState === "error") return "Action Required";
+    if (this.diagnosticsState === "warning") return "Attention Needed";
+    return "OK";
+  }
+
+  get detailsStatusLabel() {
+    if (this.diagnosticsState === "pending") return "Checking...";
+    if (this.diagnosticsState === "error") return "Action Required";
+    if (this.diagnosticsState === "warning") return "Attention Needed";
+    return "OK";
+  }
+
+  get topInstrumentCards() {
+    return this.diagnosticSections;
+  }
+
+  get detailedPrereqSections() {
+    return this.diagnosticSections;
+  }
 
   @wire(getActiveUsers)
   wiredActiveUsers({ data, error }) {
@@ -336,15 +780,46 @@ export default class AgentAssistSetupWizard extends LightningElement {
     );
   }
 
-  handleRunDiagnostics() {
-    this.dispatchEvent(
-      new ShowToastEvent({
-        title: "Diagnostics Completed",
-        message:
-          "All backend services, authentication tokens, and static resources are healthy.",
-        variant: "success"
-      })
+  async handleRunDiagnostics() {
+    this.initPendingDiagnostics();
+    console.log(
+      "%c[AgentAssist Diagnostics] 🔄 User triggered manual diagnostic refresh...",
+      "color: #0176d3; font-weight: bold; font-size: 13px;"
     );
+
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    setTimeout(async () => {
+      try {
+        if (this.wiredDiagnosticsResult) {
+          const freshData = await refreshApex(this.wiredDiagnosticsResult);
+          if (freshData) {
+            this.processDiagnosticsData(freshData, true);
+          }
+        }
+        const isHealthy = this.diagnosticsState === "healthy";
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: isHealthy ? "Diagnostics Passed" : "Diagnostics Alert",
+            message: isHealthy
+              ? "All Salesforce platform configurations, backend services, presence statuses, and permission sets are verified and healthy."
+              : "One or more diagnostic checks failed. Check the instrument panel and browser console for details.",
+            variant: isHealthy ? "success" : "error"
+          })
+        );
+      } catch (err) {
+        this.processDiagnosticsData(null, true, err);
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: "Diagnostics Error",
+            message:
+              err?.body?.message ||
+              err?.message ||
+              "Failed to run diagnostics.",
+            variant: "error"
+          })
+        );
+      }
+    }, 400);
   }
 
   selectProfileByDevName(devName) {

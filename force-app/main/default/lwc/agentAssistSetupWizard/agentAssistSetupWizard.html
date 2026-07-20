@@ -36,174 +36,9 @@
 
     <!-- Sub Pages Tabset -->
     <lightning-tabset active-tab-value={activeTab} onselect={handleTabSelect}>
-      <!-- 1. Salesforce Setup -->
+      <!-- 1. Configuration Profiles -->
       <lightning-tab
-        label="Salesforce Setup"
-        value="salesforceSetup"
-        icon-name="utility:settings"
-      >
-        <div class="slds-p-top_medium">
-          <div class="slds-grid slds-gutters slds-wrap">
-            <div
-              class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
-            >
-              <lightning-card
-                title="Salesforce Prerequisites & Deployment Health"
-                icon-name="utility:check"
-              >
-                <div class="slds-p-around_medium">
-                  <p class="slds-text-body_regular slds-m-bottom_medium">
-                    Review and verify that all core Salesforce platform
-                    configurations, security settings, and permissions are
-                    properly deployed for Google Cloud Agent Assist and
-                    Companion Agent.
-                  </p>
-
-                  <div class="slds-box slds-m-bottom_small slds-theme_shade">
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
-                    >
-                      <div class="slds-grid slds-grid_vertical-align-center">
-                        <lightning-icon
-                          icon-name="utility:shield"
-                          size="small"
-                          class="slds-m-right_small"
-                        ></lightning-icon>
-                        <div>
-                          <strong
-                            >Administrative & Agent Permission Sets</strong
-                          >
-                          <div
-                            class="slds-text-body_small slds-text-color_weak"
-                          >
-                            Agent_Assist_Admin permission set
-                          </div>
-                        </div>
-                      </div>
-                      <span class="slds-badge slds-theme_success"
-                        >Deployed</span
-                      >
-                    </div>
-                  </div>
-
-                  <div class="slds-box slds-m-bottom_small slds-theme_shade">
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
-                    >
-                      <div class="slds-grid slds-grid_vertical-align-center">
-                        <lightning-icon
-                          icon-name="utility:lock"
-                          size="small"
-                          class="slds-m-right_small"
-                        ></lightning-icon>
-                        <div>
-                          <strong>CSP Trusted Sites</strong>
-                          <div
-                            class="slds-text-body_small slds-text-color_weak"
-                          >
-                            Google Cloud Run, Google APIs, and GStatic endpoints
-                          </div>
-                        </div>
-                      </div>
-                      <span class="slds-badge slds-theme_success"
-                        >Configured</span
-                      >
-                    </div>
-                  </div>
-
-                  <div class="slds-box slds-m-bottom_small slds-theme_shade">
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
-                    >
-                      <div class="slds-grid slds-grid_vertical-align-center">
-                        <lightning-icon
-                          icon-name="utility:database"
-                          size="small"
-                          class="slds-m-right_small"
-                        ></lightning-icon>
-                        <div>
-                          <strong>Custom Metadata Objects & Schemas</strong>
-                          <div
-                            class="slds-text-body_small slds-text-color_weak"
-                          >
-                            Agent_Assist_Config__c object supporting Container &
-                            Companion Agent schemas
-                          </div>
-                        </div>
-                      </div>
-                      <span class="slds-badge slds-theme_success">Active</span>
-                    </div>
-                  </div>
-                </div>
-              </lightning-card>
-            </div>
-
-            <div
-              class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
-            >
-              <lightning-card
-                title="Quick Actions"
-                icon-name="utility:touch_action"
-              >
-                <div class="slds-p-around_medium">
-                  <p
-                    class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
-                  >
-                    Quickly assign permission sets or refresh org schema cache.
-                  </p>
-                  <div class="slds-m-bottom_small">
-                    <button
-                      type="button"
-                      class="slds-button slds-button_neutral slds-button_stretch slds-size_1-of-1"
-                      onclick={handlePlaceholderAction}
-                    >
-                      <lightning-icon
-                        icon-name="utility:user"
-                        size="x-small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      Assign Admin Permset
-                    </button>
-                  </div>
-                  <div class="slds-m-bottom_small">
-                    <a
-                      href="/lightning/setup/ManageExternalClientApplication/home"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="slds-button slds-button_neutral slds-button_stretch slds-size_1-of-1 slds-text-align_center"
-                    >
-                      <lightning-icon
-                        icon-name="utility:connected_apps"
-                        size="x-small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      External Client App Manager
-                    </a>
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      class="slds-button slds-button_neutral slds-button_stretch slds-size_1-of-1"
-                      onclick={handlePlaceholderAction}
-                    >
-                      <lightning-icon
-                        icon-name="utility:refresh"
-                        size="x-small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      Verify Schema Health
-                    </button>
-                  </div>
-                </div>
-              </lightning-card>
-            </div>
-          </div>
-        </div>
-      </lightning-tab>
-
-      <!-- 2. Configuration Profiles -->
-      <lightning-tab
-        label="Config Profiles"
+        label="Configuration Profiles"
         value="configurationProfiles"
         icon-name="utility:bundle_config"
       >
@@ -422,7 +257,9 @@
                               </lightning-combobox>
                             </div>
 
-                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                            <div
+                              class="slds-col slds-size_1-of-1 slds-m-bottom_small"
+                            >
                               <div
                                 class="slds-box slds-box_x-small slds-theme_shade slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap"
                               >
@@ -435,15 +272,22 @@
                                     class="slds-m-right_x-small slds-no-flex"
                                   ></lightning-icon>
                                   <div>
-                                    <strong>External Client App OAuth Settings</strong>
-                                    <div class="slds-text-body_small slds-text-color_weak">
-                                      Retrieve your Consumer Key (Client ID) & Consumer Secret from External Client App Manager.
+                                    <strong
+                                      >External Client App OAuth
+                                      Settings</strong
+                                    >
+                                    <div
+                                      class="slds-text-body_small slds-text-color_weak"
+                                    >
+                                      Retrieve your Consumer Key (Client ID) &
+                                      Consumer Secret from External Client App
+                                      Manager.
                                     </div>
                                   </div>
                                 </div>
                                 <div
                                   class="slds-col slds-no-flex slds-size_1-of-1 slds-medium-size_auto"
-                                  style="min-width: 250px;"
+                                  style="min-width: 250px"
                                 >
                                   <a
                                     href="/lightning/setup/ManageExternalClientApplication/home"
@@ -674,123 +518,7 @@
         </div>
       </lightning-tab>
 
-      <!-- 3. Diagnostics -->
-      <lightning-tab
-        label="Diagnostics"
-        value="diagnostics"
-        icon-name="utility:connected_apps"
-      >
-        <div class="slds-p-top_medium">
-          <lightning-card
-            title="System Diagnostics & Connectivity"
-            icon-name="utility:connected_apps"
-          >
-            <div slot="actions">
-              <lightning-button
-                label="Run All Diagnostics"
-                icon-name="utility:play"
-                variant="brand"
-                onclick={handleRunDiagnostics}
-              ></lightning-button>
-            </div>
-            <div class="slds-p-around_medium">
-              <p class="slds-text-body_regular slds-m-bottom_medium">
-                Validate communication between Salesforce, the Google Cloud UI
-                Connector, and the Agent Assist / Companion Agent backend
-                service.
-              </p>
-
-              <div class="slds-grid slds-gutters slds-wrap">
-                <div
-                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
-                >
-                  <div class="slds-box slds-box_small diagnostic-box">
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
-                    >
-                      <lightning-icon
-                        icon-name="utility:connected_apps"
-                        size="small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      <strong class="slds-text-heading_small"
-                        >UI Connector</strong
-                      >
-                    </div>
-                    <p
-                      class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
-                    >
-                      Check HTTPS & WebSocket connectivity to Google Cloud Run
-                      UI Connector backend.
-                    </p>
-                    <span class="slds-badge slds-theme_success"
-                      >Connected (200 OK)</span
-                    >
-                  </div>
-                </div>
-
-                <div
-                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
-                >
-                  <div class="slds-box slds-box_small diagnostic-box">
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
-                    >
-                      <lightning-icon
-                        icon-name="utility:key"
-                        size="small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      <strong class="slds-text-heading_small"
-                        >Authentication</strong
-                      >
-                    </div>
-                    <p
-                      class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
-                    >
-                      Verify OAuth2 token resolution, service account
-                      permissions, and session validation.
-                    </p>
-                    <span class="slds-badge slds-theme_success"
-                      >Token Active</span
-                    >
-                  </div>
-                </div>
-
-                <div
-                  class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
-                >
-                  <div class="slds-box slds-box_small diagnostic-box">
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
-                    >
-                      <lightning-icon
-                        icon-name="utility:file"
-                        size="small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      <strong class="slds-text-heading_small"
-                        >Static Resources</strong
-                      >
-                    </div>
-                    <p
-                      class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
-                    >
-                      Verify existence and integrity of ui_modules
-                      (transcript.js, container.js, common.js).
-                    </p>
-                    <span class="slds-badge slds-theme_success"
-                      >Bundle Verified</span
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-          </lightning-card>
-        </div>
-      </lightning-tab>
-
-      <!-- 4. Simulator -->
+      <!-- 2. Simulator -->
       <lightning-tab
         label="Simulator"
         value="simulator"
@@ -804,9 +532,8 @@
             <div class="slds-p-around_medium">
               <p class="slds-text-body_regular slds-m-bottom_medium">
                 Select any configuration profile to instantiate and test the
-                live
-                <strong>agentAssistContainer</strong> or
-                <strong>agentAssistCompanionAgent</strong> LWC component
+                live&#32;<strong>agentAssistContainer</strong>&#32;or&#32;
+                <strong>agentAssistCompanionAgent</strong>&#32;LWC component
                 directly inside the simulator.
               </p>
 
@@ -880,7 +607,7 @@
         </div>
       </lightning-tab>
 
-      <!-- 5. CX Platform Specific Setup -->
+      <!-- 3. CX Platform Specific Setup -->
       <lightning-tab
         label="CX Platform Setup"
         value="cxPlatformSetup"
@@ -1001,6 +728,297 @@
                   </div>
                 </lightning-accordion-section>
               </lightning-accordion>
+            </div>
+          </lightning-card>
+        </div>
+      </lightning-tab>
+
+      <!-- 4. Integration Diagnostics -->
+      <lightning-tab
+        label={diagnosticsTabLabel}
+        value="diagnostics"
+        icon-name={diagnosticsTabIcon}
+      >
+        <div class="slds-p-top_medium">
+          <!-- 1. System Diagnostics & Category Master Overview -->
+          <lightning-card
+            title="Integration Diagnostics Overview"
+            icon-name="utility:connected_apps"
+            class="slds-m-bottom_medium"
+          >
+            <div slot="actions">
+              <lightning-button
+                label="Run All Diagnostics"
+                icon-name="utility:refresh"
+                variant="brand"
+                onclick={handleRunDiagnostics}
+              ></lightning-button>
+            </div>
+            <div class="slds-p-around_medium">
+              <!-- Master Status Instrument Bar -->
+              <div
+                class="instrument-bar slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap"
+              >
+                <div
+                  class="slds-grid slds-grid_vertical-align-center slds-m-right_medium"
+                >
+                  <strong class="slds-text-heading_small slds-m-right_small"
+                    >Status:</strong
+                  >
+                  <span class="slds-text-body_small slds-text-color_weak">
+                    Integration readiness and platform system health at a
+                    glance.
+                  </span>
+                </div>
+                <span class={masterStatusPillClass}>
+                  <span class={masterStatusLedClass}></span>
+                  <span>{masterStatusLabel}</span>
+                </span>
+              </div>
+
+              <!-- All 5 Category Master Instrument Cards Grid -->
+              <div class="category-master-grid">
+                <template for:each={topInstrumentCards} for:item="card">
+                  <div
+                    key={card.id}
+                    class="instrument-card slds-p-around_medium"
+                  >
+                    <!-- Card Header -->
+                    <div>
+                      <div
+                        class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-m-bottom_x-small"
+                      >
+                        <strong
+                          class="slds-text-title_bold slds-truncate slds-m-right_small"
+                          title={card.title}
+                          >{card.title}</strong
+                        >
+                        <span class={card.secPillClass} style="flex-shrink: 0">
+                          <span class={card.secLedClass}></span>
+                          <span>{card.secStatusText}</span>
+                        </span>
+                      </div>
+
+                      <p
+                        class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium"
+                      >
+                        {card.subtitle}
+                      </p>
+                    </div>
+
+                    <!-- Clean Scannable Footer with Metric & Setup Link -->
+                    <div
+                      class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-border_top slds-p-top_x-small slds-m-top_auto"
+                    >
+                      <span class="slds-text-body_small slds-text-color_weak">
+                        <strong>{card.summaryMetricText}</strong>
+                      </span>
+                      <template lwc:if={card.setupUrl}>
+                        <a
+                          href={card.setupUrl}
+                          target="_blank"
+                          class="slds-text-link slds-text-body_small"
+                          title="Open in Salesforce Setup"
+                        >
+                          <strong>{card.setupUrlLabel} Setup ↗</strong>
+                        </a>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </lightning-card>
+
+          <!-- 2. Detailed Diagnostics & Salesforce Org Metadata Inspection -->
+          <lightning-card title="Diagnostic Details" icon-name="utility:list">
+            <div class="slds-p-around_medium">
+              <!-- Consistent Instrument Status Bar -->
+              <div
+                class="instrument-bar slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap"
+              >
+                <div
+                  class="slds-grid slds-grid_vertical-align-center slds-m-right_medium"
+                >
+                  <strong class="slds-text-heading_small slds-m-right_small"
+                    >Prerequisites Inspection:</strong
+                  >
+                  <span class="slds-text-body_small slds-text-color_weak">
+                    Full enumeration of Salesforce platform configurations,
+                    presence statuses, queues, permissions, and metadata.
+                  </span>
+                </div>
+                <span class={masterStatusPillClass}>
+                  <span class={masterStatusLedClass}></span>
+                  <span>{detailsStatusLabel}</span>
+                </span>
+              </div>
+
+              <!-- Full Enumeration Sections -->
+              <div class="slds-grid slds-gutters slds-wrap">
+                <template for:each={detailedPrereqSections} for:item="sec">
+                  <div
+                    key={sec.id}
+                    class="slds-col slds-size_1-of-1 slds-m-bottom_medium"
+                  >
+                    <div
+                      class="slds-box slds-p-around_medium"
+                      style="
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        border: 1px solid #e2e8f0;
+                      "
+                    >
+                      <!-- Section Header -->
+                      <div
+                        class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-m-bottom_small"
+                      >
+                        <div
+                          class="slds-grid slds-grid_vertical-align-center slds-truncate"
+                          style="max-width: 80%"
+                        >
+                          <lightning-icon
+                            icon-name={sec.iconName}
+                            size="small"
+                            class="slds-m-right_small"
+                            style="flex-shrink: 0"
+                          ></lightning-icon>
+                          <div>
+                            <div
+                              class="slds-grid slds-grid_vertical-align-center"
+                            >
+                              <strong class="slds-text-heading_small"
+                                >{sec.title}</strong
+                              >
+                              <template lwc:if={sec.setupUrl}>
+                                <a
+                                  href={sec.setupUrl}
+                                  target="_blank"
+                                  class="slds-text-link slds-m-left_small slds-text-body_small"
+                                  title="Open in Salesforce Setup"
+                                >
+                                  <strong>Manage {sec.setupUrlLabel} ↗</strong>
+                                </a>
+                              </template>
+                            </div>
+                            <div
+                              class="slds-text-body_small slds-text-color_weak"
+                            >
+                              {sec.subtitle}
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          class={sec.secPillClass}
+                          style="flex-shrink: 0; margin-left: 12px"
+                        >
+                          <span class={sec.secLedClass}></span>
+                          <span>{sec.secStatusText}</span>
+                        </span>
+                      </div>
+
+                      <!-- Section Items Table / List -->
+                      <div
+                        class="slds-box slds-theme_shade slds-p-around_small"
+                        style="border-radius: 6px"
+                      >
+                        <template for:each={sec.items} for:item="item">
+                          <div
+                            key={item.id}
+                            class="slds-p-vertical_x-small slds-border_bottom"
+                          >
+                            <div
+                              class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                            >
+                              <div style="max-width: 80%">
+                                <div
+                                  class="slds-text-body_regular slds-text-title_bold"
+                                >
+                                  {item.label}
+                                </div>
+                                <div
+                                  class="slds-text-body_small slds-text-color_weak"
+                                >
+                                  {item.subLabel}
+                                </div>
+                              </div>
+                              <span
+                                class={item.statusPillClass}
+                                style="flex-shrink: 0; margin-left: 12px"
+                              >
+                                <span class={item.ledClass}></span>
+                                <span>{item.statusLabel}</span>
+                              </span>
+                            </div>
+
+                            <!-- Red Error Message Callout -->
+                            <template lwc:if={item.isFail}>
+                              <div class="diag-error-box slds-m-top_x-small">
+                                <strong>Diagnostic Failure:</strong>
+                                {item.errorMessage}
+                              </div>
+                            </template>
+
+                            <!-- Assignees / list items enumeration if available -->
+                            <template lwc:if={item.hasAssignees}>
+                              <div
+                                class="slds-m-top_x-small list-container-box"
+                              >
+                                <div
+                                  class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_xxx-small"
+                                >
+                                  <span
+                                    class="slds-text-body_small slds-text-title_bold"
+                                    style="color: #334155"
+                                  >
+                                    Configured Entries & Assignments:
+                                  </span>
+                                  <template lwc:if={item.countBadgeText}>
+                                    <span class="slds-badge slds-badge_lightest"
+                                      >{item.countBadgeText}</span
+                                    >
+                                  </template>
+                                </div>
+                                <div class="compact-pill-box">
+                                  <template
+                                    for:each={item.assignees}
+                                    for:item="assignee"
+                                  >
+                                    <span
+                                      key={assignee}
+                                      class="compact-pill"
+                                      title={assignee}
+                                      >{assignee}</span
+                                    >
+                                  </template>
+                                  <template lwc:if={item.hasMore}>
+                                    <template lwc:if={item.setupUrl}>
+                                      <a
+                                        href={item.setupUrl}
+                                        target="_blank"
+                                        class="compact-pill compact-pill_more"
+                                        title="Open in Salesforce Setup"
+                                      >
+                                        +{item.moreCount} more in Setup ↗
+                                      </a>
+                                    </template>
+                                    <template lwc:else>
+                                      <span
+                                        class="compact-pill compact-pill_more"
+                                        >+{item.moreCount} more in Setup ↗</span
+                                      >
+                                    </template>
+                                  </template>
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
             </div>
           </lightning-card>
         </div>

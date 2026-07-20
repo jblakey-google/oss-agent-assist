@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ExtlClntAppGlobalOauthSettings xmlns="http://soap.sforce.com/2006/04/metadata">
     <externalClientApplication>Agent_Assist_LWC_Auth</externalClientApplication>
     <label>Agent Assist LWC Auth Global OAuth Settings</label>
-    <callbackUrl>https://login.salesforce.com/services/oauth2/callback</callbackUrl>
+    <callbackUrl
+  >https://login.salesforce.com/services/oauth2/callback</callbackUrl>
     <isClientCredentialsFlowEnabled>true</isClientCredentialsFlowEnabled>
 </ExtlClntAppGlobalOauthSettings>

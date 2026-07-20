@@ -86,4 +86,3 @@ describe("c-agent-assist-container", () => {
     delete window._uiModuleEventTarget;
   });
 });
-

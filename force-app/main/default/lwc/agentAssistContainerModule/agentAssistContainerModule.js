@@ -21,7 +21,6 @@ import { MessageContext } from "lightning/messageService";
 
 // static resources
 import ui_modules from "@salesforce/resourceUrl/ui_modules";
-import google_logo from "@salesforce/resourceUrl/google_logo";
 const five9ByotSdk = "/resource/Five9BYOT__five9ByotSdk";
 
 // Schema Fields
@@ -145,7 +144,6 @@ export default class AgentAssistContainerModule extends LightningElement {
     return this.conversationProfile.split("/conversationProfiles")[0];
   }
 
-  googleLogoUrl = google_logo;
   @api platformService = null;
   conversationNamePollingInterval = null;
   tokenRefreshInterval = null;

@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
+jobs:
+  lwc-unit-tests:
+    name: LWC Unit Tests & Linting
+    runs-on: ubuntu-latest
+    outputs:
+      has-devhub: ${{ steps.check-devhub.outputs.has-devhub }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check DevHub Secret Availability
+        id: check-devhub
+        env:
+          DEVHUB_SFDX_URL: ${{ secrets.DEVHUB_SFDX_URL }}
+        run: |
+          if [ -n "$DEVHUB_SFDX_URL" ]; then
+            echo "has-devhub=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-devhub=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Prettier Code Formatting Check
+        run: npm run prettier:verify
+
+      - name: Run LWC Jest Unit Tests
+        run: npm test
+
+  apex-tests:
+    name: Salesforce Scratch Org Deployability & Apex Tests
+    runs-on: ubuntu-latest
+    needs: lwc-unit-tests
+    # Only executes if DevHub authentication secret is configured in GitHub repository secrets
+    if: needs.lwc-unit-tests.outputs.has-devhub == 'true'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Install Dependencies & Salesforce CLI
+        run: |
+          npm ci
+          npm install -g @salesforce/cli
+
+      - name: Authenticate DevHub
+        run: |
+          echo "${{ secrets.DEVHUB_SFDX_URL }}" | sf org login sfdx-url --sfdx-url-stdin --set-default-dev-hub --alias devhub
+          sf alias set devhub=ces-solution-incubation@google.com.pbo
+          sf config set target-dev-hub=ces-solution-incubation@google.com.pbo --global
+
+      - name: Create Temporary Scratch Org
+        run: |
+          sf org create scratch --definition-file config/project-scratch-def.json --alias ci-org --target-dev-hub ces-solution-incubation@google.com.pbo --set-default --duration-days 1 --wait 10
+
+      - name: Execute Predeployment Configuration
+        run: npm run predeploy
+
+      - name: Deploy Source to Scratch Org
+        run: sf project deploy start --source-dir force-app --target-org ci-org
+
+      - name: Assign Agent Assist Admin Permission Set
+        run: sf org assign permset --name Agent_Assist_Admin --target-org ci-org
+
+      - name: Run Apex Test Suite
+        run: sf apex run test --class-names AgentAssistConfigControllerTest --code-coverage --result-format human --wait 10 --target-org ci-org
+
+      - name: Delete Scratch Org
+        if: always()
+        run: sf org delete scratch --target-org ci-org --no-prompt || true

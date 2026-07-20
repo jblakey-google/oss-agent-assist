@@ -4,7 +4,8 @@
     <description
   >The platform integration type (e.g., base, messaging, twilioflex, servicecloudvoice-nice, servicecloudvoice-byot-five9).</description>
     <externalId>false</externalId>
-    <inlineHelpText>The platform integration type (Base Platform works OOTB without CX config).</inlineHelpText>
+    <inlineHelpText
+  >The platform integration type (Base Platform works OOTB without CX config).</inlineHelpText>
     <label>Platform Integration</label>
     <required>false</required>
     <trackTrending>false</trackTrending>

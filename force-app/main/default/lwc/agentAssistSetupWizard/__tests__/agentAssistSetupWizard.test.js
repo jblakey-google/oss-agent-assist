@@ -16,40 +16,223 @@
 
 import { createElement } from "@lwc/engine-dom";
 import AgentAssistSetupWizard from "c/agentAssistSetupWizard";
+import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
+import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
+import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics",
+  () => {
+    const { createApexTestWireAdapter } = require("@salesforce/sfdx-lwc-jest");
+    return { default: createApexTestWireAdapter() };
+  },
+  { virtual: true }
+);
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.getActiveUsers",
+  () => {
+    const { createApexTestWireAdapter } = require("@salesforce/sfdx-lwc-jest");
+    return { default: createApexTestWireAdapter() };
+  },
+  { virtual: true }
+);
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.getAllConfigs",
+  () => {
+    const { createApexTestWireAdapter } = require("@salesforce/sfdx-lwc-jest");
+    return { default: createApexTestWireAdapter() };
+  },
+  { virtual: true }
+);
+
+const MOCK_HEALTHY_DIAGNOSTICS = {
+  isHealthy: true,
+  passCount: 5,
+  failCount: 0,
+  warningCount: 0,
+  sections: [
+    {
+      id: "ui_connector",
+      title: "UI Connector & Network Endpoints",
+      subtitle: "Verify HTTPS, WebSocket, and API allowlists in Trusted URLs.",
+      iconName: "utility:connected_apps",
+      setupUrl: "/lightning/setup/SecurityCspTrustedSite/home",
+      setupUrlLabel: "Trusted URLs",
+      items: [
+        {
+          id: "check-ui-https",
+          label: "Cloud Run HTTPS Endpoint (cloud_run_https)",
+          subLabel: "Allowlisted in Trusted URLs: https://*.run.app",
+          status: "pass",
+          errorMessage: null,
+          assignees: []
+        }
+      ]
+    }
+  ]
+};
+
+const MOCK_WARNING_DIAGNOSTICS = {
+  isHealthy: true,
+  passCount: 4,
+  failCount: 0,
+  warningCount: 1,
+  sections: [
+    {
+      id: "omnichannel",
+      title: "Omni-Channel Presence & Routing",
+      subtitle:
+        "Presence statuses and queue routing configurations for agent dispatch.",
+      iconName: "utility:user",
+      setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
+      setupUrlLabel: "Omni-Channel",
+      items: [
+        {
+          id: "check-presence-messaging",
+          label: "Online Messaging Status (Online_Messaging)",
+          subLabel: "Deployed presence status not found.",
+          status: "warning",
+          errorMessage: "Presence Status 'Online_Messaging' is not present.",
+          assignees: []
+        }
+      ]
+    }
+  ]
+};
+
+const MOCK_FAIL_DIAGNOSTICS = {
+  isHealthy: false,
+  passCount: 4,
+  failCount: 1,
+  warningCount: 0,
+  sections: [
+    {
+      id: "static_resources",
+      title: "Static Resources & UI Module Bundles",
+      subtitle:
+        "Verify static resource packages for container, transcript, and asset bundles.",
+      iconName: "utility:file",
+      setupUrl: "/lightning/setup/StaticResources/home",
+      setupUrlLabel: "Static Resources",
+      items: [
+        {
+          id: "check-sr-modules",
+          label: "UI Modules Bundle (ui_modules.zip)",
+          subLabel: "Missing static resource archive.",
+          status: "fail",
+          errorMessage: "Static Resource 'ui_modules' zip archive is missing.",
+          assignees: []
+        }
+      ]
+    }
+  ]
+};
 
 describe("c-agent-assist-setup-wizard", () => {
   afterEach(() => {
     while (document.body.firstChild) {
       document.body.removeChild(document.body.firstChild);
     }
+    jest.clearAllMocks();
   });
 
-  it("renders setup wizard header and tabset", () => {
+  it("renders setup wizard header, title, and tabset", async () => {
     const element = createElement("c-agent-assist-setup-wizard", {
       is: AgentAssistSetupWizard
     });
 
     document.body.appendChild(element);
 
-    return Promise.resolve().then(() => {
-      const header = element.shadowRoot.querySelector(".wizard-header-clean");
-      expect(header).not.toBeNull();
-      const tabset = element.shadowRoot.querySelector("lightning-tabset");
-      expect(tabset).not.toBeNull();
-    });
+    const header = element.shadowRoot.querySelector(".wizard-header-clean");
+    expect(header).not.toBeNull();
+    const title = element.shadowRoot.querySelector(".header-title");
+    expect(title.textContent).toBe("Setup Wizard");
+    const tabset = element.shadowRoot.querySelector("lightning-tabset");
+    expect(tabset).not.toBeNull();
   });
 
-  it("renders Client Credentials User combobox", () => {
+  it("populates active users picklist when getActiveUsers emits data", async () => {
     const element = createElement("c-agent-assist-setup-wizard", {
       is: AgentAssistSetupWizard
     });
 
     document.body.appendChild(element);
 
-    return Promise.resolve().then(() => {
-      const comboboxes =
-        element.shadowRoot.querySelectorAll("lightning-combobox");
-      expect(comboboxes.length).toBeGreaterThan(0);
+    getActiveUsers.emit([
+      { label: "Alex Rivera (test-agent@example.com)", value: "005xx000001" }
+    ]);
+
+    await Promise.resolve();
+
+    const comboboxes =
+      element.shadowRoot.querySelectorAll("lightning-combobox");
+    expect(comboboxes.length).toBeGreaterThan(0);
+  });
+
+  it("evaluates healthy diagnostics and displays OK status pills", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
     });
+
+    document.body.appendChild(element);
+
+    getOrgDiagnostics.emit(MOCK_HEALTHY_DIAGNOSTICS);
+    await Promise.resolve();
+
+    const passPills = element.shadowRoot.querySelectorAll(".status-pill_pass");
+    expect(passPills.length).toBeGreaterThan(0);
+    expect(passPills[0].textContent).toContain("OK");
+  });
+
+  it("evaluates warning diagnostics and renders Attention Needed pills", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+
+    getOrgDiagnostics.emit(MOCK_WARNING_DIAGNOSTICS);
+    await Promise.resolve();
+
+    const warnPills = element.shadowRoot.querySelectorAll(".status-pill_warn");
+    expect(warnPills.length).toBeGreaterThan(0);
+    expect(warnPills[0].textContent).toContain("Attention Needed");
+  });
+
+  it("evaluates failed diagnostics and renders Action Required pills with error box", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+
+    getOrgDiagnostics.emit(MOCK_FAIL_DIAGNOSTICS);
+    await Promise.resolve();
+
+    const failPills = element.shadowRoot.querySelectorAll(".status-pill_fail");
+    expect(failPills.length).toBeGreaterThan(0);
+    expect(failPills[0].textContent).toContain("Action Required");
+
+    const errorBox = element.shadowRoot.querySelector(".diag-error-box");
+    expect(errorBox).not.toBeNull();
+    expect(errorBox.textContent).toContain(
+      "Static Resource 'ui_modules' zip archive is missing."
+    );
+  });
+
+  it("handles empty or errored diagnostics gracefully", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+
+    getOrgDiagnostics.error(new Error("Apex query error"));
+    await Promise.resolve();
+
+    const failPills = element.shadowRoot.querySelectorAll(".status-pill_fail");
+    expect(failPills.length).toBeGreaterThan(0);
   });
 });

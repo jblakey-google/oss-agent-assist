@@ -22,7 +22,6 @@ import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getR
 
 // Static Resources
 import ui_modules from "@salesforce/resourceUrl/ui_modules";
-import google_logo from "@salesforce/resourceUrl/google_logo";
 
 // Platform Services & Config
 import BasePlatformService from "./platformServices/BasePlatformService";
@@ -61,7 +60,6 @@ export default class AgentAssistContainer extends LightningElement {
   _heightApplied = false;
   tokenRefreshInterval = null;
   conversationNamePollingInterval = null;
-  googleLogoUrl = google_logo;
 
   @wire(MessageContext) messageContext;
   @wire(getRecord, { recordId: "$recordId", fields: ["Contact.Phone"] })

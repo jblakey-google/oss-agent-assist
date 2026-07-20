@@ -28,7 +28,7 @@ public without sharing class AgentAssistConfigController {
     public String title { get; set; }
     @AuraEnabled
     public String endpointUrl { get; set; }
-    
+
     // Container Schema Fields
     @AuraEnabled
     public String conversationProfile { get; set; }
@@ -54,7 +54,7 @@ public without sharing class AgentAssistConfigController {
     public Boolean showCorrectnessFeedback { get; set; }
     @AuraEnabled
     public String disabledFeatures { get; set; }
-    
+
     // Companion Agent Schema Fields
     @AuraEnabled
     public String modelName { get; set; }
@@ -62,7 +62,7 @@ public without sharing class AgentAssistConfigController {
     public String welcomeMessage { get; set; }
     @AuraEnabled
     public Boolean enableAutonomousActions { get; set; }
-    
+
     // Shared / System Fields
     @AuraEnabled
     public Boolean isActive { get; set; }
@@ -89,7 +89,7 @@ public without sharing class AgentAssistConfigController {
     result.profileType = 'Container';
     result.title = 'Google Cloud Agent Assist';
     result.endpointUrl = 'https://api.agentassist.example.com/v1';
-    
+
     // Container Defaults
     result.conversationProfile = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}';
     result.channel = 'chat';
@@ -103,7 +103,7 @@ public without sharing class AgentAssistConfigController {
     result.showHeader = false;
     result.showCorrectnessFeedback = false;
     result.disabledFeatures = '';
-    
+
     // Companion Agent Defaults
     result.modelName = 'gemini-1.5-pro';
     result.welcomeMessage = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?';
@@ -161,7 +161,7 @@ public without sharing class AgentAssistConfigController {
         if (String.isNotBlank(cfg.Endpoint_URL__c)) {
           result.endpointUrl = cfg.Endpoint_URL__c;
         }
-        
+
         // Populate Container Schema Fields
         if (String.isNotBlank(cfg.Conversation_Profile__c)) {
           result.conversationProfile = cfg.Conversation_Profile__c;
@@ -413,20 +413,764 @@ public without sharing class AgentAssistConfigController {
     List<Map<String, String>> options = new List<Map<String, String>>();
     try {
       for (User u : [
-        SELECT Id, Name, Username 
-        FROM User 
-        WHERE IsActive = TRUE 
-        ORDER BY Name ASC 
+        SELECT Id, Name, Username
+        FROM User
+        WHERE IsActive = TRUE
+        ORDER BY Name ASC
         LIMIT 1000
       ]) {
-        options.add(new Map<String, String>{
-          'label' => u.Name + ' (' + u.Username + ')',
-          'value' => u.Username
-        });
+        options.add(
+          new Map<String, String>{
+            'label' => u.Name +
+            ' (' +
+            u.Username +
+            ')',
+            'value' => u.Username
+          }
+        );
       }
     } catch (Exception ex) {
       // Return empty list if user cannot query User object
     }
     return options;
+  }
+
+  public class DiagnosticItemDetail {
+    @AuraEnabled
+    public String id { get; set; }
+    @AuraEnabled
+    public String label { get; set; }
+    @AuraEnabled
+    public String subLabel { get; set; }
+    @AuraEnabled
+    public String status { get; set; } // 'pass', 'fail', 'warning'
+    @AuraEnabled
+    public String errorMessage { get; set; }
+    @AuraEnabled
+    public Integer totalCount { get; set; }
+    @AuraEnabled
+    public String setupUrl { get; set; }
+    @AuraEnabled
+    public List<String> assignees { get; set; }
+
+    public DiagnosticItemDetail() {
+      this(null, null, null, 'pass', null, new List<String>(), 0, null);
+    }
+
+    public DiagnosticItemDetail(
+      String id,
+      String label,
+      String subLabel,
+      String status,
+      String errorMessage,
+      List<String> assignees
+    ) {
+      this(id, label, subLabel, status, errorMessage, assignees, null, null);
+    }
+
+    public DiagnosticItemDetail(
+      String id,
+      String label,
+      String subLabel,
+      String status,
+      String errorMessage,
+      List<String> assignees,
+      Integer totalCount
+    ) {
+      this(
+        id,
+        label,
+        subLabel,
+        status,
+        errorMessage,
+        assignees,
+        totalCount,
+        null
+      );
+    }
+
+    public DiagnosticItemDetail(
+      String id,
+      String label,
+      String subLabel,
+      String status,
+      String errorMessage,
+      List<String> assignees,
+      Integer totalCount,
+      String setupUrl
+    ) {
+      this.id = id;
+      this.label = label;
+      this.subLabel = subLabel;
+      this.status = status != null ? status : 'pass';
+      this.errorMessage = errorMessage;
+      this.assignees = assignees != null ? assignees : new List<String>();
+      this.totalCount = totalCount != null ? totalCount : this.assignees.size();
+      this.setupUrl = setupUrl;
+    }
+  }
+
+  public class DiagnosticSection {
+    @AuraEnabled
+    public String id { get; set; }
+    @AuraEnabled
+    public String title { get; set; }
+    @AuraEnabled
+    public String subtitle { get; set; }
+    @AuraEnabled
+    public String iconName { get; set; }
+    @AuraEnabled
+    public String statusBadge { get; set; } // 'OK', 'Action Required', 'Attention Needed'
+    @AuraEnabled
+    public String badgeVariant { get; set; } // 'success', 'destructive', 'warning'
+    @AuraEnabled
+    public String setupUrl { get; set; }
+    @AuraEnabled
+    public String setupUrlLabel { get; set; }
+    @AuraEnabled
+    public List<DiagnosticItemDetail> items { get; set; }
+
+    public DiagnosticSection() {
+      this.items = new List<DiagnosticItemDetail>();
+      this.badgeVariant = 'success';
+      this.statusBadge = 'OK';
+    }
+  }
+
+  public class OrgDiagnosticsWrapper {
+    @AuraEnabled
+    public List<DiagnosticSection> sections { get; set; }
+    @AuraEnabled
+    public Boolean isHealthy { get; set; }
+    @AuraEnabled
+    public Integer passCount { get; set; }
+    @AuraEnabled
+    public Integer failCount { get; set; }
+    @AuraEnabled
+    public Integer warningCount { get; set; }
+    @AuraEnabled
+    public String lastRunTime { get; set; }
+    @AuraEnabled
+    public Integer activeProfilesCount { get; set; }
+
+    public OrgDiagnosticsWrapper() {
+      this.sections = new List<DiagnosticSection>();
+      this.isHealthy = true;
+      this.passCount = 0;
+      this.failCount = 0;
+      this.warningCount = 0;
+      this.activeProfilesCount = 0;
+    }
+  }
+
+  /**
+   * Retrieves comprehensive org diagnostics with itemized health status indicators for instrument panel.
+   */
+  @AuraEnabled(cacheable=true)
+  public static OrgDiagnosticsWrapper getOrgDiagnostics() {
+    OrgDiagnosticsWrapper wrapper = new OrgDiagnosticsWrapper();
+    wrapper.lastRunTime = Datetime.now().format('yyyy-MM-dd HH:mm:ss');
+
+    // 1. UI Connector & Network Endpoints
+    DiagnosticSection uiConnSection = new DiagnosticSection();
+    uiConnSection.id = 'ui_connector';
+    uiConnSection.title = 'UI Connector & Network Endpoints';
+    uiConnSection.subtitle = 'Verify HTTPS, WebSocket, and API allowlists in Trusted URLs.';
+    uiConnSection.iconName = 'utility:connected_apps';
+    uiConnSection.setupUrl = '/lightning/setup/SecurityCspTrustedSite/home';
+    uiConnSection.setupUrlLabel = 'Trusted URLs';
+
+    Map<String, CspTrustedSite> cspMap = new Map<String, CspTrustedSite>();
+    try {
+      for (CspTrustedSite csp : [
+        SELECT Id, DeveloperName, EndpointUrl, IsActive
+        FROM CspTrustedSite
+        LIMIT 50
+      ]) {
+        cspMap.put(csp.DeveloperName, csp);
+      }
+    } catch (Exception ex) {
+    }
+
+    // Check HTTPS Cloud Run
+    if (
+      cspMap.containsKey('cloud_run_https') &&
+      cspMap.get('cloud_run_https').IsActive
+    ) {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-https',
+          'Cloud Run HTTPS Endpoint (cloud_run_https)',
+          'Allowlisted in Trusted URLs: ' +
+          cspMap.get('cloud_run_https').EndpointUrl,
+          'pass',
+          null,
+          null,
+          1
+        )
+      );
+    } else {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-https',
+          'Cloud Run HTTPS Endpoint (cloud_run_https)',
+          'Missing or inactive Trusted URL entry.',
+          'fail',
+          'Trusted URL "cloud_run_https" (https://*.run.app) is missing or inactive in Setup > Security > Trusted URLs.',
+          null,
+          0
+        )
+      );
+    }
+
+    // Check WSS Cloud Run
+    if (
+      cspMap.containsKey('cloud_run_wss') &&
+      cspMap.get('cloud_run_wss').IsActive
+    ) {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-wss',
+          'Cloud Run WebSocket Streaming (cloud_run_wss)',
+          'Allowlisted in Trusted URLs: ' +
+          cspMap.get('cloud_run_wss').EndpointUrl,
+          'pass',
+          null,
+          null,
+          1
+        )
+      );
+    } else {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-wss',
+          'Cloud Run WebSocket Streaming (cloud_run_wss)',
+          'Missing or inactive Trusted URL entry.',
+          'fail',
+          'Trusted URL "cloud_run_wss" (wss://*.run.app) is missing or inactive in Setup > Security > Trusted URLs.',
+          null,
+          0
+        )
+      );
+    }
+
+    // Check Google APIs
+    if (cspMap.containsKey('googleapi') && cspMap.get('googleapi').IsActive) {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-gapi',
+          'Google Cloud APIs Allowlist (googleapi)',
+          'Allowlisted in Trusted URLs: ' + cspMap.get('googleapi').EndpointUrl,
+          'pass',
+          null,
+          null,
+          1
+        )
+      );
+    } else {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-gapi',
+          'Google Cloud APIs Allowlist (googleapi)',
+          'Missing or inactive Trusted URL entry.',
+          'fail',
+          'Trusted URL "googleapi" (https://*.googleapis.com) is missing or inactive in Setup > Security > Trusted URLs.',
+          null,
+          0
+        )
+      );
+    }
+
+    // Check GStatic CDN
+    if (cspMap.containsKey('gstatic') && cspMap.get('gstatic').IsActive) {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-gstatic',
+          'Google Static UI Module CDN (gstatic)',
+          'Allowlisted in Trusted URLs: ' + cspMap.get('gstatic').EndpointUrl,
+          'pass',
+          null,
+          null,
+          1
+        )
+      );
+    } else {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-gstatic',
+          'Google Static UI Module CDN (gstatic)',
+          'Missing or inactive Trusted URL entry.',
+          'fail',
+          'Trusted URL "gstatic" (https://www.gstatic.com) is missing or inactive in Setup > Security > Trusted URLs.',
+          null,
+          0
+        )
+      );
+    }
+
+    // Check Twilio Flex Integration
+    if (
+      cspMap.containsKey('twilio_flex') && cspMap.get('twilio_flex').IsActive
+    ) {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-twilio',
+          'Twilio Flex Integration Allowlist (twilio_flex)',
+          'Allowlisted in Trusted URLs: ' +
+          cspMap.get('twilio_flex').EndpointUrl,
+          'pass',
+          null,
+          null,
+          1
+        )
+      );
+    } else {
+      uiConnSection.items.add(
+        new DiagnosticItemDetail(
+          'check-ui-twilio',
+          'Twilio Flex Integration Allowlist (twilio_flex)',
+          'Missing or inactive Trusted URL entry.',
+          'fail',
+          'Trusted URL "twilio_flex" (https://flex.twilio.com) is missing or inactive in Setup > Security > Trusted URLs.',
+          null,
+          0
+        )
+      );
+    }
+    wrapper.sections.add(uiConnSection);
+
+    // 2. Authentication & Security Tokens
+    DiagnosticSection authSection = new DiagnosticSection();
+    authSection.id = 'auth_tokens';
+    authSection.title = 'Authentication & Security Tokens';
+    authSection.subtitle = 'Enumerate administrator and agent permission sets and user assignees.';
+    authSection.iconName = 'utility:key';
+    authSection.setupUrl = '/lightning/setup/PermSets/home';
+    authSection.setupUrlLabel = 'Permission Sets';
+
+    Map<String, PermissionSet> permMap = new Map<String, PermissionSet>();
+    try {
+      for (PermissionSet ps : [
+        SELECT
+          Id,
+          Name,
+          Label,
+          Description,
+          (
+            SELECT Assignee.Name, Assignee.Username
+            FROM Assignments
+            WHERE Assignee.IsActive = TRUE
+            LIMIT 10
+          )
+        FROM PermissionSet
+        WHERE
+          Name IN ('Agent_Assist_Admin', 'Messaging_Agent')
+          OR Name LIKE '%Agent_Assist%'
+      ]) {
+        permMap.put(ps.Name, ps);
+      }
+    } catch (Exception ex) {
+    }
+
+    // Check Agent_Assist_Admin
+    if (permMap.containsKey('Agent_Assist_Admin')) {
+      PermissionSet ps = permMap.get('Agent_Assist_Admin');
+      List<String> assignees = new List<String>();
+      Integer totalAssigned = 0;
+      try {
+        totalAssigned = [
+          SELECT COUNT()
+          FROM PermissionSetAssignment
+          WHERE PermissionSetId = :ps.Id AND Assignee.IsActive = TRUE
+        ];
+      } catch (Exception ex) {
+      }
+
+      if (ps.Assignments != null) {
+        for (PermissionSetAssignment psa : ps.Assignments) {
+          if (psa.Assignee != null) {
+            assignees.add(
+              psa.Assignee.Name + ' (' + psa.Assignee.Username + ')'
+            );
+          }
+        }
+      }
+      authSection.items.add(
+        new DiagnosticItemDetail(
+          'check-perm-admin',
+          'Agent Assist Administrator (Agent_Assist_Admin)',
+          'Administrative permission set deployed (' +
+            totalAssigned +
+            ' active user(s) assigned).',
+          'pass',
+          null,
+          assignees,
+          totalAssigned,
+          '/lightning/setup/PermSets/home'
+        )
+      );
+    } else {
+      authSection.items.add(
+        new DiagnosticItemDetail(
+          'check-perm-admin',
+          'Agent Assist Administrator (Agent_Assist_Admin)',
+          'Permission set missing from org metadata.',
+          'fail',
+          'Permission Set "Agent_Assist_Admin" is not deployed in this Salesforce org.',
+          null,
+          0,
+          '/lightning/setup/PermSets/home'
+        )
+      );
+    }
+
+    // Check Messaging_Agent
+    if (permMap.containsKey('Messaging_Agent')) {
+      PermissionSet ps = permMap.get('Messaging_Agent');
+      List<String> assignees = new List<String>();
+      Integer totalAssigned = 0;
+      try {
+        totalAssigned = [
+          SELECT COUNT()
+          FROM PermissionSetAssignment
+          WHERE PermissionSetId = :ps.Id AND Assignee.IsActive = TRUE
+        ];
+      } catch (Exception ex) {
+      }
+
+      if (ps.Assignments != null) {
+        for (PermissionSetAssignment psa : ps.Assignments) {
+          if (psa.Assignee != null) {
+            assignees.add(
+              psa.Assignee.Name + ' (' + psa.Assignee.Username + ')'
+            );
+          }
+        }
+      }
+      authSection.items.add(
+        new DiagnosticItemDetail(
+          'check-perm-agent',
+          'Messaging Agent Permission Set (Messaging_Agent)',
+          'Contact center agent permission set deployed (' +
+            totalAssigned +
+            ' active user(s) assigned).',
+          'pass',
+          null,
+          assignees,
+          totalAssigned,
+          '/lightning/setup/PermSets/home'
+        )
+      );
+    } else {
+      authSection.items.add(
+        new DiagnosticItemDetail(
+          'check-perm-agent',
+          'Messaging Agent Permission Set (Messaging_Agent)',
+          'Optional messaging permission set not deployed.',
+          'warning',
+          'Permission Set "Messaging_Agent" is not present.',
+          null,
+          0,
+          '/lightning/setup/PermSets/home'
+        )
+      );
+    }
+    wrapper.sections.add(authSection);
+
+    // 3. Static Resources & UI Modules
+    DiagnosticSection srSection = new DiagnosticSection();
+    srSection.id = 'static_resources';
+    srSection.title = 'Static Resources & UI Module Bundles';
+    srSection.subtitle = 'Verify static resource packages for container, transcript, and asset bundles.';
+    srSection.iconName = 'utility:file';
+    srSection.setupUrl = '/lightning/setup/StaticResources/home';
+    srSection.setupUrlLabel = 'Static Resources';
+
+    Map<String, StaticResource> srMap = new Map<String, StaticResource>();
+    try {
+      for (StaticResource sr : [
+        SELECT Id, Name, ContentType, BodyLength
+        FROM StaticResource
+        WHERE Name = 'ui_modules'
+      ]) {
+        srMap.put(sr.Name, sr);
+      }
+    } catch (Exception ex) {
+    }
+
+    // Check ui_modules.zip
+    if (srMap.containsKey('ui_modules')) {
+      StaticResource sr = srMap.get('ui_modules');
+      String sizeStr = sr.BodyLength != null
+        ? (sr.BodyLength / 1024) + ' KB'
+        : 'N/A';
+      srSection.items.add(
+        new DiagnosticItemDetail(
+          'check-sr-modules',
+          'UI Modules Bundle (ui_modules.zip)',
+          'Verified JavaScript bundle (container.js, transcript.js, common.js, companion_agent.js). Size: ' +
+          sizeStr,
+          'pass',
+          null,
+          null,
+          1,
+          '/lightning/setup/StaticResources/home'
+        )
+      );
+    } else {
+      srSection.items.add(
+        new DiagnosticItemDetail(
+          'check-sr-modules',
+          'UI Modules Bundle (ui_modules.zip)',
+          'Missing static resource archive.',
+          'fail',
+          'Static Resource "ui_modules" zip archive is missing in Setup > Custom Code > Static Resources.',
+          null,
+          0,
+          '/lightning/setup/StaticResources/home'
+        )
+      );
+    }
+    wrapper.sections.add(srSection);
+
+    // 4. Omni-Channel Presence & Routing
+    DiagnosticSection omniSection = new DiagnosticSection();
+    omniSection.id = 'omnichannel';
+    omniSection.title = 'Omni-Channel Presence & Routing';
+    omniSection.subtitle = 'Presence statuses and queue routing configurations for agent dispatch.';
+    omniSection.iconName = 'utility:user';
+    omniSection.setupUrl = '/lightning/setup/ServicePresenceStatusSettings/home';
+    omniSection.setupUrlLabel = 'Omni-Channel';
+
+    Map<String, SObject> presenceMap = new Map<String, SObject>();
+    try {
+      for (
+        SObject st : Database.query(
+          'SELECT Id, DeveloperName, MasterLabel FROM ServicePresenceStatus WHERE DeveloperName IN (\'Online_Messaging\', \'Busy\')'
+        )
+      ) {
+        presenceMap.put((String) st.get('DeveloperName'), st);
+      }
+    } catch (Exception ex) {
+    }
+
+    // Check Online_Messaging Presence Status
+    if (presenceMap.containsKey('Online_Messaging')) {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-presence-messaging',
+          'Online Messaging Status (Online_Messaging)',
+          'Deployed Omni-Channel presence status is active in org.',
+          'pass',
+          null,
+          null,
+          1,
+          '/lightning/setup/ServicePresenceStatusSettings/home'
+        )
+      );
+    } else {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-presence-messaging',
+          'Online Messaging Status (Online_Messaging)',
+          'Deployed presence status not found.',
+          'warning',
+          'Presence Status "Online_Messaging" is not present. If you use a custom presence status for agent routing, you may safely ignore this warning.',
+          null,
+          0,
+          '/lightning/setup/ServicePresenceStatusSettings/home'
+        )
+      );
+    }
+
+    // Check Busy Presence Status
+    if (presenceMap.containsKey('Busy')) {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-presence-busy',
+          'Busy Presence Status (Busy)',
+          'Deployed Omni-Channel presence status is active in org.',
+          'pass',
+          null,
+          null,
+          1,
+          '/lightning/setup/ServicePresenceStatusSettings/home'
+        )
+      );
+    } else {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-presence-busy',
+          'Busy Presence Status (Busy)',
+          'Deployed presence status not found.',
+          'warning',
+          'Presence Status "Busy" is not present. If you use custom busy statuses, you may safely ignore this warning.',
+          null,
+          0,
+          '/lightning/setup/ServicePresenceStatusSettings/home'
+        )
+      );
+    }
+
+    // Check Messaging_Routing_Configuration
+    Boolean hasQrc = false;
+    try {
+      List<SObject> qrcList = Database.query(
+        'SELECT Id, DeveloperName, MasterLabel FROM QueueRoutingConfig WHERE DeveloperName = \'Messaging_Routing_Configuration\' LIMIT 1'
+      );
+      hasQrc = !qrcList.isEmpty();
+    } catch (Exception ex) {
+    }
+
+    if (hasQrc) {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-qrc-messaging',
+          'Messaging Routing Config (Messaging_Routing_Configuration)',
+          'Deployed Omni-Channel routing configuration active.',
+          'pass',
+          null,
+          null,
+          1,
+          '/lightning/setup/QueueRoutingConfigSettings/home'
+        )
+      );
+    } else {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-qrc-messaging',
+          'Messaging Routing Config (Messaging_Routing_Configuration)',
+          'Deployed routing configuration not found.',
+          'warning',
+          'Routing Configuration "Messaging_Routing_Configuration" is not present. If your org routes messaging through a custom routing config, you may safely ignore this warning.',
+          null,
+          0,
+          '/lightning/setup/QueueRoutingConfigSettings/home'
+        )
+      );
+    }
+
+    // Check Messaging_Queue
+    Boolean hasQueue = false;
+    try {
+      List<Group> queues = [
+        SELECT Id, Name, DeveloperName
+        FROM Group
+        WHERE Type = 'Queue' AND DeveloperName = 'Messaging_Queue'
+        LIMIT 1
+      ];
+      hasQueue = !queues.isEmpty();
+    } catch (Exception ex) {
+    }
+
+    if (hasQueue) {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-queues-messaging',
+          'Messaging Queue (Messaging_Queue)',
+          'Deployed Omni-Channel messaging queue is active in org.',
+          'pass',
+          null,
+          null,
+          1,
+          '/lightning/setup/Queues/home'
+        )
+      );
+    } else {
+      omniSection.items.add(
+        new DiagnosticItemDetail(
+          'check-queues-messaging',
+          'Messaging Queue (Messaging_Queue)',
+          'Deployed queue not found in org.',
+          'warning',
+          'Queue "Messaging_Queue" is not present. If your org routes messaging through a custom queue, you may safely ignore this warning.',
+          null,
+          0,
+          '/lightning/setup/Queues/home'
+        )
+      );
+    }
+    wrapper.sections.add(omniSection);
+
+    // 5. Custom Metadata Objects & Config Database
+    DiagnosticSection dbSection = new DiagnosticSection();
+    dbSection.id = 'schema';
+    dbSection.title = 'Custom Metadata Objects & Schemas';
+    dbSection.subtitle = 'Agent_Assist_Config__c database storage and active profile records.';
+    dbSection.iconName = 'utility:database';
+
+    try {
+      Integer count = [
+        SELECT COUNT()
+        FROM Agent_Assist_Config__c
+        WHERE Is_Active__c = TRUE
+      ];
+      wrapper.activeProfilesCount = count;
+      if (count > 0) {
+        dbSection.items.add(
+          new DiagnosticItemDetail(
+            'check-db-schema',
+            'Agent_Assist_Config__c Custom Object',
+            'Active schema storing ' + count + ' configuration profile(s).',
+            'pass',
+            null,
+            null
+          )
+        );
+      } else {
+        dbSection.items.add(
+          new DiagnosticItemDetail(
+            'check-db-schema',
+            'Agent_Assist_Config__c Custom Object',
+            'Schema active but 0 configuration profiles saved in DB.',
+            'warning',
+            'No active Agent_Assist_Config__c records found.',
+            null
+          )
+        );
+      }
+    } catch (Exception ex) {
+      dbSection.items.add(
+        new DiagnosticItemDetail(
+          'check-db-schema',
+          'Agent_Assist_Config__c Custom Object',
+          'Custom Object schema query failed.',
+          'fail',
+          'Agent_Assist_Config__c object is missing or unreadable.',
+          null
+        )
+      );
+    }
+    wrapper.sections.add(dbSection);
+
+    // Compute Section status badges & Wrapper counters
+    for (DiagnosticSection sec : wrapper.sections) {
+      Integer secFails = 0;
+      Integer secWarns = 0;
+      for (DiagnosticItemDetail item : sec.items) {
+        if (item.status == 'fail') {
+          secFails++;
+          wrapper.failCount++;
+        } else if (item.status == 'warning') {
+          secWarns++;
+          wrapper.warningCount++;
+        } else {
+          wrapper.passCount++;
+        }
+      }
+      if (secFails > 0) {
+        sec.statusBadge = 'Action Required (' + secFails + ' Failed)';
+        sec.badgeVariant = 'destructive';
+      } else if (secWarns > 0) {
+        sec.statusBadge = 'Attention Needed';
+        sec.badgeVariant = 'warning';
+      } else {
+        sec.statusBadge = 'OK';
+        sec.badgeVariant = 'success';
+      }
+    }
+
+    wrapper.isHealthy = (wrapper.failCount == 0);
+    return wrapper;
   }
 }

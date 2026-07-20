@@ -18,6 +18,26 @@
 private class AgentAssistConfigControllerTest {
   @TestSetup
   static void setupTestData() {
+    List<PermissionSetAssignment> existing = [
+      SELECT Id
+      FROM PermissionSetAssignment
+      WHERE
+        AssigneeId = :UserInfo.getUserId()
+        AND PermissionSet.Name = 'Agent_Assist_Admin'
+    ];
+    if (existing.isEmpty()) {
+      PermissionSet ps = [
+        SELECT Id
+        FROM PermissionSet
+        WHERE Name = 'Agent_Assist_Admin'
+        LIMIT 1
+      ];
+      insert new PermissionSetAssignment(
+        AssigneeId = UserInfo.getUserId(),
+        PermissionSetId = ps.Id
+      );
+    }
+
     List<Agent_Assist_Config__c> testConfigs = new List<Agent_Assist_Config__c>{
       new Agent_Assist_Config__c(
         Name = 'Default Profile',
@@ -191,5 +211,64 @@ private class AgentAssistConfigControllerTest {
     Test.stopTest();
 
     Assert.isNotNull(users, 'Active users list should not be null');
+  }
+
+  @IsTest
+  static void testGetOrgDiagnostics() {
+    Test.startTest();
+    AgentAssistConfigController.OrgDiagnosticsWrapper diag = AgentAssistConfigController.getOrgDiagnostics();
+
+    // Model unit test for constructor overloads
+    AgentAssistConfigController.DiagnosticItemDetail item1 = new AgentAssistConfigController.DiagnosticItemDetail();
+    AgentAssistConfigController.DiagnosticItemDetail item2 = new AgentAssistConfigController.DiagnosticItemDetail(
+      'id1',
+      'lbl',
+      'sub',
+      'pass',
+      'err',
+      new List<String>{ 'user1' }
+    );
+    AgentAssistConfigController.DiagnosticItemDetail item3 = new AgentAssistConfigController.DiagnosticItemDetail(
+      'id2',
+      'lbl',
+      'sub',
+      'warning',
+      'err',
+      new List<String>{ 'user1' },
+      5
+    );
+    AgentAssistConfigController.DiagnosticItemDetail item4 = new AgentAssistConfigController.DiagnosticItemDetail(
+      'id3',
+      'lbl',
+      'sub',
+      'fail',
+      'err',
+      new List<String>{ 'user1' },
+      10,
+      '/url'
+    );
+
+    AgentAssistConfigController.DiagnosticSection sec = new AgentAssistConfigController.DiagnosticSection();
+    Test.stopTest();
+
+    Assert.isNotNull(diag, 'Diagnostics wrapper should not be null');
+    Assert.isTrue(
+      diag.sections.size() >= 5,
+      'Should return at least 5 diagnostic sections'
+    );
+    Assert.isTrue(diag.isHealthy, 'Org should be reported as healthy');
+    Assert.areEqual('pass', item1.status, 'Default status should be pass');
+    Assert.areEqual(
+      1,
+      item2.totalCount,
+      'Item2 should infer count from assignees list'
+    );
+    Assert.areEqual(5, item3.totalCount, 'Item3 should preserve custom count');
+    Assert.areEqual('/url', item4.setupUrl, 'Item4 should preserve setup URL');
+    Assert.areEqual(
+      'OK',
+      sec.statusBadge,
+      'Section default badge should be OK'
+    );
   }
 }
