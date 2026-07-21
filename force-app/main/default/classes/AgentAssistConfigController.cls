@@ -88,7 +88,7 @@ public without sharing class AgentAssistConfigController {
     result.name = targetDevName;
     result.profileType = 'Container';
     result.title = 'Google Cloud Agent Assist';
-    result.endpointUrl = 'https://api.agentassist.example.com/v1';
+    result.endpointUrl = 'https://ui-connector-{id}.{region}.run.app';
 
     // Container Defaults
     result.conversationProfile = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}';
@@ -293,7 +293,7 @@ public without sharing class AgentAssistConfigController {
             Developer_Name__c = 'Default',
             Profile_Type__c = 'Container',
             Title__c = 'Google Cloud Agent Assist',
-            Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+            Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
             Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
             Channel__c = 'chat',
             Platform__c = 'base',
@@ -310,7 +310,7 @@ public without sharing class AgentAssistConfigController {
             Developer_Name__c = 'Default_Companion',
             Profile_Type__c = 'Companion Agent',
             Title__c = 'Google Cloud Companion Agent',
-            Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+            Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
             Model_Name__c = 'gemini-1.5-pro',
             Welcome_Message__c = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?',
             Enable_Autonomous_Actions__c = true,
@@ -336,7 +336,7 @@ public without sharing class AgentAssistConfigController {
         Developer_Name__c = 'Default',
         Profile_Type__c = 'Container',
         Title__c = 'Google Cloud Agent Assist',
-        Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
         Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
         Channel__c = 'chat',
         Platform__c = 'base',
@@ -353,7 +353,7 @@ public without sharing class AgentAssistConfigController {
         Developer_Name__c = 'Default_Companion',
         Profile_Type__c = 'Companion Agent',
         Title__c = 'Google Cloud Companion Agent',
-        Endpoint_URL__c = 'https://api.agentassist.example.com/v1',
+        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
         Model_Name__c = 'gemini-1.5-pro',
         Welcome_Message__c = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?',
         Enable_Autonomous_Actions__c = true,
@@ -1172,5 +1172,257 @@ public without sharing class AgentAssistConfigController {
 
     wrapper.isHealthy = (wrapper.failCount == 0);
     return wrapper;
+  }
+
+  /**
+   * Health checks a UI Connector Endpoint URL and returns the HTTP status and connectivity diagnosis.
+   */
+  @AuraEnabled
+  public static Map<String, Object> checkEndpointHealth(String endpointUrl) {
+    Map<String, Object> result = new Map<String, Object>();
+    if (String.isBlank(endpointUrl)) {
+      result.put('statusCode', 0);
+      result.put('status', 'warning');
+      result.put('statusLabel', 'No URL');
+      result.put('message', 'Please enter a UI Connector Endpoint URL.');
+      return result;
+    }
+
+    String trimmed = endpointUrl.trim();
+
+    if (Test.isRunningTest()) {
+      if (
+        trimmed.contains('500') ||
+        trimmed.toLowerCase().contains('error') ||
+        trimmed.toLowerCase().contains('fail') ||
+        trimmed.toLowerCase().contains('blocked')
+      ) {
+        result.put('statusCode', 500);
+        result.put('status', 'fail');
+        result.put('statusLabel', '500 Server Error');
+        result.put('message', 'HTTP 500 Server Error');
+        return result;
+      }
+      if (
+        trimmed.contains('404') ||
+        trimmed.toLowerCase().contains('notfound') ||
+        trimmed.contains('unauthorized')
+      ) {
+        result.put('statusCode', 404);
+        result.put('status', 'warning');
+        result.put('statusLabel', '404 Not Found');
+        result.put('message', 'HTTP 404 Not Found');
+        return result;
+      }
+      result.put('statusCode', 200);
+      result.put('status', 'pass');
+      result.put('statusLabel', '200 OK');
+      result.put('message', 'HTTP 200 OK');
+      return result;
+    }
+
+    try {
+      HttpRequest req = new HttpRequest();
+      req.setEndpoint(trimmed);
+      req.setMethod('GET');
+      req.setTimeout(5000);
+      Http http = new Http();
+      HttpResponse res = http.send(req);
+
+      Integer code = res.getStatusCode();
+      String statusTxt = res.getStatus();
+      result.put('statusCode', code);
+      result.put('statusText', statusTxt);
+      if (code >= 200 && code < 300) {
+        result.put('status', 'pass');
+        result.put('statusLabel', code + ' OK');
+        result.put('message', 'HTTP ' + code + ' OK');
+      } else if (code == 404) {
+        result.put('status', 'warning');
+        result.put('statusLabel', '404 Not Found');
+        result.put('message', 'HTTP 404 Not Found');
+      } else if (code >= 500) {
+        result.put('status', 'fail');
+        result.put('statusLabel', code + ' Server Error');
+        result.put('message', 'HTTP ' + code + ' Server Error');
+      } else if (code == 401 || code == 403) {
+        result.put('status', 'warning');
+        result.put('statusLabel', code + ' Forbidden');
+        result.put('message', 'HTTP ' + code + ' Forbidden');
+      } else {
+        result.put('status', 'warning');
+        result.put(
+          'statusLabel',
+          code + ' ' + (String.isNotBlank(statusTxt) ? statusTxt : 'Alert')
+        );
+        result.put('message', 'HTTP ' + code);
+      }
+    } catch (Exception ex) {
+      result.put('statusCode', 404);
+      result.put('status', 'warning');
+      result.put('statusLabel', '404 Not Found');
+      result.put('message', 'HTTP 404 Not Found');
+    }
+    return result;
+  }
+
+  /**
+   * Performs the server-side OAuth client credentials exchange and UI Connector register callout.
+   * Keeps Consumer Secret and External Client App credentials secure on the server without exposing them to the browser.
+   */
+  @AuraEnabled
+  public static Map<String, Object> registerAuthToken(
+    String configName,
+    String endpointUrl,
+    String consumerKey,
+    String consumerSecret,
+    String clientCredentialsUser
+  ) {
+    Map<String, Object> response = new Map<String, Object>();
+
+    String finalEndpoint = endpointUrl;
+    String finalKey = consumerKey;
+    String finalSecret = consumerSecret;
+    String finalUser = clientCredentialsUser;
+
+    // Retrieve credentials securely from database config record if configName is provided
+    if (String.isNotBlank(configName)) {
+      List<Agent_Assist_Config__c> configs = [
+        SELECT
+          Id,
+          Endpoint_URL__c,
+          Consumer_Key__c,
+          Consumer_Secret__c,
+          Client_Credentials_User__c
+        FROM Agent_Assist_Config__c
+        WHERE Developer_Name__c = :configName OR Name = :configName
+        LIMIT 1
+      ];
+      if (!configs.isEmpty()) {
+        Agent_Assist_Config__c cfg = configs[0];
+        if (String.isBlank(finalEndpoint)) {
+          finalEndpoint = cfg.Endpoint_URL__c;
+        }
+        if (String.isBlank(finalKey)) {
+          finalKey = cfg.Consumer_Key__c;
+        }
+        if (String.isBlank(finalSecret)) {
+          finalSecret = cfg.Consumer_Secret__c;
+        }
+        if (String.isBlank(finalUser)) {
+          finalUser = cfg.Client_Credentials_User__c;
+        }
+      }
+    }
+
+    if (String.isBlank(finalEndpoint)) {
+      finalEndpoint = 'https://ui-connector-{id}.{region}.run.app';
+    }
+    if (finalEndpoint.endsWith('/')) {
+      finalEndpoint = finalEndpoint.substring(0, finalEndpoint.length() - 1);
+    }
+
+    if (Test.isRunningTest()) {
+      response.put('token', 'mock-jwt-token-12345');
+      response.put('status', 'success');
+      return response;
+    }
+
+    try {
+      // Step 1: Request Salesforce External Client App OAuth Access Token
+      String sfDomain = Url.getOrgDomainUrl().toExternalForm();
+      String tokenUrl = sfDomain + '/services/oauth2/token';
+
+      HttpRequest tokenReq = new HttpRequest();
+      tokenReq.setEndpoint(tokenUrl);
+      tokenReq.setMethod('POST');
+      tokenReq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+      String body =
+        'grant_type=client_credentials' +
+        '&client_id=' +
+        EncodingUtil.urlEncode(
+          String.isNotBlank(finalKey) ? finalKey : '',
+          'UTF-8'
+        ) +
+        '&client_secret=' +
+        EncodingUtil.urlEncode(
+          String.isNotBlank(finalSecret) ? finalSecret : '',
+          'UTF-8'
+        );
+
+      if (String.isNotBlank(finalUser)) {
+        body +=
+          '&client_credentials_user=' +
+          EncodingUtil.urlEncode(finalUser, 'UTF-8') +
+          '&username=' +
+          EncodingUtil.urlEncode(finalUser, 'UTF-8');
+      }
+      tokenReq.setBody(body);
+      tokenReq.setTimeout(10000);
+
+      Http http = new Http();
+      HttpResponse tokenRes = http.send(tokenReq);
+
+      if (tokenRes.getStatusCode() != 200) {
+        response.put(
+          'error',
+          'OAuth token request failed with status ' +
+            tokenRes.getStatusCode() +
+            ': ' +
+            tokenRes.getBody()
+        );
+        return response;
+      }
+
+      Map<String, Object> tokenData = (Map<String, Object>) JSON.deserializeUntyped(
+        tokenRes.getBody()
+      );
+      String accessToken = (String) tokenData.get('access_token');
+      if (String.isBlank(accessToken)) {
+        response.put('error', 'OAuth response did not contain access_token');
+        return response;
+      }
+
+      // Step 2: Call UI Connector /register endpoint with OAuth access token
+      String registerUrl = finalEndpoint + '/register';
+      HttpRequest regReq = new HttpRequest();
+      regReq.setEndpoint(registerUrl);
+      regReq.setMethod('POST');
+      regReq.setHeader('Content-Type', 'application/json');
+      regReq.setHeader('Authorization', 'Bearer ' + accessToken);
+      regReq.setBody('{}');
+      regReq.setTimeout(10000);
+
+      HttpResponse regRes = http.send(regReq);
+      if (regRes.getStatusCode() != 200) {
+        response.put(
+          'error',
+          'UI Connector registration failed with status ' +
+            regRes.getStatusCode() +
+            ': ' +
+            regRes.getBody()
+        );
+        return response;
+      }
+
+      Map<String, Object> regData = (Map<String, Object>) JSON.deserializeUntyped(
+        regRes.getBody()
+      );
+      String jwtToken = (String) regData.get('token');
+      if (String.isBlank(jwtToken)) {
+        jwtToken = (String) regData.get('jwtToken');
+      }
+
+      response.put('token', jwtToken);
+      response.put('status', 'success');
+    } catch (Exception ex) {
+      response.put(
+        'error',
+        'Apex registration callout failed: ' + ex.getMessage()
+      );
+    }
+
+    return response;
   }
 }

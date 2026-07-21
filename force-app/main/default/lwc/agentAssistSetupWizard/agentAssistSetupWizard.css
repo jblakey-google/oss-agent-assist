@@ -412,3 +412,54 @@
   color: #1a73e8;
   border: 1px solid #d2e3fc;
 }
+
+.schema-settings-box {
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  overflow: hidden;
+}
+
+.toggle-group-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.toggle-grid {
+  margin: 0 -8px;
+}
+
+.endpoint-label {
+  font-weight: 700;
+  color: #3e3e3c;
+  display: inline-flex;
+  align-items: center;
+}
+
+.deploy-doc-link {
+  font-weight: 400;
+  font-size: 11px;
+  color: #0176d3;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.deploy-doc-link:hover {
+  text-decoration: underline;
+  color: #014486;
+}
+
+.endpoint-msg-warn {
+  color: #b06000;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.endpoint-msg-fail {
+  color: #c5221f;
+  font-size: 11px;
+  margin-top: 4px;
+}

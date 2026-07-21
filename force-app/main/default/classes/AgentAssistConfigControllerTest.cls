@@ -44,7 +44,7 @@ private class AgentAssistConfigControllerTest {
         Developer_Name__c = 'Default',
         Profile_Type__c = 'Container',
         Title__c = 'Google Cloud Agent Assist',
-        Endpoint_URL__c = 'https://api.example.com/v1',
+        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
         Conversation_Profile__c = 'projects/test-proj/locations/global/conversationProfiles/cp-123',
         Channel__c = 'chat',
         Platform__c = 'base',
@@ -63,7 +63,7 @@ private class AgentAssistConfigControllerTest {
         Developer_Name__c = 'Default_Companion',
         Profile_Type__c = 'Companion Agent',
         Title__c = 'Google Cloud Companion Agent',
-        Endpoint_URL__c = 'https://api.example.com/v1',
+        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
         Model_Name__c = 'gemini-1.5-pro',
         Welcome_Message__c = 'Hello! I am your AI Companion Agent.',
         Enable_Autonomous_Actions__c = true,
@@ -270,5 +270,72 @@ private class AgentAssistConfigControllerTest {
       sec.statusBadge,
       'Section default badge should be OK'
     );
+  }
+
+  @IsTest
+  static void testCheckEndpointHealth() {
+    Test.startTest();
+    Map<String, Object> resEmpty = AgentAssistConfigController.checkEndpointHealth(
+      ''
+    );
+    Map<String, Object> res200 = AgentAssistConfigController.checkEndpointHealth(
+      'https://ui-connector-test.run.app'
+    );
+    Map<String, Object> res404 = AgentAssistConfigController.checkEndpointHealth(
+      'https://api.example.com/404'
+    );
+    Map<String, Object> res500 = AgentAssistConfigController.checkEndpointHealth(
+      'https://api.example.com/500'
+    );
+    Map<String, Object> resBlocked = AgentAssistConfigController.checkEndpointHealth(
+      'https://unauthorized-blocked-domain.com/endpoint'
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'warning',
+      resEmpty.get('status'),
+      'Empty endpoint should return warning'
+    );
+    Assert.areEqual(
+      'pass',
+      res200.get('status'),
+      '200 endpoint should return pass'
+    );
+    Assert.areEqual(
+      'warning',
+      res404.get('status'),
+      '404 endpoint should return warning'
+    );
+    Assert.areEqual(
+      'fail',
+      res500.get('status'),
+      '500 endpoint should return fail'
+    );
+    Assert.areEqual(
+      'fail',
+      resBlocked.get('status'),
+      'Blocked endpoint should return fail status'
+    );
+  }
+
+  @IsTest
+  static void testRegisterAuthToken() {
+    Test.startTest();
+    Map<String, Object> res = AgentAssistConfigController.registerAuthToken(
+      'Default',
+      'https://ui-connector-test.run.app',
+      'test-key',
+      'test-secret',
+      'test-user'
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'success',
+      res.get('status'),
+      'registerAuthToken should return success in test context'
+    );
+    Assert.isNotNull(res.get('token'), 'JWT token should be returned');
   }
 }

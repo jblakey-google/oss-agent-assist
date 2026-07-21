@@ -2,11 +2,11 @@
 <Queue xmlns="http://soap.sforce.com/2006/04/metadata">
     <doesIncludeBosses>false</doesIncludeBosses>
     <doesSendEmailToMembers>false</doesSendEmailToMembers>
-    <email>test-ndrit01d8gdf@example.com</email>
+    <email>test-bn6qeao6vtsm@example.com</email>
     <name>Messaging Queue</name>
     <queueMembers>
         <users>
-            <user>test-ndrit01d8gdf@example.com</user>
+            <user>test-bn6qeao6vtsm@example.com</user>
         </users>
     </queueMembers>
     <queueRoutingConfig>Messaging_Routing_Configuration</queueRoutingConfig>

@@ -19,6 +19,22 @@ import AgentAssistSetupWizard from "c/agentAssistSetupWizard";
 import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
 import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
+import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth",
+  () => {
+    return {
+      default: jest.fn().mockResolvedValue({
+        statusCode: 200,
+        status: "pass",
+        statusLabel: "200 OK",
+        message: "Endpoint is reachable and healthy (HTTP 200)."
+      })
+    };
+  },
+  { virtual: true }
+);
 
 jest.mock(
   "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics",
@@ -234,5 +250,66 @@ describe("c-agent-assist-setup-wizard", () => {
 
     const failPills = element.shadowRoot.querySelectorAll(".status-pill_fail");
     expect(failPills.length).toBeGreaterThan(0);
+  });
+
+  it("immediately health checks endpoint URL and renders connectivity indicator pill", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const label = element.shadowRoot.querySelector(".endpoint-label");
+    expect(label).not.toBeNull();
+    expect(label.textContent).toContain("UI Connector Endpoint URL");
+
+    const endpointPill = element.shadowRoot
+      .querySelector(".endpoint-label")
+      .parentElement.querySelector(".status-pill");
+    expect(endpointPill).not.toBeNull();
+    expect(endpointPill.textContent).toContain("200 OK");
+  });
+
+  it("renders 404 Not Found indicator pill when endpoint is unreachable or missing", async () => {
+    checkEndpointHealth.mockResolvedValueOnce({
+      statusCode: 404,
+      status: "warning",
+      statusLabel: "404 Not Found",
+      message: "HTTP 404 Not Found"
+    });
+
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const endpointPill = element.shadowRoot
+      .querySelector(".endpoint-label")
+      .parentElement.querySelector(".status-pill");
+    expect(endpointPill).not.toBeNull();
+    expect(endpointPill.textContent).toContain("404 Not Found");
+  });
+
+  it("renders container schema settings box with feature flags toggle group without negative margin blowout", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const schemaBox = element.shadowRoot.querySelector(".schema-settings-box");
+    expect(schemaBox).not.toBeNull();
+
+    const toggleGroup = element.shadowRoot.querySelector(".toggle-group-card");
+    expect(toggleGroup).not.toBeNull();
+
+    const toggles = toggleGroup.querySelectorAll("lightning-input");
+    expect(toggles.length).toBe(4);
   });
 });

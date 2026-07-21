@@ -69,7 +69,7 @@ export default class AgentAssistContainer extends LightningElement {
   @api get endpoint() {
     const ep =
       this.resolvedState?.endpointUrl ||
-      "https://api.agentassist.example.com/v1";
+      "https://ui-connector-{id}.{region}.run.app";
     return ep.endsWith("/") ? ep.slice(0, -1) : ep;
   }
   @api get conversationProfile() {

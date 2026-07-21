@@ -15,7 +15,7 @@
  */
 
 import BasePlatformHandler from "./BasePlatformHandler";
-import { loadScript } from "lightning/platformResourceLoader";
+import { getFieldValue } from "lightning/uiRecordApi";
 import {
   createMessageContext,
   publish,
@@ -23,9 +23,9 @@ import {
   unsubscribe,
   APPLICATION_SCOPE
 } from "lightning/messageService";
-import MSG_CHANNEL from "@salesforce/messageChannel/Five9VoiceMessageChannel__c";
 
-const five9ByotSdk = "/resource/Five9BYOT__five9ByotSdk";
+// Five9 BYOT Message Channel (defined as string to prevent static import errors when package is not installed)
+const MSG_CHANNEL = "Five9BYOT__Five9VoiceMessageChannel__c";
 
 // The maximum time (in seconds) to wait for the Five9 SDK to populate the sessionId before falling back to the SCV callId.
 const SESSION_ID_WAIT_TIMEOUT_SECONDS = 5;

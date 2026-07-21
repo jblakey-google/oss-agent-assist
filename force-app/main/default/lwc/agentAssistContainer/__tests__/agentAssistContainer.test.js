@@ -50,7 +50,7 @@ describe("c-agent-assist-container", () => {
       developerName: "Default",
       profileType: "Container",
       title: "Google Cloud Agent Assist",
-      endpointUrl: "https://api.example.com/v1",
+      endpointUrl: "https://ui-connector-{id}.{region}.run.app",
       conversationProfile: "projects/p/locations/l/conversationProfiles/cp",
       channel: "chat",
       platform: "messaging",

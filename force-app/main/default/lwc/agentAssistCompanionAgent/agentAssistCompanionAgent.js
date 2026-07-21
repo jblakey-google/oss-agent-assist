@@ -55,7 +55,7 @@ export default class AgentAssistCompanionAgent extends LightningElement {
         title: "Configuration Error",
         developerName: this.configName || "Default_Companion",
         profileType: "Companion Agent",
-        endpointUrl: "https://api.agentassist.example.com/v1",
+        endpointUrl: "https://ui-connector-{id}.{region}.run.app",
         modelName: "gemini-1.5-pro",
         welcomeMessage:
           "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -132,7 +132,7 @@ export default class AgentAssistCompanionAgent extends LightningElement {
   get resolvedEndpoint() {
     return (
       this.resolvedState?.endpointUrl ||
-      "https://api.agentassist.example.com/v1"
+      "https://ui-connector-{id}.{region}.run.app"
     );
   }
 

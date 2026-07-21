@@ -127,7 +127,7 @@ describe("BasePlatformService", () => {
       errorSpy.mockRestore();
     });
 
-    it("registers auth token successfully", async () => {
+    it("registers auth token successfully via Apex callout or browser fallback", async () => {
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -140,12 +140,10 @@ describe("BasePlatformService", () => {
 
       const result = await basePlatformService.registerAuthToken();
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(result).toBe("test-ui-connector-token");
     });
 
     it("handles OAuth token request failure", async () => {
-      // This test verifies that a failed OAuth token request is handled gracefully.
       global.fetch.mockResolvedValueOnce({
         ok: false,
         statusText: "OAuth failed"
@@ -153,13 +151,11 @@ describe("BasePlatformService", () => {
 
       const result = await basePlatformService.registerAuthToken();
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(result).toBeNull();
       expect(mockLwc.loadError).toBeInstanceOf(Error);
     });
 
     it("handles UI Connector registration failure", async () => {
-      // This test verifies that a failed UI Connector registration is handled gracefully.
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -172,7 +168,6 @@ describe("BasePlatformService", () => {
 
       const result = await basePlatformService.registerAuthToken();
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(result).toBeNull();
       expect(mockLwc.loadError).toBeInstanceOf(Error);
     });

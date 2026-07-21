@@ -6,5 +6,5 @@
     <label>Agent Assist LWC Auth Policy</label>
     <isClientCredentialsFlowEnabled>true</isClientCredentialsFlowEnabled>
     <clientCredentialsFlowUser
-  >test-ndrit01d8gdf@example.com</clientCredentialsFlowUser>
+  >test-bn6qeao6vtsm@example.com</clientCredentialsFlowUser>
 </ExtlClntAppOauthConfigurablePolicies>

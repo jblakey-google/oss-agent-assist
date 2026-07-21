@@ -86,10 +86,37 @@ export default class BasePlatformService {
   ////////////////////////////////////////////////////////////////////////////
 
   async registerAuthToken() {
+    try {
+      this.lwc.debugLog(
+        "Requesting UI Connector JWT token via secure Apex callout..."
+      );
+      const result = await registerAuthTokenApex({
+        configName: this.lwc.configName || "Default",
+        endpointUrl: this.lwc.endpoint || "",
+        consumerKey: this.lwc.consumerKey || "",
+        consumerSecret: this.lwc.consumerSecret || "",
+        clientCredentialsUser: this.lwc.clientCredentialsUser || ""
+      });
+
+      if (result && result.token) {
+        this.lwc.debugLog(
+          "UI Modules JWT Token successfully retrieved via Apex callout."
+        );
+        return result.token;
+      } else if (result && result.error) {
+        console.error("Apex registerAuthToken error:", result.error);
+        this.lwc.loadError = new Error(result.error);
+      }
+    } catch (err) {
+      console.error("Failed to execute Apex registerAuthToken callout:", err);
+      this.lwc.loadError = err;
+    }
+
+    // Direct browser fetch fallback (for local test/mock environments or if Apex callout is unconfigured)
     if (typeof fetch === "undefined") {
       return null;
     }
-    // Get a UI Connector auth token using a SF External Client App id token.
+
     const tokenParams = {
       grant_type: "client_credentials",
       client_id: this.lwc.consumerKey,
@@ -100,51 +127,52 @@ export default class BasePlatformService {
       tokenParams.username = this.lwc.clientCredentialsUser;
     }
 
-    const access_token = await fetch(
-      `/services/oauth2/token?` + new URLSearchParams(tokenParams)
-    )
-      .then((res) => {
-        if (!res.ok)
-          throw new Error(`OAuth token request failed: ${res.statusText}`);
-        return res.json();
-      })
-      .then((data) => data.access_token)
-      .catch((err) => {
-        console.error("Failed to register auth token:", err);
-        this.lwc.loadError = err;
-        return null;
-      });
-    this.lwc.debugLog(
-      `Salesforce External Client App OAuth Token successfully retrieved.`
-    );
+    try {
+      const access_token = await fetch(
+        `/services/oauth2/token?` + new URLSearchParams(tokenParams)
+      )
+        .then((res) => {
+          if (!res.ok)
+            throw new Error(`OAuth token request failed: ${res.statusText}`);
+          return res.json();
+        })
+        .then((data) => data.access_token)
+        .catch((err) => {
+          console.error("Failed to register auth token:", err);
+          this.lwc.loadError = err;
+          return null;
+        });
 
-    if (!access_token) {
+      if (!access_token) {
+        return null;
+      }
+
+      return await fetch(`${this.lwc.endpoint}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${access_token}`
+        }
+      })
+        .then((res) => {
+          if (!res.ok)
+            throw new Error(
+              `UI Connector registration failed: ${res.statusText}`
+            );
+          return res.json();
+        })
+        .then((data) => {
+          this.lwc.debugLog(`UI Modules JWT Token successfully retrieved.`);
+          return data.token;
+        })
+        .catch((err) => {
+          console.error("Failed to get UI Connector token:", err);
+          this.lwc.loadError = err;
+          return null;
+        });
+    } catch (fallbackErr) {
       return null;
     }
-
-    return await fetch(`${this.lwc.endpoint}/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${access_token}`
-      }
-    })
-      .then((res) => {
-        if (!res.ok)
-          throw new Error(
-            `UI Connector registration failed: ${res.statusText}`
-          );
-        return res.json();
-      })
-      .then((data) => {
-        this.lwc.debugLog(`UI Modules JWT Token successfully retrieved.`);
-        return data.token;
-      })
-      .catch((err) => {
-        console.error("Failed to get UI Connector token:", err);
-        this.lwc.loadError = err;
-        return null;
-      });
   }
 
   async checkAndRefreshToken() {

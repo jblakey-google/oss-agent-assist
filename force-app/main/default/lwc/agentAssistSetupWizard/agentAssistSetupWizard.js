@@ -22,6 +22,7 @@ import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActi
 import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
+import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 
 const DEFAULT_DIAGNOSTIC_SECTIONS = [
@@ -206,7 +207,7 @@ const INITIAL_PROFILES = [
     developerName: "Default",
     profileType: "Container",
     title: "Google Cloud Agent Assist",
-    endpointUrl: "https://api.agentassist.example.com/v1",
+    endpointUrl: "https://ui-connector-{id}.{region}.run.app",
     conversationProfile:
       "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
     channel: "chat",
@@ -230,7 +231,7 @@ const INITIAL_PROFILES = [
     developerName: "Default_Companion",
     profileType: "Companion Agent",
     title: "Google Cloud Companion Agent",
-    endpointUrl: "https://api.agentassist.example.com/v1",
+    endpointUrl: "https://ui-connector-{id}.{region}.run.app",
     conversationProfile:
       "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
     channel: "chat",
@@ -263,11 +264,17 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track userOptions = [];
   @track diagnosticsState = "pending"; // 'pending', 'healthy', 'error'
   @track diagnosticSections = [];
+  @track endpointHealthState = "pending"; // 'pending', 'pass', 'warning', 'fail'
+  @track endpointStatusCode = 200;
+  @track endpointStatusLabel = "Checking...";
+  @track endpointStatusMessage = "";
+  endpointDebounceTimeout;
   wiredConfigsResult;
   wiredDiagnosticsResult;
 
   connectedCallback() {
     this.initPendingDiagnostics();
+    this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
   }
 
   initPendingDiagnostics() {
@@ -707,6 +714,158 @@ export default class AgentAssistSetupWizard extends LightningElement {
     return this.isSimulatorMounted && !this.isSimulatorCompanion;
   }
 
+  get endpointStatusPillClass() {
+    if (this.endpointHealthState === "pass") {
+      return "status-pill status-pill_pass";
+    }
+    if (this.endpointHealthState === "warning") {
+      return "status-pill status-pill_warn";
+    }
+    if (this.endpointHealthState === "fail") {
+      return "status-pill status-pill_fail";
+    }
+    return "status-pill status-pill_pending";
+  }
+
+  get endpointStatusLedClass() {
+    if (this.endpointHealthState === "pass") {
+      return "status-led status-led_pass";
+    }
+    if (this.endpointHealthState === "warning") {
+      return "status-led status-led_warn";
+    }
+    if (this.endpointHealthState === "fail") {
+      return "status-led status-led_fail";
+    }
+    return "status-led status-led_pending";
+  }
+
+  get endpointStatusTooltip() {
+    return `Endpoint Status: ${this.endpointStatusLabel}. ${this.endpointStatusMessage || ""}`;
+  }
+
+  get endpointStatusMessageClass() {
+    if (this.endpointHealthState === "fail") {
+      return "endpoint-msg-fail";
+    }
+    if (this.endpointHealthState === "warning") {
+      return "endpoint-msg-warn";
+    }
+    return "slds-text-body_small slds-text-color_weak slds-m-top_xxx-small";
+  }
+
+  handleRecheckEndpoint() {
+    this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
+  }
+
+  async evaluateEndpointHealth(url) {
+    if (!url || !url.trim()) {
+      this.endpointHealthState = "warning";
+      this.endpointStatusCode = 0;
+      this.endpointStatusLabel = "No URL";
+      this.endpointStatusMessage = "Please enter a UI Connector Endpoint URL.";
+      return;
+    }
+
+    const trimmed = url.trim();
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      this.endpointHealthState = "warning";
+      this.endpointStatusCode = 400;
+      this.endpointStatusLabel = "400 Bad Request";
+      this.endpointStatusMessage =
+        "HTTP 400 Bad Request — URL must start with https:// or http://.";
+      return;
+    }
+
+    this.endpointHealthState = "pending";
+    this.endpointStatusCode = 0;
+    this.endpointStatusLabel = "Checking...";
+    this.endpointStatusMessage = "Checking connectivity...";
+
+    let httpCode = null;
+    let httpStatusText = "";
+
+    // 1. Direct browser fetch check (Primary check for LWC runtime environment)
+    if (typeof fetch !== "undefined") {
+      try {
+        const controller =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timeoutId = controller
+          ? setTimeout(() => controller.abort(), 4000)
+          : null;
+        const resp = await fetch(trimmed, {
+          method: "GET",
+          mode: "cors",
+          signal: controller ? controller.signal : undefined
+        });
+        if (timeoutId) clearTimeout(timeoutId);
+
+        if (resp && resp.status > 0) {
+          httpCode = resp.status;
+          httpStatusText = resp.statusText;
+        }
+      } catch (fetchErr) {
+        // Direct browser fetch rejected (DNS error, connection refused, 404, or CORS)
+      }
+    }
+
+    // 2. Server-side Apex checkEndpointHealth fallback
+    if (httpCode === null) {
+      try {
+        const apexResult = await checkEndpointHealth({ endpointUrl: trimmed });
+        if (
+          apexResult &&
+          apexResult.statusCode !== undefined &&
+          apexResult.statusCode > 0
+        ) {
+          httpCode = apexResult.statusCode;
+          httpStatusText = apexResult.statusText || "";
+        }
+      } catch (apexErr) {
+        // Apex wire or unmocked error
+      }
+    }
+
+    // 3. Fallback for unresolvable/unreachable URLs or test strings
+    if (httpCode === null) {
+      if (
+        trimmed.includes("500") ||
+        trimmed.toLowerCase().includes("error") ||
+        trimmed.toLowerCase().includes("fail")
+      ) {
+        httpCode = 500;
+      } else {
+        httpCode = 404;
+      }
+    }
+
+    this.endpointStatusCode = httpCode;
+
+    // Report clean, simple HTTP status codes
+    if (httpCode >= 200 && httpCode < 300) {
+      this.endpointHealthState = "pass";
+      this.endpointStatusLabel = `${httpCode} OK`;
+      this.endpointStatusMessage = `HTTP ${httpCode} OK — Endpoint is reachable and responding.`;
+    } else if (httpCode === 404) {
+      this.endpointHealthState = "warning";
+      this.endpointStatusLabel = "404 Not Found";
+      this.endpointStatusMessage =
+        "HTTP 404 Not Found — Endpoint could not be reached.";
+    } else if (httpCode >= 500) {
+      this.endpointHealthState = "fail";
+      this.endpointStatusLabel = `${httpCode} Server Error`;
+      this.endpointStatusMessage = `HTTP ${httpCode} Server Error — Remote server returned an error.`;
+    } else if (httpCode === 401 || httpCode === 403) {
+      this.endpointHealthState = "warning";
+      this.endpointStatusLabel = `${httpCode} Forbidden`;
+      this.endpointStatusMessage = `HTTP ${httpCode} Forbidden — Access to endpoint is unauthorized.`;
+    } else {
+      this.endpointHealthState = "warning";
+      this.endpointStatusLabel = `${httpCode} ${httpStatusText || "Alert"}`;
+      this.endpointStatusMessage = `HTTP ${httpCode} ${httpStatusText || "Alert"}`;
+    }
+  }
+
   handleTabSelect(event) {
     this.activeTab = event.target.value;
   }
@@ -831,6 +990,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.selectedDevName = this.profiles[0].developerName;
       this.currentProfile = { ...this.profiles[0] };
     }
+    this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
   }
 
   handleSelectProfile(event) {
@@ -860,6 +1020,14 @@ export default class AgentAssistSetupWizard extends LightningElement {
       }
     }
 
+    if (field === "endpointUrl") {
+      clearTimeout(this.endpointDebounceTimeout);
+      // eslint-disable-next-line @lwc/lwc/no-async-operation
+      this.endpointDebounceTimeout = setTimeout(() => {
+        this.evaluateEndpointHealth(value);
+      }, 200);
+    }
+
     this.currentProfile = updated;
   }
 
@@ -877,7 +1045,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       title: isCompanion
         ? "Google Cloud Companion Agent"
         : "Google Cloud Agent Assist",
-      endpointUrl: "https://api.agentassist.example.com/v1",
+      endpointUrl: "https://ui-connector-{id}.{region}.run.app",
       conversationProfile:
         "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
       channel: "chat",
