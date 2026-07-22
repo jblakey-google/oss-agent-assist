@@ -488,3 +488,13 @@
   font-size: 11px;
   margin-top: 4px;
 }
+
+.simulator-card-header {
+  text-align: center !important;
+  width: 100%;
+}
+
+.simulator-card-header h3,
+.simulator-card-header p {
+  text-align: center !important;
+}

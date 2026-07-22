@@ -202,14 +202,14 @@ const DEFAULT_DIAGNOSTIC_SECTIONS = [
 
 const CHAT_PLATFORM_OPTIONS = [
   { label: "Base Platform (Direct API Connector)", value: "base" },
-  { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" }
+  { label: "Salesforce chat integration", value: "messaging" }
 ];
 
 const VOICE_PLATFORM_OPTIONS = [
-  { label: "Twilio Flex", value: "twilioflex" },
-  { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
+  { label: "Salesforce voice integration with Twilio Flex", value: "twilioflex" },
+  { label: "Salesforce voice integration with NICE CXone", value: "servicecloudvoice-nice" },
   {
-    label: "Service Cloud Voice (BYOT Five9)",
+    label: "Salesforce voice integration with Five9",
     value: "servicecloudvoice-byot-five9"
   }
 ];
@@ -270,7 +270,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
   appIcon = sfAgentAssistIcon;
   @track activeTab = "configurationProfiles";
   @track isTypeModalOpen = false;
-  @track simulatedMessage = "";
+  @track customerMessage = "";
+  @track agentMessage = "";
+  @track simulatorConversationId = null;
+  @track simulatorConversationName = null;
   @track simulatorProfileDevName = "Default";
   @track profiles = [...INITIAL_PROFILES];
   @track selectedDevName = "Default";
@@ -286,9 +289,46 @@ export default class AgentAssistSetupWizard extends LightningElement {
   wiredConfigsResult;
   wiredDiagnosticsResult;
 
+  handleConversationEvent = (event) => {
+    if (event?.detail?.conversationName) {
+      this.simulatorConversationName = event.detail.conversationName;
+      const parts = event.detail.conversationName.split("/");
+      this.simulatorConversationId = parts[parts.length - 1];
+    } else if (event?.detail?.conversationId) {
+      this.simulatorConversationId = event.detail.conversationId;
+    }
+  };
+
   connectedCallback() {
+    try {
+      const savedTab = sessionStorage.getItem("agent_assist_setup_active_tab");
+      if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
+        this.activeTab = savedTab;
+      }
+    } catch (e) {
+      // Ignore storage errors in restricted contexts
+    }
+    window.addEventListener(
+      "active-conversation-selected",
+      this.handleConversationEvent
+    );
+    window.addEventListener(
+      "conversation-initialized",
+      this.handleConversationEvent
+    );
     this.initPendingDiagnostics();
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener(
+      "active-conversation-selected",
+      this.handleConversationEvent
+    );
+    window.removeEventListener(
+      "conversation-initialized",
+      this.handleConversationEvent
+    );
   }
 
   initPendingDiagnostics() {
@@ -877,7 +917,22 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   handleTabSelect(event) {
-    this.activeTab = event.target.value;
+    const selectedTab =
+      event.target?.activeTabValue ||
+      event.detail?.value ||
+      event.target?.value ||
+      event.detail?.activeTabValue;
+
+    if (!selectedTab || selectedTab === "undefined" || selectedTab === "null") {
+      return;
+    }
+
+    this.activeTab = selectedTab;
+    try {
+      sessionStorage.setItem("agent_assist_setup_active_tab", selectedTab);
+    } catch (e) {
+      // Ignore storage errors in restricted contexts
+    }
   }
 
   handleOpenNewProfileModal() {
@@ -936,6 +991,79 @@ export default class AgentAssistSetupWizard extends LightningElement {
   handleSimulatorProfileChange(event) {
     this.simulatorProfileDevName = event.detail.value;
     this.handleReloadSimulator();
+  }
+
+  handleCustomerMessageChange(event) {
+    this.customerMessage = event.target.value;
+  }
+
+  handleAgentMessageChange(event) {
+    this.agentMessage = event.target.value;
+  }
+
+  handleSendCustomerMessage() {
+    if (!this.customerMessage) return;
+    this.sendSimulatedMessage("END_USER", this.customerMessage);
+    this.customerMessage = "";
+  }
+
+  handleSendAgentMessage() {
+    if (!this.agentMessage) return;
+    this.sendSimulatedMessage("HUMAN_AGENT", this.agentMessage);
+    this.agentMessage = "";
+  }
+
+  handleCustomerKeyUp(event) {
+    if (event.key === "Enter") {
+      this.handleSendCustomerMessage();
+    }
+  }
+
+  handleAgentKeyUp(event) {
+    if (event.key === "Enter") {
+      this.handleSendAgentMessage();
+    }
+  }
+
+  sendSimulatedMessage(participantRole, text) {
+    if (!text || !text.trim()) return;
+    const trimmedText = text.trim();
+
+    let convId = this.simulatorConversationId;
+    if (!convId) {
+      const containerEl = this.template.querySelector(
+        "c-agent-assist-container, c-agent-assist-companion-agent, c-agent-assist-container-module"
+      );
+      if (containerEl?.conversationId) {
+        convId = containerEl.conversationId;
+      } else if (containerEl?.conversationName) {
+        const parts = containerEl.conversationName.split("/");
+        convId = parts[parts.length - 1];
+      }
+    }
+
+    const payload = {
+      detail: {
+        conversationId: convId,
+        participantRole: participantRole,
+        request: {
+          textInput: {
+            text: trimmedText,
+            languageCode: "us"
+          }
+        }
+      }
+    };
+
+    if (typeof window.dispatchAgentAssistEvent === "function") {
+      window.dispatchAgentAssistEvent("analyze-content-requested", payload);
+    } else if (typeof dispatchAgentAssistEvent === "function") {
+      dispatchAgentAssistEvent("analyze-content-requested", payload);
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("analyze-content-requested", payload)
+      );
+    }
   }
 
   handlePlaceholderAction() {
@@ -1175,8 +1303,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.selectProfileByDevName(this.profiles[0]?.developerName || "Default");
       this.dispatchEvent(
         new ShowToastEvent({
-          title: "Profile Deleted",
-          message: "Configuration profile removed.",
+          title: "LWC Configuration Profile Deleted",
+          message: "LWC configuration profile removed.",
           variant: "warning"
         })
       );

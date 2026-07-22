@@ -22,7 +22,7 @@
             <value>
                 <fullName>messaging</fullName>
                 <default>false</default>
-                <label>Salesforce Messaging (MIAW / Chat)</label>
+                <label>Salesforce Enhanced Chat</label>
             </value>
             <value>
                 <fullName>twilioflex</fullName>

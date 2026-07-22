@@ -337,7 +337,7 @@ describe("c-agent-assist-setup-wizard", () => {
     // Default channel is chat, check platform options
     expect(platformCombobox.options).toEqual([
       { label: "Base Platform (Direct API Connector)", value: "base" },
-      { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" }
+      { label: "Salesforce chat integration", value: "messaging" }
     ]);
 
     // Change channel to voice
@@ -351,10 +351,10 @@ describe("c-agent-assist-setup-wizard", () => {
 
     // Platform options should now be voice platforms and platform auto-updated to twilioflex
     expect(platformCombobox.options).toEqual([
-      { label: "Twilio Flex", value: "twilioflex" },
-      { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
+      { label: "Salesforce voice integration with Twilio Flex", value: "twilioflex" },
+      { label: "Salesforce voice integration with NICE CXone", value: "servicecloudvoice-nice" },
       {
-        label: "Service Cloud Voice (BYOT Five9)",
+        label: "Salesforce voice integration with Five9",
         value: "servicecloudvoice-byot-five9"
       }
     ]);
@@ -371,7 +371,7 @@ describe("c-agent-assist-setup-wizard", () => {
 
     expect(platformCombobox.options).toEqual([
       { label: "Base Platform (Direct API Connector)", value: "base" },
-      { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" }
+      { label: "Salesforce chat integration", value: "messaging" }
     ]);
     expect(platformCombobox.value).toBe("base");
   });

@@ -33,7 +33,7 @@
   max-height: calc(var(--aa-container-height, 530px) - 66px);
 }
 
-/* Hides a dimensionless LWC specific element that supports Messaging for In-App and Web */
+/* Hides a dimensionless LWC specific element that supports Enhanced Chat */
 .hidden,
 lightning-conversation-toolkit-api,
 lightning-service-cloud-voice-toolkit-api {
@@ -219,6 +219,40 @@ lightning-service-cloud-voice-toolkit-api {
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: bold;
+}
+
+/* Empty State View ========================================================= */
+.empty-state-container {
+  width: 100%;
+  min-height: 220px;
+  background: #ffffff;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.empty-state-illustration {
+  background: #e0f2fe;
+  border-radius: 50%;
+  padding: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.empty-state-description {
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.slds-hide {
+  display: none !important;
 }
 
 /* Responsive Breakpoints =================================================== */

@@ -107,7 +107,7 @@ export default class AgentAssistCompanionAgent extends LightningElement {
 
   get resolvedTitle() {
     if (this.isProfileMissing) {
-      return "Configuration Profile Deleted";
+      return "LWC Configuration Profile Deleted";
     }
     return this.resolvedState?.title || "Google Cloud Companion Agent";
   }

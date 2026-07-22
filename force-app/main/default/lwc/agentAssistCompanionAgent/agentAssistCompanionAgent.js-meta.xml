@@ -33,10 +33,10 @@
             <property
         name="configName"
         type="String"
-        label="Configuration Profile Name"
+        label="LWC Configuration Profile Name"
         datasource="apex://AgentAssistCompanionPicklist"
         default="Default_Companion"
-        description="Select a Companion Agent configuration profile managed in the Setup Wizard."
+        description="Select a Companion Agent LWC configuration profile managed in the Setup Wizard."
       />
         </targetConfig>
     </targetConfigs>

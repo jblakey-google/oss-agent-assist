@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { api, wire } from "lwc";
+import { LightningElement, api, wire, track } from "lwc";
 import { loadScript, loadStyle } from "lightning/platformResourceLoader";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { MessageContext } from "lightning/messageService";
@@ -26,7 +26,6 @@ const five9ByotSdk = "/resource/Five9BYOT__five9ByotSdk";
 // Schema Fields
 const VENDOR_CALL_KEY_FIELD = "VoiceCall.VendorCallKey";
 
-import { LightningElement } from "lwc";
 import agentAssistEventNames from "./data/agentAssistEventNames";
 import sampleContext from "./data/sampleContext";
 import {
@@ -73,6 +72,23 @@ export default class AgentAssistContainerModule extends LightningElement {
   @api cancelSummarizationTimeout = null;
   @api token = null;
   @api showTranscript = false;
+  @track isConversationInitialized = false;
+
+  get showEmptyState() {
+    return !this.isConversationInitialized && !this.loadError;
+  }
+
+  get containerClass() {
+    return this.showEmptyState
+      ? "agent-assist-container slds-hide"
+      : "agent-assist-container";
+  }
+
+  get transcriptContainerClass() {
+    return this.showEmptyState
+      ? "transcript-container hidden slds-hide"
+      : "transcript-container hidden";
+  }
 
   // LWC Private Properties
   _heightApplied = false;

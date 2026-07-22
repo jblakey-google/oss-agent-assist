@@ -117,42 +117,50 @@ export default class BasePlatformService {
       return null;
     }
 
-    const tokenParams = {
-      grant_type: "client_credentials",
-      client_id: this.lwc.consumerKey,
-      client_secret: this.lwc.consumerSecret
-    };
-    if (this.lwc.clientCredentialsUser) {
-      tokenParams.client_credentials_user = this.lwc.clientCredentialsUser;
-      tokenParams.username = this.lwc.clientCredentialsUser;
-    }
-
     try {
-      const access_token = await fetch(
-        `/services/oauth2/token?` + new URLSearchParams(tokenParams)
-      )
-        .then((res) => {
-          if (!res.ok)
-            throw new Error(`OAuth token request failed: ${res.statusText}`);
-          return res.json();
-        })
-        .then((data) => data.access_token)
-        .catch((err) => {
-          console.error("Failed to register auth token:", err);
-          this.lwc.loadError = err;
-          return null;
-        });
+      let access_token = null;
 
-      if (!access_token) {
-        return null;
+      if (this.lwc.consumerKey && this.lwc.consumerSecret) {
+        const tokenParams = {
+          grant_type: "client_credentials",
+          client_id: this.lwc.consumerKey,
+          client_secret: this.lwc.consumerSecret
+        };
+        if (this.lwc.clientCredentialsUser) {
+          tokenParams.client_credentials_user = this.lwc.clientCredentialsUser;
+          tokenParams.username = this.lwc.clientCredentialsUser;
+        }
+
+        access_token = await fetch(
+          `/services/oauth2/token?` + new URLSearchParams(tokenParams)
+        )
+          .then((res) => {
+            if (!res.ok)
+              throw new Error(`OAuth token request failed: ${res.statusText}`);
+            return res.json();
+          })
+          .then((data) => data.access_token)
+          .catch((err) => {
+            console.error("Failed to register auth token:", err);
+            this.lwc.loadError = err;
+            return null;
+          });
+
+        if (!access_token) {
+          return null;
+        }
+      }
+
+      const headers = {
+        "Content-Type": "application/json"
+      };
+      if (access_token) {
+        headers.Authorization = `Bearer ${access_token}`;
       }
 
       return await fetch(`${this.lwc.endpoint}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${access_token}`
-        }
+        headers: headers
       })
         .then((res) => {
           if (!res.ok)
@@ -368,6 +376,11 @@ export default class BasePlatformService {
       );
     }
     addAgentAssistEventListener(
+      "conversation-initialized",
+      (event) => this.handleConversationInitialized(event),
+      { namespace: this.lwc.recordId }
+    );
+    addAgentAssistEventListener(
       "copy-to-clipboard",
       (event) => this.handleCopyToClipboard(event),
       { namespace: this.lwc.recordId }
@@ -379,8 +392,14 @@ export default class BasePlatformService {
     );
   }
 
+  handleConversationInitialized(event) {
+    this.lwc.debugLog("handleConversationInitialized called", event);
+    this.lwc.isConversationInitialized = true;
+  }
+
   async handleConnectorInitialized() {
     this.lwc.debugLog("handleConnectorInitialized called");
+    this.lwc.isConversationInitialized = true;
 
     // Ensure we have a token before proceeding.
     this.lwc.debugLog("waiting for ui connector token...");

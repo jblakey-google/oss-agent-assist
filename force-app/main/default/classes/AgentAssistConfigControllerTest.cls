@@ -145,7 +145,7 @@ private class AgentAssistConfigControllerTest {
       'Missing or deleted profile should return isFound = false'
     );
     Assert.areEqual(
-      'Configuration Profile Deleted',
+      'LWC Configuration Profile Deleted',
       res.title,
       'Should set title to error state'
     );
@@ -335,6 +335,26 @@ private class AgentAssistConfigControllerTest {
       'success',
       res.get('status'),
       'registerAuthToken should return success in test context'
+    );
+    Assert.isNotNull(res.get('token'), 'JWT token should be returned');
+  }
+
+  @IsTest
+  static void testRegisterAuthTokenWithoutEcaDetails() {
+    Test.startTest();
+    Map<String, Object> res = AgentAssistConfigController.registerAuthToken(
+      'Default',
+      'https://ui-connector-test.run.app',
+      '',
+      '',
+      ''
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'success',
+      res.get('status'),
+      'registerAuthToken should return success even without ECA details in test context'
     );
     Assert.isNotNull(res.get('token'), 'JWT token should be returned');
   }

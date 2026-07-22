@@ -235,7 +235,7 @@ public without sharing class AgentAssistConfigController {
         result.isFound = true;
       } else {
         result.isFound = false;
-        result.title = 'Configuration Profile Deleted';
+        result.title = 'LWC Configuration Profile Deleted';
         result.resolutionSource =
           'Profile "' +
           targetDevName +
@@ -1329,68 +1329,68 @@ public without sharing class AgentAssistConfigController {
     }
 
     try {
-      // Step 1: Request Salesforce External Client App OAuth Access Token
-      String sfDomain = Url.getOrgDomainUrl().toExternalForm();
-      String tokenUrl = sfDomain + '/services/oauth2/token';
-
-      HttpRequest tokenReq = new HttpRequest();
-      tokenReq.setEndpoint(tokenUrl);
-      tokenReq.setMethod('POST');
-      tokenReq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-      String body =
-        'grant_type=client_credentials' +
-        '&client_id=' +
-        EncodingUtil.urlEncode(
-          String.isNotBlank(finalKey) ? finalKey : '',
-          'UTF-8'
-        ) +
-        '&client_secret=' +
-        EncodingUtil.urlEncode(
-          String.isNotBlank(finalSecret) ? finalSecret : '',
-          'UTF-8'
-        );
-
-      if (String.isNotBlank(finalUser)) {
-        body +=
-          '&client_credentials_user=' +
-          EncodingUtil.urlEncode(finalUser, 'UTF-8') +
-          '&username=' +
-          EncodingUtil.urlEncode(finalUser, 'UTF-8');
-      }
-      tokenReq.setBody(body);
-      tokenReq.setTimeout(10000);
-
       Http http = new Http();
-      HttpResponse tokenRes = http.send(tokenReq);
+      String accessToken = null;
 
-      if (tokenRes.getStatusCode() != 200) {
-        response.put(
-          'error',
-          'OAuth token request failed with status ' +
-            tokenRes.getStatusCode() +
-            ': ' +
-            tokenRes.getBody()
+      // Step 1: Request Salesforce External Client App OAuth Access Token (if ECA credentials are provided)
+      if (String.isNotBlank(finalKey) && String.isNotBlank(finalSecret)) {
+        String sfDomain = Url.getOrgDomainUrl().toExternalForm();
+        String tokenUrl = sfDomain + '/services/oauth2/token';
+
+        HttpRequest tokenReq = new HttpRequest();
+        tokenReq.setEndpoint(tokenUrl);
+        tokenReq.setMethod('POST');
+        tokenReq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+        String body =
+          'grant_type=client_credentials' +
+          '&client_id=' +
+          EncodingUtil.urlEncode(finalKey, 'UTF-8') +
+          '&client_secret=' +
+          EncodingUtil.urlEncode(finalSecret, 'UTF-8');
+
+        if (String.isNotBlank(finalUser)) {
+          body +=
+            '&client_credentials_user=' +
+            EncodingUtil.urlEncode(finalUser, 'UTF-8') +
+            '&username=' +
+            EncodingUtil.urlEncode(finalUser, 'UTF-8');
+        }
+        tokenReq.setBody(body);
+        tokenReq.setTimeout(10000);
+
+        HttpResponse tokenRes = http.send(tokenReq);
+
+        if (tokenRes.getStatusCode() != 200) {
+          response.put(
+            'error',
+            'OAuth token request failed with status ' +
+              tokenRes.getStatusCode() +
+              ': ' +
+              tokenRes.getBody()
+          );
+          return response;
+        }
+
+        Map<String, Object> tokenData = (Map<String, Object>) JSON.deserializeUntyped(
+          tokenRes.getBody()
         );
-        return response;
+        accessToken = (String) tokenData.get('access_token');
+        if (String.isBlank(accessToken)) {
+          response.put('error', 'OAuth response did not contain access_token');
+          return response;
+        }
       }
 
-      Map<String, Object> tokenData = (Map<String, Object>) JSON.deserializeUntyped(
-        tokenRes.getBody()
-      );
-      String accessToken = (String) tokenData.get('access_token');
-      if (String.isBlank(accessToken)) {
-        response.put('error', 'OAuth response did not contain access_token');
-        return response;
-      }
-
-      // Step 2: Call UI Connector /register endpoint with OAuth access token
+      // Step 2: Call UI Connector /register endpoint
       String registerUrl = finalEndpoint + '/register';
       HttpRequest regReq = new HttpRequest();
       regReq.setEndpoint(registerUrl);
       regReq.setMethod('POST');
       regReq.setHeader('Content-Type', 'application/json');
-      regReq.setHeader('Authorization', 'Bearer ' + accessToken);
+      if (String.isNotBlank(accessToken)) {
+        regReq.setHeader('Authorization', 'Bearer ' + accessToken);
+      }
       regReq.setBody('{}');
       regReq.setTimeout(10000);
 

@@ -31,7 +31,7 @@
           </div>
           <div class="slds-media__body">
             <div class="slds-text-heading_small slds-text-color_error">
-              <strong>Configuration Profile Deleted or Missing</strong>
+              <strong>LWC Configuration Profile Deleted or Missing</strong>
             </div>
             <p class="slds-text-body_regular slds-m-top_xx-small">
               The assigned profile
@@ -59,9 +59,33 @@
         <p>{loadError.message}</p>
       </div>
 
+      <!-- Empty State View: Shown while waiting for conversation-initialized event -->
+      <template lwc:if={showEmptyState}>
+        <div class="empty-state-container slds-p-around_medium slds-text-align_center">
+          <div class="empty-state-illustration slds-m-bottom_small">
+            <lightning-icon
+              icon-name="utility:chat"
+              size="medium"
+              variant="brand"
+            ></lightning-icon>
+          </div>
+          <h3 class="slds-text-heading_small slds-text-title_bold slds-m-bottom_xx-small">
+            Waiting for Active Conversation
+          </h3>
+          <p class="slds-text-body_small slds-text-color_weak empty-state-description">
+            Agent Assist will only display the features configured for the assigned conversation profile once a conversation connects. Read more about&#32;<a
+              href="https://docs.cloud.google.com/agent-assist/docs/conversation-profile"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="slds-text-link"
+            >creating conversation profiles</a>.
+          </p>
+        </div>
+      </template>
+
       <!-- Optionally, the Transcript UI Module will load in here -->
       <div
-        class="transcript-container hidden"
+        class={transcriptContainerClass}
         lwc:if={showTranscript}
         lwc:ref="transcriptContainer"
       >
@@ -75,7 +99,7 @@
 
       <!-- The Container UI Module will load in here -->
       <div
-        class="agent-assist-container"
+        class={containerClass}
         lwc:dom="manual"
         lwc:ref="agentAssistContainer"
       ></div>

@@ -47,14 +47,35 @@ export default class AgentAssistContainer extends LightningElement {
 
   // Runtime reactive state properties
   @track loadError = null;
-  @track conversationId = null;
-  @track conversationName = null;
+  @api conversationId = null;
+  @api conversationName = null;
+  @track isConversationInitialized = false;
   @track cancelSummarizationTimeout = null;
   @track token = null;
   @track showTranscript = false;
   @track voiceCallData;
   @track resolvedState = {};
   @track isLoading = true;
+
+  get showEmptyState() {
+    return (
+      !this.isConversationInitialized &&
+      !this.loadError &&
+      !this.isProfileMissing
+    );
+  }
+
+  get containerClass() {
+    return this.showEmptyState
+      ? "agent-assist-container slds-hide"
+      : "agent-assist-container";
+  }
+
+  get transcriptContainerClass() {
+    return this.showEmptyState
+      ? "transcript-container hidden slds-hide"
+      : "transcript-container hidden";
+  }
 
   platformService = null;
   _heightApplied = false;

@@ -64,9 +64,9 @@
 
     <!-- Sub Pages Tabset -->
     <lightning-tabset active-tab-value={activeTab} onselect={handleTabSelect}>
-      <!-- 1. Configuration Profiles -->
+      <!-- 1. LWC Configuration Profiles -->
       <lightning-tab
-        label="Configuration Profiles"
+        label="LWC Configuration Profiles"
         value="configurationProfiles"
         icon-name="utility:bundle_config"
       >
@@ -78,7 +78,7 @@
               class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
             >
               <lightning-card
-                title="Configuration Profiles"
+                title="LWC Configuration Profiles"
                 icon-name="utility:bundle_config"
               >
                 <div class="slds-p-around_small">
@@ -167,16 +167,16 @@
                       class="slds-m-right_x-small"
                     ></lightning-icon>
                     <strong class="slds-text-heading_small"
-                      >How Configuration Profiles Work</strong
+                      >How LWC Configuration Profiles Work</strong
                     >
                   </div>
                   <p
                     class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
                   >
                     <strong>Dropdown Select in Lightning Editor:</strong
-                    >&#32;Every configuration profile created here is
+                    >&#32;Every LWC configuration profile created here is
                     automatically populated into the&#32;<strong
-                      >Configuration Profile Name</strong
+                      >LWC Configuration Profile Name</strong
                     >&#32;dropdown in Lightning App Builder. Drop the&#32;<code
                       class="xml-code"
                       >agentAssistContainer</code
@@ -414,6 +414,16 @@
                                       Consumer Secret from External Client App
                                       Manager.
                                     </div>
+                                    <div
+                                      class="slds-text-body_small slds-m-top_xxx-small"
+                                    >
+                                      <a
+                                        href="https://docs.cloud.google.com/agent-assist/docs/backend-module-install#customize_the_user_authentication_method"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="slds-text-link"
+                                      >Read more about how Agent Assist authentication works in Salesforce.</a>
+                                    </div>
                                   </div>
                                 </div>
                                 <div
@@ -641,9 +651,14 @@
           >
             <div class="slds-p-around_medium">
               <p class="slds-text-body_regular slds-m-bottom_medium">
-                Select any configuration profile to instantiate and test the
+                Select any LWC configuration profile to instantiate and test the
                 live&#32;<strong>agentAssistContainer</strong>&#32;or&#32;<strong>agentAssistCompanionAgent</strong>&#32;LWC
-                component directly inside the simulator.
+                component directly inside the simulator. You can also test your conversation profile using the&#32;<a
+                  href="https://docs.cloud.google.com/agent-assist/docs/simulator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-text-link"
+                >Agent Assist Simulator documentation</a>.
               </p>
 
               <!-- Profile Selector for Simulator -->
@@ -657,11 +672,11 @@
                     class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2"
                   >
                     <lightning-combobox
-                      label="Configuration Profile to Instantiate"
+                      label="LWC Configuration Profile to Instantiate"
                       value={simulatorProfileDevName}
                       options={simulatorProfileOptions}
                       onchange={handleSimulatorProfileChange}
-                      field-level-help="Select a configuration profile to preview the live LWC."
+                      field-level-help="Select an LWC configuration profile to preview the live LWC."
                     >
                     </lightning-combobox>
                   </div>
@@ -694,23 +709,104 @@
                 </div>
               </div>
 
-              <!-- Live Instantiated Container LWC -->
-              <template lwc:if={isSimulatorContainer}>
-                <div class="slds-m-top_medium">
-                  <c-agent-assist-container
-                    config-name={simulatorProfileDevName}
-                  ></c-agent-assist-container>
-                </div>
-              </template>
+              <!-- Main Grid: Left Column Chat Inputs | Right Column Live LWC Component -->
+              <div class="slds-grid slds-gutters slds-wrap">
+                <!-- Left Column: Chat Simulator Controls / Inputs -->
+                <div
+                  class="slds-col slds-size_1-of-1 slds-large-size_5-of-12 slds-m-bottom_medium"
+                >
+                  <div class="slds-card slds-card_boundary slds-p-around_medium">
+                    <div class="simulator-card-header slds-text-align_center slds-m-bottom_medium">
+                      <h3 class="slds-text-heading_medium slds-text-title_bold slds-text-align_center">
+                        Start a conversation
+                      </h3>
+                      <p class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small slds-text-align_center">
+                        Use the chat inputs below to simulate conversation messages.
+                      </p>
+                    </div>
 
-              <!-- Live Instantiated Companion Agent LWC -->
-              <template lwc:if={isSimulatorCompanion}>
-                <div class="slds-m-top_medium">
-                  <c-agent-assist-companion-agent
-                    config-name={simulatorProfileDevName}
-                  ></c-agent-assist-companion-agent>
+                    <!-- Customer Input Section -->
+                    <div class="slds-m-bottom_medium">
+                      <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                        <span class="slds-text-title_bold">Customer</span>
+                      </div>
+                      <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+                        <div class="slds-col slds-grow">
+                          <lightning-input
+                            type="text"
+                            variant="label-hidden"
+                            label="Type a customer's message"
+                            placeholder="Type a customer's message"
+                            value={customerMessage}
+                            onchange={handleCustomerMessageChange}
+                            onkeyup={handleCustomerKeyUp}
+                          ></lightning-input>
+                        </div>
+                        <div class="slds-col slds-no-flex">
+                          <lightning-button-icon
+                            icon-name="utility:send"
+                            variant="brand"
+                            alternative-text="Send as Customer"
+                            title="Send as Customer"
+                            onclick={handleSendCustomerMessage}
+                          ></lightning-button-icon>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Agent Input Section -->
+                    <div class="slds-m-bottom_medium">
+                      <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                        <span class="slds-text-title_bold">Agent</span>
+                      </div>
+                      <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+                        <div class="slds-col slds-grow">
+                          <lightning-input
+                            type="text"
+                            variant="label-hidden"
+                            label="Type an agent's message"
+                            placeholder="Type an agent's message"
+                            value={agentMessage}
+                            onchange={handleAgentMessageChange}
+                            onkeyup={handleAgentKeyUp}
+                          ></lightning-input>
+                        </div>
+                        <div class="slds-col slds-no-flex">
+                          <lightning-button-icon
+                            icon-name="utility:send"
+                            variant="brand"
+                            alternative-text="Send as Agent"
+                            title="Send as Agent"
+                            onclick={handleSendAgentMessage}
+                          ></lightning-button-icon>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
-              </template>
+
+                <!-- Right Column: Live Instantiated Component -->
+                <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12">
+                  <!-- Live Instantiated Container LWC -->
+                  <template lwc:if={isSimulatorContainer}>
+                    <div>
+                      <c-agent-assist-container
+                        config-name={simulatorProfileDevName}
+                      ></c-agent-assist-container>
+                    </div>
+                  </template>
+
+                  <!-- Live Instantiated Companion Agent LWC -->
+                  <template lwc:if={isSimulatorCompanion}>
+                    <div>
+                      <c-agent-assist-companion-agent
+                        config-name={simulatorProfileDevName}
+                      ></c-agent-assist-companion-agent>
+                    </div>
+                  </template>
+                </div>
+              </div>
             </div>
           </lightning-card>
         </div>
@@ -734,10 +830,163 @@
                 Agent Assist & Companion Agent.
               </p>
 
-              <lightning-accordion active-section-name="genesys">
+              <lightning-accordion active-section-name="messaging">
+                <lightning-accordion-section
+                  name="messaging"
+                  label="Salesforce chat integration"
+                >
+                  <div class="slds-p-around_small slds-theme_shade">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                      Connect Salesforce Enhanced Chat or Salesforce Chat sessions directly to Google Cloud Agent Assist.
+                    </p>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Configure Messaging Channels and Omni-Channel Routing in Salesforce Setup.
+                      </li>
+                      <li>
+                        Place the&#32;<code class="xml-code"
+                          >agentAssistContainer</code
+                        >&#32;or&#32;<code class="xml-code"
+                          >agentAssistCompanionAgent</code
+                        >&#32;LWC on MessagingSession / LiveChatTranscript record pages.
+                      </li>
+                      <li>
+                        Configure MessagingPlatformService to listen for chat payload dispatches and push real-time suggestions to agents.
+                      </li>
+                    </ul>
+                    <a
+                      href="https://docs.cloud.google.com/agent-assist/docs/aaforsalesforce-chat"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="slds-button slds-button_neutral doc-pill-link"
+                    >
+                      <lightning-icon
+                        icon-name="utility:new_window"
+                        size="xx-small"
+                        class="slds-m-right_xx-small"
+                      ></lightning-icon>
+                      View Salesforce Chat & Messaging Setup Guide
+                    </a>
+                  </div>
+                </lightning-accordion-section>
+
+                <lightning-accordion-section
+                  name="five9"
+                  label="Salesforce voice integration with Five9"
+                >
+                  <div class="slds-p-around_small slds-theme_shade">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                      Integrate Five9 Bring Your Own Telephony (BYOT) and Service Cloud Voice real-time audio streams with Agent Assist.
+                    </p>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Install and configure Five9 BYOT managed package in Salesforce.
+                      </li>
+                      <li>
+                        Enable Service Cloud Voice real-time audio streaming and Five9 telephony connector.
+                      </li>
+                      <li>
+                        Place the&#32;<code class="xml-code"
+                          >agentAssistContainer</code
+                        >&#32;or&#32;<code class="xml-code"
+                          >agentAssistCompanionAgent</code
+                        >&#32;LWC on VoiceCall record pages with Five9 platform handler enabled.
+                      </li>
+                    </ul>
+                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                      <a
+                        href="https://docs.cloud.google.com/agent-assist/priv/docs/salesforce-voice-five9"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:new_window"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        View Five9 Service Cloud Voice Setup Guide
+                      </a>
+                      <a
+                        href="https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GuYVdUAN"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:shopping_bag"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        Five9 AppExchange Listing
+                      </a>
+                    </div>
+                  </div>
+                </lightning-accordion-section>
+
+                <lightning-accordion-section
+                  name="nice"
+                  label="Salesforce voice integration with NICE CXone"
+                >
+                  <div class="slds-p-around_small slds-theme_shade">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                      Integrate NICE CXone Service Cloud Voice (SCV) audio streams directly with Google Cloud Agent Assist.
+                    </p>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Configure NICE CXone Service Cloud Voice partner integration and AudioStream connector.
+                      </li>
+                      <li>
+                        Enable real-time audio streaming from NICE CXone contact center to Agent Assist backend.
+                      </li>
+                      <li>
+                        Place the&#32;<code class="xml-code"
+                          >agentAssistContainer</code
+                        >&#32;or&#32;<code class="xml-code"
+                          >agentAssistCompanionAgent</code
+                        >&#32;LWC on VoiceCall record pages to display real-time suggestions.
+                      </li>
+                    </ul>
+                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                      <a
+                        href="https://docs.cloud.google.com/agent-assist/docs/salesforce-voice-nice"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:new_window"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        View NICE CXone Service Cloud Voice Setup Guide
+                      </a>
+                      <a
+                        href="https://appexchange.salesforce.com/appxListingDetail?listingId=175e1542-c700-459c-8f9b-6fcb1bce7a14"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:shopping_bag"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        NICE CXone AppExchange Listing
+                      </a>
+                    </div>
+                  </div>
+                </lightning-accordion-section>
+
                 <lightning-accordion-section
                   name="genesys"
-                  label="Genesys Cloud CX Setup"
+                  label="Salesforce voice integration with Genesys Cloud CX"
                 >
                   <div class="slds-p-around_small slds-theme_shade">
                     <p class="slds-text-body_small slds-m-bottom_x-small">
@@ -759,18 +1008,40 @@
                         Widget in Genesys Agent Workspace.
                       </li>
                     </ul>
-                    <lightning-button
-                      label="View Genesys Cloud Setup Guide"
-                      icon-name="utility:new_window"
-                      variant="neutral"
-                      onclick={handlePlaceholderAction}
-                    ></lightning-button>
+                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                      <a
+                        href="https://docs.cloud.google.com/agent-assist/docs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:new_window"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        View Genesys Cloud Setup Guide
+                      </a>
+                      <a
+                        href="https://appexchange.salesforce.com/appxListingDetail?listingId=7f59a36f-86c0-4cac-b8af-2c1722ede4d1"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:shopping_bag"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        Genesys Cloud AppExchange Listing
+                      </a>
+                    </div>
                   </div>
                 </lightning-accordion-section>
 
                 <lightning-accordion-section
                   name="twilio"
-                  label="Twilio Flex Setup"
+                  label="Salesforce voice integration with Twilio Flex"
                 >
                   <div class="slds-p-around_small slds-theme_shade">
                     <p class="slds-text-body_small slds-m-bottom_x-small">
@@ -792,50 +1063,34 @@
                         sessions to Salesforce.
                       </li>
                     </ul>
-                    <lightning-button
-                      label="View Twilio Flex Setup Guide"
-                      icon-name="utility:new_window"
-                      variant="neutral"
-                      onclick={handlePlaceholderAction}
-                    ></lightning-button>
-                  </div>
-                </lightning-accordion-section>
-
-                <lightning-accordion-section
-                  name="scv"
-                  label="Salesforce Service Cloud Voice & Omni-Channel"
-                >
-                  <div class="slds-p-around_small slds-theme_shade">
-                    <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Connect Service Cloud Voice telephony streams and digital
-                      messaging sessions directly to Agent Assist.
-                    </p>
-                    <ul
-                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
-                    >
-                      <li>
-                        Enable VoiceCall Real-Time Audio Streaming in Voice
-                        settings.
-                      </li>
-                      <li>
-                        Configure Omni-Channel presence statuses and queue
-                        routing.
-                      </li>
-                      <li>
-                        Place the&#32;<code class="xml-code"
-                          >agentAssistContainer</code
-                        >&#32;or&#32;<code class="xml-code"
-                          >agentAssistCompanionAgent</code
-                        >&#32;LWC on VoiceCall and MessagingSession record
-                        pages.
-                      </li>
-                    </ul>
-                    <lightning-button
-                      label="View Service Cloud Voice Guide"
-                      icon-name="utility:new_window"
-                      variant="neutral"
-                      onclick={handlePlaceholderAction}
-                    ></lightning-button>
+                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                      <a
+                        href="https://docs.cloud.google.com/agent-assist/docs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:new_window"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        View Twilio Flex Setup Guide
+                      </a>
+                      <a
+                        href="https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GZ7AuUAL"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:shopping_bag"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        Twilio Flex AppExchange Listing
+                      </a>
+                    </div>
                   </div>
                 </lightning-accordion-section>
               </lightning-accordion>
@@ -1167,7 +1422,7 @@
             <p
               class="slds-m-top_x-small slds-text-body_small slds-text-color_weak"
             >
-              Choose a configuration profile type to create for your contact
+              Choose an LWC configuration profile type to create for your contact
               center agents.
             </p>
           </header>
@@ -1188,16 +1443,16 @@
                     class="slds-m-right_x-small"
                   ></lightning-icon>
                   <strong class="slds-text-heading_small"
-                    >How Configuration Profiles Work</strong
+                    >How LWC Configuration Profiles Work</strong
                   >
                 </div>
                 <p
                   class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
                 >
                   <strong>Dropdown Select in Lightning Editor:</strong
-                  >&#32;Every configuration profile created here is
+                  >&#32;Every LWC configuration profile created here is
                   automatically populated into the&#32;<strong
-                    >Configuration Profile Name</strong
+                    >LWC Configuration Profile Name</strong
                   >&#32;dropdown in Lightning App Builder. Drop the&#32;<code
                     class="xml-code"
                     >agentAssistContainer</code

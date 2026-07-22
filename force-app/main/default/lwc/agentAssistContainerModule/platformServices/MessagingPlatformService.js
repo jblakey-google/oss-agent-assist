@@ -37,7 +37,7 @@ export default class MessagingPlatformService extends BasePlatformService {
   ////////////////////////////////////////////////////////////////////////////
 
   init() {
-    // Set up Agent Assist UIM to work with Messaging for In-App and Web
+    // Set up Agent Assist UIM to work with Enhanced Chat
     this.generateConversationName();
     this.subscribeToMessageChannels();
     this.listenToAgentAssistEventsForMessaging();
@@ -48,7 +48,7 @@ export default class MessagingPlatformService extends BasePlatformService {
     if (this.lwc.cancelSummarizationTimeout) {
       clearTimeout(this.lwc.cancelSummarizationTimeout);
     }
-    // Clean up Agent Assist UIM Messaging for In-App and Web
+    // Clean up Agent Assist UIM Enhanced Chat
     this.unsubscribeFromMessagingChannels();
   }
 
