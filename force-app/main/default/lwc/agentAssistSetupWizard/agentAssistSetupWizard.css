@@ -36,6 +36,31 @@
   line-height: 1.2;
 }
 
+.doc-pill-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background-color: #f1f5f9;
+  color: #0176d3;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+  --slds-c-icon-color-foreground-default: #0176d3;
+}
+
+.doc-pill-link:hover {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #0284c7;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --slds-c-icon-color-foreground-default: #0369a1;
+}
+
 .full-width-btn {
   width: 100%;
   display: block;

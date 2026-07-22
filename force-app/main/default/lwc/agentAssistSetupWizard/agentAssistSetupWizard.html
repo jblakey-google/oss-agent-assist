@@ -18,18 +18,46 @@
   <div class="wizard-container slds-p-around_medium">
     <!-- Main Header -->
     <div class="slds-m-bottom_small wizard-header-clean">
-      <div class="slds-grid slds-grid_vertical-align-center">
-        <img
-          src={appIcon}
-          alt="Google Cloud Agent Assist Icon"
-          class="slds-m-right_small wizard-header-icon"
-        />
-        <div>
-          <h1 class="slds-text-heading_medium header-title">Setup Wizard</h1>
-          <p class="slds-text-body_small slds-text-color_weak">
-            Centralized configuration and integration management for Google
-            Cloud Agent Assist & Companion Agent
-          </p>
+      <div
+        class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-wrap"
+      >
+        <div class="slds-grid slds-grid_vertical-align-center">
+          <img
+            src={appIcon}
+            alt="Google Cloud Agent Assist Icon"
+            class="slds-m-right_small wizard-header-icon"
+          />
+          <div>
+            <h1 class="slds-text-heading_medium header-title">
+              Integration Setup Wizard
+            </h1>
+            <p class="slds-text-body_small slds-text-color_weak">
+              Centralized configuration and integration management for Google
+              Cloud Agent Assist & Companion Agent
+            </p>
+          </div>
+        </div>
+        <div
+          class="slds-m-left_small slds-m-top_x-small slds-medium-m-top_none"
+        >
+          <a
+            href="https://docs.cloud.google.com/agent-assist/docs/salesforce"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="doc-pill-link"
+          >
+            <lightning-icon
+              icon-name="utility:knowledge_base"
+              size="xx-small"
+              class="slds-m-right_xx-small"
+            ></lightning-icon>
+            Documentation
+            <lightning-icon
+              icon-name="utility:new_window"
+              size="xx-small"
+              class="slds-m-left_xx-small"
+            ></lightning-icon>
+          </a>
         </div>
       </div>
     </div>
@@ -74,9 +102,11 @@
                     class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
                   >
                     Select a profile to edit. Profiles appear in the Lightning
-                    Editor dropdown for
-                    <code class="xml-code">agentAssistContainer</code> or
-                    <code class="xml-code">agentAssistCompanionAgent</code>.
+                    Editor dropdown for&#32;<code class="xml-code"
+                      >agentAssistContainer</code
+                    >&#32;or&#32;<code class="xml-code"
+                      >agentAssistCompanionAgent</code
+                    >.
                   </p>
 
                   <div class="slds-nav-vertical">
@@ -95,7 +125,9 @@
                             <div
                               class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small"
                             >
-                              configName: <strong>{prof.developerName}</strong>
+                              configName:&#32;<strong
+                                >{prof.developerName}</strong
+                              >
                             </div>
                             <div
                               class="slds-text-body_small slds-m-top_xxx-small slds-grid slds-grid_vertical-align-center"
@@ -121,6 +153,41 @@
             <div
               class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
             >
+              <!-- Architecture & Picklist Info Callout -->
+              <div class="slds-m-bottom_medium">
+                <div
+                  class="slds-box slds-box_small slds-theme_shade info-panel-box slds-p-around_medium"
+                >
+                  <div
+                    class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+                  >
+                    <lightning-icon
+                      icon-name="utility:bundle_config"
+                      size="small"
+                      class="slds-m-right_x-small"
+                    ></lightning-icon>
+                    <strong class="slds-text-heading_small"
+                      >How Configuration Profiles Work</strong
+                    >
+                  </div>
+                  <p
+                    class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
+                  >
+                    <strong>Dropdown Select in Lightning Editor:</strong
+                    >&#32;Every configuration profile created here is
+                    automatically populated into the&#32;<strong
+                      >Configuration Profile Name</strong
+                    >&#32;dropdown in Lightning App Builder. Drop the&#32;<code
+                      class="xml-code"
+                      >agentAssistContainer</code
+                    >&#32;or&#32;<code class="xml-code"
+                      >agentAssistCompanionAgent</code
+                    >&#32;on any page (Record Page, Utility Bar, App Page) and
+                    select the profile directly from the picklist.
+                  </p>
+                </div>
+              </div>
+
               <lightning-card title={editorCardTitle} icon-name="utility:edit">
                 <div class="slds-p-around_medium">
                   <!-- Segmented Type Selector Bar: Type: Companion Agent || Container -->
@@ -175,7 +242,6 @@
                         value={currentProfile.developerName}
                         data-field="developerName"
                         onchange={handleFieldChange}
-                        field-level-help="Unique key referenced in Lightning App Builder picklist."
                         disabled={isDeveloperNameDisabled}
                         required
                       >
@@ -199,16 +265,14 @@
                         <label
                           class="slds-form-element__label slds-no-margin endpoint-label"
                         >
-                          UI Connector Endpoint URL
-                          <a
+                          UI Connector Endpoint URL&#32;<a
                             href="https://docs.cloud.google.com/agent-assist/docs/backend-basics"
                             target="_blank"
                             rel="noopener noreferrer"
                             class="slds-text-link slds-m-left_x-small deploy-doc-link"
                             title="View deployment guide on Google Cloud documentation"
                           >
-                            How to deploy this
-                            <lightning-icon
+                            Deployment Documentation&#32;<lightning-icon
                               icon-name="utility:new_window"
                               size="xx-small"
                               variant="link"
@@ -280,6 +344,19 @@
                                 required
                               >
                               </lightning-input>
+                              <div
+                                class="slds-m-top_xx-small slds-text-body_small"
+                              >
+                                <a
+                                  href="https://docs.cloud.google.com/agent-assist/docs/conversation-profile"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="slds-text-link"
+                                >
+                                  View Google Cloud Conversation Profile
+                                  Documentation
+                                </a>
+                              </div>
                             </div>
 
                             <div
@@ -300,12 +377,12 @@
                               class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
                             >
                               <lightning-combobox
-                                label="Platform Integration"
+                                label="CX Platform Integration"
                                 value={currentProfile.platform}
                                 options={platformOptions}
                                 data-field="platform"
                                 onchange={handleFieldChange}
-                                field-level-help="Salesforce platform integration type."
+                                field-level-help="The CX platform integration type, e.g., base, messaging, twilioflex, servicecloudvoice-nice, servicecloudvoice-five9."
                               >
                               </lightning-combobox>
                             </div>
@@ -546,39 +623,6 @@
                   </div>
                 </div>
               </lightning-card>
-
-              <!-- Architecture & Picklist Info Callout -->
-              <div class="slds-m-top_medium">
-                <div
-                  class="slds-box slds-box_small slds-theme_shade info-panel-box slds-p-around_medium"
-                >
-                  <div
-                    class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
-                  >
-                    <lightning-icon
-                      icon-name="utility:bundle_config"
-                      size="small"
-                      class="slds-m-right_x-small"
-                    ></lightning-icon>
-                    <strong class="slds-text-heading_small"
-                      >How Configuration Profiles Work</strong
-                    >
-                  </div>
-                  <p
-                    class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
-                  >
-                    <strong>Dropdown Select in Lightning Editor:</strong> Every
-                    configuration profile created here is automatically
-                    populated into the
-                    <strong>Configuration Profile Name</strong> dropdown in
-                    Lightning App Builder. Drop the
-                    <code class="xml-code">agentAssistContainer</code> or
-                    <code class="xml-code">agentAssistCompanionAgent</code> on
-                    any page (Record Page, Utility Bar, App Page) and select the
-                    profile directly from the picklist.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -598,9 +642,8 @@
             <div class="slds-p-around_medium">
               <p class="slds-text-body_regular slds-m-bottom_medium">
                 Select any configuration profile to instantiate and test the
-                live&#32;<strong>agentAssistContainer</strong>&#32;or&#32;
-                <strong>agentAssistCompanionAgent</strong>&#32;LWC component
-                directly inside the simulator.
+                live&#32;<strong>agentAssistContainer</strong>&#32;or&#32;<strong>agentAssistCompanionAgent</strong>&#32;LWC
+                component directly inside the simulator.
               </p>
 
               <!-- Profile Selector for Simulator -->
@@ -779,10 +822,12 @@
                         routing.
                       </li>
                       <li>
-                        Place the
-                        <code class="xml-code">agentAssistContainer</code> or
-                        <code class="xml-code">agentAssistCompanionAgent</code>
-                        LWC on VoiceCall and MessagingSession record pages.
+                        Place the&#32;<code class="xml-code"
+                          >agentAssistContainer</code
+                        >&#32;or&#32;<code class="xml-code"
+                          >agentAssistCompanionAgent</code
+                        >&#32;LWC on VoiceCall and MessagingSession record
+                        pages.
                       </li>
                     </ul>
                     <lightning-button
@@ -1020,8 +1065,8 @@
                             <!-- Red Error Message Callout -->
                             <template lwc:if={item.isFail}>
                               <div class="diag-error-box slds-m-top_x-small">
-                                <strong>Diagnostic Failure:</strong>
-                                {item.errorMessage}
+                                <strong>Diagnostic Failure:</strong
+                                >&#32;{item.errorMessage}
                               </div>
                             </template>
 
@@ -1129,6 +1174,41 @@
 
           <!-- Modal Body (Two Selection Cards) -->
           <div class="slds-modal__content slds-p-around_large modal-content-bg">
+            <!-- How Configuration Profiles Work Callout -->
+            <div class="slds-m-bottom_medium">
+              <div
+                class="slds-box slds-box_small slds-theme_default info-panel-box slds-p-around_medium"
+              >
+                <div
+                  class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:bundle_config"
+                    size="small"
+                    class="slds-m-right_x-small"
+                  ></lightning-icon>
+                  <strong class="slds-text-heading_small"
+                    >How Configuration Profiles Work</strong
+                  >
+                </div>
+                <p
+                  class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
+                >
+                  <strong>Dropdown Select in Lightning Editor:</strong
+                  >&#32;Every configuration profile created here is
+                  automatically populated into the&#32;<strong
+                    >Configuration Profile Name</strong
+                  >&#32;dropdown in Lightning App Builder. Drop the&#32;<code
+                    class="xml-code"
+                    >agentAssistContainer</code
+                  >&#32;or&#32;<code class="xml-code"
+                    >agentAssistCompanionAgent</code
+                  >&#32;on any page (Record Page, Utility Bar, App Page) and
+                  select the profile directly from the picklist.
+                </p>
+              </div>
+            </div>
+
             <div class="slds-grid slds-gutters slds-wrap">
               <!-- Option 1: Companion Agent -->
               <div
@@ -1166,20 +1246,23 @@
 
                   <ul class="type-feature-list slds-m-bottom_medium">
                     <li>
-                      <span class="check-icon">✓</span> Supports Most and Latest
-                      Features
+                      <span class="check-icon">✓</span>&#32;Supports Most and
+                      Latest Features
                     </li>
                     <li>
-                      <span class="check-icon">✓</span> Agent Facing AI Chat
+                      <span class="check-icon">✓</span>&#32;Agent Facing AI Chat
                     </li>
                     <li>
-                      <span class="check-icon">✓</span> Next Best Action
+                      <span class="check-icon">✓</span>&#32;Next Best Action
                       Suggestions
                     </li>
-                    <li><span class="check-icon">✓</span> Knowledge Search</li>
-                    <li><span class="check-icon">✓</span> Summarization</li>
                     <li>
-                      <span class="check-icon">✓</span> Real-time Transcription
+                      <span class="check-icon">✓</span>&#32;Knowledge Search
+                    </li>
+                    <li><span class="check-icon">✓</span>&#32;Summarization</li>
+                    <li>
+                      <span class="check-icon">✓</span>&#32;Real-time
+                      Transcription
                     </li>
                   </ul>
 
@@ -1231,17 +1314,20 @@
 
                   <ul class="type-feature-list slds-m-bottom_medium">
                     <li>
-                      <span class="check-icon">✓</span> Supports all Existing
-                      Features
+                      <span class="check-icon">✓</span>&#32;Supports all
+                      Existing Features
                     </li>
                     <li>
-                      <span class="check-icon">✓</span> Well Documented, GA
+                      <span class="check-icon">✓</span>&#32;Well Documented, GA
                     </li>
-                    <li><span class="check-icon">✓</span> AI Coach</li>
-                    <li><span class="check-icon">✓</span> Knowledge Search</li>
-                    <li><span class="check-icon">✓</span> Summarization</li>
+                    <li><span class="check-icon">✓</span>&#32;AI Coach</li>
                     <li>
-                      <span class="check-icon">✓</span> Real-time Transcription
+                      <span class="check-icon">✓</span>&#32;Knowledge Search
+                    </li>
+                    <li><span class="check-icon">✓</span>&#32;Summarization</li>
+                    <li>
+                      <span class="check-icon">✓</span>&#32;Real-time
+                      Transcription
                     </li>
                   </ul>
 

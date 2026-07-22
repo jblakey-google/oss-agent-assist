@@ -164,7 +164,7 @@ describe("c-agent-assist-setup-wizard", () => {
     const header = element.shadowRoot.querySelector(".wizard-header-clean");
     expect(header).not.toBeNull();
     const title = element.shadowRoot.querySelector(".header-title");
-    expect(title.textContent).toBe("Setup Wizard");
+    expect(title.textContent).toBe("Integration Setup Wizard");
     const tabset = element.shadowRoot.querySelector("lightning-tabset");
     expect(tabset).not.toBeNull();
   });
@@ -312,4 +312,68 @@ describe("c-agent-assist-setup-wizard", () => {
     const toggles = toggleGroup.querySelectorAll("lightning-input");
     expect(toggles.length).toBe(4);
   });
+
+  it("filters platform options based on conversation channel and auto-updates platform on channel change", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const comboboxes = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-combobox")
+    );
+    const channelCombobox = comboboxes.find(
+      (cb) => cb.dataset.field === "channel"
+    );
+    const platformCombobox = comboboxes.find(
+      (cb) => cb.dataset.field === "platform"
+    );
+
+    expect(channelCombobox).not.toBeUndefined();
+    expect(platformCombobox).not.toBeUndefined();
+
+    // Default channel is chat, check platform options
+    expect(platformCombobox.options).toEqual([
+      { label: "Base Platform (Direct API Connector)", value: "base" },
+      { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" }
+    ]);
+
+    // Change channel to voice
+    channelCombobox.value = "voice";
+    channelCombobox.dispatchEvent(
+      new CustomEvent("change", {
+        detail: { value: "voice" }
+      })
+    );
+    await Promise.resolve();
+
+    // Platform options should now be voice platforms and platform auto-updated to twilioflex
+    expect(platformCombobox.options).toEqual([
+      { label: "Twilio Flex", value: "twilioflex" },
+      { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
+      {
+        label: "Service Cloud Voice (BYOT Five9)",
+        value: "servicecloudvoice-byot-five9"
+      }
+    ]);
+    expect(platformCombobox.value).toBe("twilioflex");
+
+    // Change channel back to chat
+    channelCombobox.value = "chat";
+    channelCombobox.dispatchEvent(
+      new CustomEvent("change", {
+        detail: { value: "chat" }
+      })
+    );
+    await Promise.resolve();
+
+    expect(platformCombobox.options).toEqual([
+      { label: "Base Platform (Direct API Connector)", value: "base" },
+      { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" }
+    ]);
+    expect(platformCombobox.value).toBe("base");
+  });
 });
+

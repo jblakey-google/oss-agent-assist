@@ -200,6 +200,20 @@ const DEFAULT_DIAGNOSTIC_SECTIONS = [
   }
 ];
 
+const CHAT_PLATFORM_OPTIONS = [
+  { label: "Base Platform (Direct API Connector)", value: "base" },
+  { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" }
+];
+
+const VOICE_PLATFORM_OPTIONS = [
+  { label: "Twilio Flex", value: "twilioflex" },
+  { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
+  {
+    label: "Service Cloud Voice (BYOT Five9)",
+    value: "servicecloudvoice-byot-five9"
+  }
+];
+
 const INITIAL_PROFILES = [
   {
     id: "mock-1",
@@ -555,16 +569,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
     { label: "Voice (Telephony)", value: "voice" }
   ];
 
-  platformOptions = [
-    { label: "Base Platform (Direct API Connector)", value: "base" },
-    { label: "Salesforce Messaging (MIAW / Chat)", value: "messaging" },
-    { label: "Twilio Flex", value: "twilioflex" },
-    { label: "Service Cloud Voice (NICE)", value: "servicecloudvoice-nice" },
-    {
-      label: "Service Cloud Voice (BYOT Five9)",
-      value: "servicecloudvoice-byot-five9"
+  get platformOptions() {
+    if (this.currentProfile?.channel === "voice") {
+      return VOICE_PLATFORM_OPTIONS;
     }
-  ];
+    return CHAT_PLATFORM_OPTIONS;
+  }
 
   @wire(getAllConfigs)
   wiredConfigs(result) {
@@ -1008,6 +1018,16 @@ export default class AgentAssistSetupWizard extends LightningElement {
       ...this.currentProfile,
       [field]: value
     };
+
+    if (field === "channel") {
+      const validPlatforms =
+        value === "voice"
+          ? VOICE_PLATFORM_OPTIONS.map((opt) => opt.value)
+          : CHAT_PLATFORM_OPTIONS.map((opt) => opt.value);
+      if (!validPlatforms.includes(updated.platform)) {
+        updated.platform = validPlatforms[0];
+      }
+    }
 
     if (field === "name" && !this.isDeveloperNameDisabled && value) {
       if (

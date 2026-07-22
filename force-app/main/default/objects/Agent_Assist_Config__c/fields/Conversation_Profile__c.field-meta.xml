@@ -5,7 +5,7 @@
   >The full resource name of the Google Cloud Conversation Profile.</description>
     <externalId>false</externalId>
     <inlineHelpText
-  >e.g. projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}</inlineHelpText>
+  >e.g. projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id} (Docs: https://docs.cloud.google.com/agent-assist/docs/conversation-profile)</inlineHelpText>
     <label>Conversation Profile</label>
     <length>255</length>
     <required>false</required>

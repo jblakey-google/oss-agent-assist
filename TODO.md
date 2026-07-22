@@ -2,15 +2,13 @@
 
 - [ ] Platform integration progress accordions
   - [ ] Use Apex to check installed packages for the specific package id required by each integration.
-- [ ] Add chat inputs for the Simulator.
-- [ ] The simulator can probably only work with the base connector, since others depend on things like Voice Calls, Messaging Sessions, conversations created by telephony interacting with core-services, deployment, etc. If that's the case then the simulator should test the configured features for a profile, with the base connector, and a disclaimer. Though possibly they should use the Console simulator instead if they just want to test their profile...not sure.
-- [ ] Test with various SF licenses, using the scratch-def.json.
-- [x] Use an Apex callout to handle register/ request, this would improve the security posture of the auth flow which currently uses the client credentials flow from the browser which, although authenticated in SF, is an antipattern as it exposes the ECA creds in the browser. This can be prevented by using an Apex callout, specifically for register/. Once you have a JWT, should be fine with normal fetch
+- [ ] Test with various SF licenses, using the project-scratch-def.json.
 
 ## Doing
 
 ## Done
 
+- [x] Use an Apex callout to handle register/ request, this would improve the security posture of the auth flow which currently uses the client credentials flow from the browser which, although authenticated in SF, is an antipattern as it exposes the ECA creds in the browser. This can be prevented by using an Apex callout, specifically for register/. Once you have a JWT, should be fine with normal fetch
 - [x] Salesforce Setup and Diagnostics Panel can be merged. I like Diagnostics better. https://screenshot.googleplex.com/B67WpmKBL8HfTAU
 - [x] Build out Diagnostics & Platform Agnostic Chat Simulator (What features cannot be tested without voice?)
   - [x] Check connectivity with the UI Connector
