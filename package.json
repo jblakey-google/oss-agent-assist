@@ -14,7 +14,7 @@
     "prettier": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prettier:verify": "prettier --check \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prepare": "husky || true",
-    "precommit": "echo 'ho ho ho' || lint-staged",
+    "precommit": "lint-staged",
     "devhub:login": "sf org login web --alias DevHub --set-default-dev-hub",
     "prod:login": "sf org login web --alias prod --instance-url https://login.salesforce.com --set-default",
     "scratch:create": "sf org create scratch --alias scratch --edition developer --target-dev-hub DevHub --definition-file config/project-scratch-def.json --set-default && npm run deploy && npm run assign && npm run open",

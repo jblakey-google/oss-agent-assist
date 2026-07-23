@@ -45,6 +45,9 @@
 - [x] Support instantiating live LWC in the Simulator based on a configuration profile selector (defaults to default profile).
 - [x] Fix read-only Apex runtime 500 error in `getResolvedConfig` and `getAllConfigs` by removing DML operations from cacheable `@AuraEnabled(cacheable=true)` methods.
 - [x] Support the generation of static resources for `companion_agent.js` (https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/companion_agent.js) and include in static resource checks.
+- [x] Migrate integration callouts (`/register`) to Salesforce Named Credentials (`callout:Agent_Assist_UI_Connector`) and completely purge legacy Remote Site Settings.
+- [x] Implement CSS Container Queries (`@container`) and responsive flex layout rules for `agentAssistContainer` and `agentAssistContainerModule`.
+- [x] Streamline LWC Simulator & Transcript UI: Remove redundant Transcript header, right-align Reload Component button, and fix 1px border clipping in stacked responsive views.
 
 ---
 
@@ -61,7 +64,7 @@
 
 ### Security & Governance
 
-- **Server-Side Apex Auth Callouts (`/register`)**: Enhances security posture by shifting client credential authentication from browser JavaScript to server-side Apex callouts, eliminating exposure of ECA secrets in browser network logs/DOM.
+- **Named Credentials & Clean Auth Architecture (`/register`)**: Transitioned integration callouts to Salesforce Named Credentials (`callout:Agent_Assist_UI_Connector`), shifting authentication to server-side Apex while eliminating manual Remote Site Setting configuration overhead.
 - **Active Configuration Profile Deletion Protection**: Protects active LWC Configuration Profiles assigned to live Salesforce pages from accidental deletion, preventing high-impact runtime outages in active contact centers.
 - **Open Source Flexibility & Code Ownership**: Because it is an open source integration, and not a managed package, enterprise customers retain the ability to modify the LWC source code to do things like implement custom auth, fix any environment specific bugs that arise, and have visibility into what's going on under the hood. They can even add new features or modify existing platform integrations. This makes the (very complicated) solution robust against the unknowable future of AI, CX Platforms, and enterprise requirements.
 
@@ -72,13 +75,18 @@
 - **Detailed Diagnostics Page**: Detailed diagnostics page with troubleshooting steps for common issues. All the tools needed to integrate in one place. Deep links to fix issues in SF config. The app is aware of its deps, like the UI Modules static resources, connectivity, and auth, and can report on their status.
 - **Terminology Alignment ("Enhanced Chat")**: Updated messaging terminology from MIAW to "Enhanced Chat" across documentation and component UI, aligning with current Salesforce product standards to minimize admin and agent confusion.
 
+### UI, UX & Responsive Layout
+
+- **Container Queries & Responsive Layout Flexibility**: Implemented modern CSS container queries (`@container`) to make components dynamically adapt to their parent container dimensions. In wide views, the transcript fills 100% container height; in narrow sidebars or stacked layouts, it cleanly contracts to a compact 160px scrollable view, ensuring high-density usability across Salesforce Utility Bars, sidebars, and full-page layouts.
+- **Polished Simulator Experience**: Streamlined the Simulator UI by removing redundant column headers, right-aligning action controls, and ensuring zero-clipping borders across all viewport sizes.
+
 ### Testing & Onboarding
 
 - **Simulator Auth Flexibility**: Simulator works with AUTH_OPTION "Skip", so customer can test their conversation profile with the Base API Connector in Salesforce, before they get auth set up (or implementing their own as may very well be the case). Improves user experience and reduces friction.
 
 ### Multi-Platform & Architecture Flexibility
 
-- **Base API Connector**: Base API Connector facilitates use of the LWC with other messaging platforms (e.g. SF + Quiq, which Warner Bothers Discovery uses).
+- **Base API Connector**: Base API Connector facilitates use of the LWC with other messaging platforms (e.g. SF + Quiq, which Warner Bros. Discovery uses).
 - **Multi-Instance Page Support**: Allows multiple configurations on the same page to be used, and is very flexible. Could be used to support both voice and chat side by side, which (probably) requires 2 different conversation profiles.
 - **Companion Agent & Container Support**: Supports the transition to Companion Agent, while still supporting Container.
 
