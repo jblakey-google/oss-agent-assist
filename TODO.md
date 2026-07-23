@@ -4,6 +4,7 @@
 - [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 - [ ] Add CX Platform Setup accordion logos. You can just embed them as svgs or base64-encoded images.
 - [ ] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
+- [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
 
 ## Doing
 

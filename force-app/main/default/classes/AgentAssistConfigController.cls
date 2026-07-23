@@ -410,7 +410,7 @@ public without sharing class AgentAssistConfigController {
    */
   /**
    * Retrieves active users in the org for the OAuth Client Credentials user picklist.
-   * Only includes standard CRM users eligible for full CRM feature access.
+   * Only includes users with Salesforce User License or System Administrator Profile.
    */
   @AuraEnabled(cacheable=true)
   public static List<Map<String, String>> getActiveUsers() {
@@ -419,7 +419,8 @@ public without sharing class AgentAssistConfigController {
       for (User u : [
         SELECT Id, Name, Username
         FROM User
-        WHERE IsActive = TRUE AND UserType = 'Standard'
+        WHERE IsActive = TRUE
+          AND (Profile.UserLicense.Name = 'Salesforce' OR Profile.Name = 'System Administrator')
         ORDER BY Name ASC
         LIMIT 1000
       ]) {
@@ -440,7 +441,8 @@ public without sharing class AgentAssistConfigController {
   }
 
   /**
-   * Retrieves active standard users along with their Agent_Assist_User permission set assignment status.
+   * Retrieves active users along with their Agent_Assist_User permission set assignment status.
+   * Only includes users with Salesforce User License or System Administrator Profile.
    */
   @AuraEnabled
   public static List<Map<String, Object>> getUsersWithPermissionSetStatus() {
@@ -467,7 +469,8 @@ public without sharing class AgentAssistConfigController {
       for (User u : [
         SELECT Id, Name, Username
         FROM User
-        WHERE IsActive = TRUE AND UserType = 'Standard'
+        WHERE IsActive = TRUE
+          AND (Profile.UserLicense.Name = 'Salesforce' OR Profile.Name = 'System Administrator')
         ORDER BY Name ASC
         LIMIT 1000
       ]) {

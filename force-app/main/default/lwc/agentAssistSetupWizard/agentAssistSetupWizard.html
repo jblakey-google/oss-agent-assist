@@ -560,51 +560,40 @@
                                 >
                                   Feature Flags & UI Toggles
                                 </div>
-                                <div class="slds-grid slds-wrap toggle-grid">
-                                  <div
-                                    class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-horizontal_x-small slds-m-bottom_x-small"
-                                  >
+                                <div class="toggle-list slds-m-top_x-small">
                                     <lightning-input
                                       type="toggle"
                                       label="Debug Mode"
                                       checked={currentProfile.debugMode}
                                       data-field="debugMode"
+                                      variant="label-inline"
                                       onchange={handleFieldChange}
                                     >
                                     </lightning-input>
-                                  </div>
-                                  <div
-                                    class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-horizontal_x-small slds-m-bottom_x-small"
-                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Dark Mode Toggle"
                                       checked={currentProfile.showDarkModeToggle}
                                       data-field="showDarkModeToggle"
+                                      variant="label-inline"
                                       onchange={handleFieldChange}
                                     >
                                     </lightning-input>
-                                  </div>
-                                  <div
-                                    class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-horizontal_x-small slds-m-bottom_x-small"
-                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Show Header"
                                       checked={currentProfile.showHeader}
                                       data-field="showHeader"
+                                      variant="label-inline"
                                       onchange={handleFieldChange}
                                     >
                                     </lightning-input>
-                                  </div>
-                                  <div
-                                    class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-horizontal_x-small slds-m-bottom_x-small"
-                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Correctness Feedback"
                                       checked={currentProfile.showCorrectnessFeedback}
                                       data-field="showCorrectnessFeedback"
+                                      variant="label-inline"
                                       onchange={handleFieldChange}
                                     >
                                     </lightning-input>
