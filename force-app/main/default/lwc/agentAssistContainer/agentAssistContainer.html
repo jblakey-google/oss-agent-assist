@@ -61,7 +61,9 @@
 
       <!-- Empty State View: Shown while waiting for conversation-initialized event -->
       <template lwc:if={showEmptyState}>
-        <div class="empty-state-container slds-p-around_medium slds-text-align_center">
+        <div
+          class="empty-state-container slds-p-around_medium slds-text-align_center"
+        >
           <div class="empty-state-illustration slds-m-bottom_small">
             <lightning-icon
               icon-name="utility:chat"
@@ -69,16 +71,23 @@
               variant="brand"
             ></lightning-icon>
           </div>
-          <h3 class="slds-text-heading_small slds-text-title_bold slds-m-bottom_xx-small">
+          <h3
+            class="slds-text-heading_small slds-text-title_bold slds-m-bottom_xx-small"
+          >
             Waiting for Active Conversation
           </h3>
-          <p class="slds-text-body_small slds-text-color_weak empty-state-description">
-            Agent Assist will only display the features configured for the assigned conversation profile once a conversation connects. Read more about&#32;<a
+          <p
+            class="slds-text-body_small slds-text-color_weak empty-state-description"
+          >
+            Agent Assist will only display the features configured for the
+            assigned conversation profile once a conversation connects. Read
+            more about&#32;<a
               href="https://docs.cloud.google.com/agent-assist/docs/conversation-profile"
               target="_blank"
               rel="noopener noreferrer"
               class="slds-text-link"
-            >creating conversation profiles</a>.
+              >creating conversation profiles</a
+            >.
           </p>
         </div>
       </template>

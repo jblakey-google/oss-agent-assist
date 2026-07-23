@@ -1,22 +1,23 @@
 ## Tasks
-- [ ] Platform integration progress accordions
-  - [x] Add links to the AgentExchange package each depends on.
-  - [ ] Use Apex to check installed packages for the specific package id required by each integration.
-  - [ ] Five9 Fusion: 04tTN000000C1rZYAS
-  - [ ] Twilio Flex CTI: 04t8Z0000012JNXQA2
-  - [ ] Nice CXOne: 04tUi000000L76XIAS
-  - [ ] Genesys Cloud CX: 04tQp000000ngyzIAA
 
 - [ ] Test with various SF licenses, using the project-scratch-def.json.
-
-- [ ] Perhaps we should call them LWC Configuration Profiles, to disambiguate from Conversation Profiles (which are configured in the Agent Assist Admin Console).
-- [x] Update Messaging for In-App and Web to "Enhanced Chat" Throughout
-  - [ ] Create a CL to make this update in the public docs: MIAW -> "Enhanced Chat"
+- [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 
 ## Doing
 
 ## Done
 
+- [x] Update Messaging for In-App and Web to "Enhanced Chat" Throughout
+  - [x] Create a CL to make this update in the public docs: MIAW -> "Enhanced Chat"
+- [x] Perhaps we should call them LWC Configuration Profiles, to disambiguate from Conversation Profiles (which are configured in the Agent Assist Admin Console).
+- [x] Active Tab persistence not working
+- [x] Platform integration progress accordions
+  - [x] Add links to the AgentExchange package each depends on.
+  - [x] Use Apex to check installed packages for the specific package id required by each integration.
+  - [x] Five9 Fusion: 04tTN000000C1rZYAS
+  - [x] Twilio Flex CTI: 04t8Z0000012JNXQA2
+  - [x] Nice CXOne: 04tUi000000L76XIAS
+  - [x] Genesys Cloud CX: 04tQp000000ngyzIAA
 - [x] Simulator
   - [x] Chat inputs for simulator.
   - [x] "Skip" or "SalesforceLWC" should work for auth.
@@ -55,14 +56,38 @@
   - In Voice integrations, conversations are initialized from external telephony events. To also support chat in the same LWC Configuration Profile, a chat channel/provider is needed. So say it's messaging, we would need to initialize the MessagingPlatformService, and say ServiceCloudVoicePlatformService with the Five9PlatformHandler, at the same time, in the same LWC.
   - What if platform was not a string, but a list, and you could mix and match platforms, like ["messaging", and "five9"]. The LWC then waits for initialization by agent assist events dispatched from either of those platform services.
 
-
 ## Benefits/Value Added
 
-- Simulator works with AUTH_OPTION "Skip", so customer can test their conversation profile with the Base API Connector in Salesforce, before they get auth set up (or implementing their own as may very well be the case). Improves user experience and reduces friction.
-- Base API Connector facilitates use of the LWC with other messaging platforms (e.g. SF + Quiq, which Warner Bothers Discovery uses).
-- CX Platform Specific Setup panel: This points to the documentation, 3rd party links, etc. Accordion for each platform. Checklist (Is app installed, permission sets assigned, etc. But less hand holding to avoid introducing brittleness.)
-- Detailed diagnostics page with troubleshooting steps for common issues. All the tools needed to integrate in one place. Deep links to fix issues in SF config. The app is aware of its deps, like the UI Modules static resources, connectivity, and auth, and can report on their status.
-- ConfigurationName based LWC will allow centrally managing configurations, which can be used for many profile types. Suppose an enterprise customer has 10 different teams in the contact center and each want's to set them up differently. Now they don't have to do it at the page level, but in our centralized configuration wizard. This makes for an easier life for admins.
-- Allows multiple configurations on the same page to be used, and is very flexible. Could be used to support both voice and chat side by side, which (probably) requires 2 different conversation profiles.
-- Supports the transition to Companion Agent, while still supporting Container.
-- Because it is an open source integration, and not a managed package, enterprise customers retain the ability to modify the LWC source code to do things like implement custom auth, fix any environment specific bugs that arise, and have visibility into what's going on under the hood. They can even add new features or modify existing platform integrations. This makes the (very complicated) solution robust against the unknowable future of AI, CX Platforms, and enterprise requirements.
+### Security & Governance
+
+- **Server-Side Apex Auth Callouts (`/register`)**: Enhances security posture by shifting client credential authentication from browser JavaScript to server-side Apex callouts, eliminating exposure of ECA secrets in browser network logs/DOM.
+- **Active Configuration Profile Deletion Protection**: Protects active LWC Configuration Profiles assigned to live Salesforce pages from accidental deletion, preventing high-impact runtime outages in active contact centers.
+- **Open Source Flexibility & Code Ownership**: Because it is an open source integration, and not a managed package, enterprise customers retain the ability to modify the LWC source code to do things like implement custom auth, fix any environment specific bugs that arise, and have visibility into what's going on under the hood. They can even add new features or modify existing platform integrations. This makes the (very complicated) solution robust against the unknowable future of AI, CX Platforms, and enterprise requirements.
+
+### Admin Experience & Diagnostics
+
+- **Centralized Configuration Management**: ConfigurationName based LWC will allow centrally managing configurations, which can be used for many profile types. Suppose an enterprise customer has 10 different teams in the contact center and each want's to set them up differently. Now they don't have to do it at the page level, but in our centralized configuration wizard. This makes for an easier life for admins.
+- **CX Platform Specific Setup Panel**: This points to the documentation, 3rd party links, etc. Accordion for each platform. Checklist (Is app installed, permission sets assigned, etc. But less hand holding to avoid introducing brittleness.)
+- **Detailed Diagnostics Page**: Detailed diagnostics page with troubleshooting steps for common issues. All the tools needed to integrate in one place. Deep links to fix issues in SF config. The app is aware of its deps, like the UI Modules static resources, connectivity, and auth, and can report on their status.
+- **Terminology Alignment ("Enhanced Chat")**: Updated messaging terminology from MIAW to "Enhanced Chat" across documentation and component UI, aligning with current Salesforce product standards to minimize admin and agent confusion.
+
+### Testing & Onboarding
+
+- **Simulator Auth Flexibility**: Simulator works with AUTH_OPTION "Skip", so customer can test their conversation profile with the Base API Connector in Salesforce, before they get auth set up (or implementing their own as may very well be the case). Improves user experience and reduces friction.
+
+### Multi-Platform & Architecture Flexibility
+
+- **Base API Connector**: Base API Connector facilitates use of the LWC with other messaging platforms (e.g. SF + Quiq, which Warner Bothers Discovery uses).
+- **Multi-Instance Page Support**: Allows multiple configurations on the same page to be used, and is very flexible. Could be used to support both voice and chat side by side, which (probably) requires 2 different conversation profiles.
+- **Companion Agent & Container Support**: Supports the transition to Companion Agent, while still supporting Container.
+
+### System Reliability & Performance
+
+- **High-Throughput Apex Caching Stability**: Fixed Apex 500 runtime errors in `@AuraEnabled(cacheable=true)` methods (`getResolvedConfig`, `getAllConfigs`) by removing DML operations, ensuring reliable performance under heavy contact center call/chat traffic.
+
+## Appendix
+
+https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GuYVdUAN
+https://appexchange.salesforce.com/appxListingDetail?listingId=175e1542-c700-459c-8f9b-6fcb1bce7a14
+https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GZ7AuUAL
+https://appexchange.salesforce.com/appxListingDetail?listingId=7f59a36f-86c0-4cac-b8af-2c1722ede4d1

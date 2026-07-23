@@ -1143,6 +1143,101 @@ public without sharing class AgentAssistConfigController {
     }
     wrapper.sections.add(dbSection);
 
+    // 6. Installed Contact Center (CX) Packages
+    DiagnosticSection pkgSection = new DiagnosticSection();
+    pkgSection.id = 'installed_packages';
+    pkgSection.title = 'Installed Contact Center (CX) Packages';
+    pkgSection.subtitle = 'Checks for required third-party telephony/CTI managed packages in Salesforce.';
+    pkgSection.iconName = 'utility:package';
+    pkgSection.setupUrl = '/lightning/setup/ImportedPackage/home';
+    pkgSection.setupUrlLabel = 'Packages';
+
+    Map<String, Boolean> pkgStatusMap = getInstalledPackageStatus();
+    Map<String, Map<String, String>> targetPackages = new Map<String, Map<String, String>>{
+      'five9' => new Map<String, String>{
+        'id' => '04tTN000000C1rZYAS',
+        'name' => 'Five9 Fusion',
+        'integration' => 'Salesforce voice integration with Five9',
+        'appExchangeUrl' => 'https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GuYVdUAN'
+      },
+      'twilio' => new Map<String, String>{
+        'id' => '04t8Z0000012JNXQA2',
+        'name' => 'Twilio Flex CTI',
+        'integration' => 'Salesforce voice integration with Twilio Flex',
+        'appExchangeUrl' => 'https://appexchange.salesforce.com/appxListingDetail?listingId=175e1542-c700-459c-8f9b-6fcb1bce7a14'
+      },
+      'nice' => new Map<String, String>{
+        'id' => '04tUi000000L76XIAS',
+        'name' => 'NICE CXone',
+        'integration' => 'Salesforce voice integration with NICE CXone',
+        'appExchangeUrl' => 'https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GZ7AuUAL'
+      },
+      'genesys' => new Map<String, String>{
+        'id' => '04tQp000000ngyzIAA',
+        'name' => 'Genesys Cloud CX',
+        'integration' => 'Salesforce voice integration with Genesys Cloud CX',
+        'appExchangeUrl' => 'https://appexchange.salesforce.com/appxListingDetail?listingId=7f59a36f-86c0-4cac-b8af-2c1722ede4d1'
+      }
+    };
+
+    Integer installedCount = 0;
+    for (String key : targetPackages.keySet()) {
+      Map<String, String> info = targetPackages.get(key);
+      String pkgId = info.get('id');
+      if (pkgStatusMap.containsKey(pkgId) && pkgStatusMap.get(pkgId) == true) {
+        installedCount++;
+      }
+    }
+
+    for (String key : targetPackages.keySet()) {
+      Map<String, String> info = targetPackages.get(key);
+      String pkgId = info.get('id');
+      Boolean isInstalled =
+        pkgStatusMap.containsKey(pkgId) && pkgStatusMap.get(pkgId) == true;
+      String appExchangeUrl = info.get('appExchangeUrl');
+
+      if (isInstalled) {
+        pkgSection.items.add(
+          new DiagnosticItemDetail(
+            'check-pkg-' + key,
+            info.get('integration') + ' (' + info.get('name') + ')',
+            'Package ' +
+              info.get('name') +
+              ' (' +
+              pkgId +
+              ') is installed in this org.',
+            'pass',
+            null,
+            null,
+            1,
+            appExchangeUrl
+          )
+        );
+      } else {
+        pkgSection.items.add(
+          new DiagnosticItemDetail(
+            'check-pkg-' + key,
+            info.get('integration') + ' (' + info.get('name') + ')',
+            'Package ' +
+              info.get('name') +
+              ' (' +
+              pkgId +
+              ') is not installed.',
+            'warning',
+            'Package ' +
+              info.get('name') +
+              ' (' +
+              pkgId +
+              ') was not detected in InstalledSubscriberPackage. Install from AppExchange if using this integration.',
+            null,
+            0,
+            appExchangeUrl
+          )
+        );
+      }
+    }
+    wrapper.sections.add(pkgSection);
+
     // Compute Section status badges & Wrapper counters
     for (DiagnosticSection sec : wrapper.sections) {
       Integer secFails = 0;
@@ -1424,5 +1519,155 @@ public without sharing class AgentAssistConfigController {
     }
 
     return response;
+  }
+
+  /**
+   * Checks installation status for target CX integration subscriber package IDs.
+   * Uses direct SOQL, Tooling API REST callout, and PackageLicense namespace fallback across all packages.
+   * Returns a map of packageId -> Boolean (true if installed).
+   */
+  @AuraEnabled(cacheable=true)
+  public static Map<String, Boolean> getInstalledPackageStatus() {
+    Map<String, Boolean> result = new Map<String, Boolean>{
+      '04tTN000000C1rZYAS' => false, // Five9 Fusion
+      '04t8Z0000012JNXQA2' => false, // Twilio Flex CTI
+      '04tUi000000L76XIAS' => false, // NICE CXone
+      '04tQp000000ngyzIAA' => false // Genesys Cloud CX
+    };
+
+    Set<String> installedIds = new Set<String>();
+
+    // Strategy 1: Standard SOQL on InstalledSubscriberPackage (checking VersionId & PackageId)
+    try {
+      List<SObject> installedPkgs = Database.query(
+        'SELECT Id, SubscriberPackageId, SubscriberPackageVersionId FROM InstalledSubscriberPackage'
+      );
+      for (SObject pkg : installedPkgs) {
+        String verId = (String) pkg.get('SubscriberPackageVersionId');
+        String pkgId = (String) pkg.get('SubscriberPackageId');
+        if (String.isNotBlank(verId)) {
+          installedIds.add(verId);
+          if (verId.length() >= 15) {
+            installedIds.add(verId.substring(0, 15));
+          }
+        }
+        if (String.isNotBlank(pkgId)) {
+          installedIds.add(pkgId);
+          if (pkgId.length() >= 15) {
+            installedIds.add(pkgId.substring(0, 15));
+          }
+        }
+      }
+    } catch (Exception ex) {
+    }
+
+    // Strategy 2: Tooling API REST Callout (always run to supplement installedIds)
+    if (UserInfo.getSessionId() != null) {
+      try {
+        String query = 'SELECT SubscriberPackageId, SubscriberPackageVersionId FROM InstalledSubscriberPackage';
+        String endpoint =
+          URL.getOrgDomainUrl().toExternalForm() +
+          '/services/data/v60.0/tooling/query?q=' +
+          EncodingUtil.urlEncode(query, 'UTF-8');
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(endpoint);
+        req.setMethod('GET');
+        req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionId());
+
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+
+        if (res.getStatusCode() == 200) {
+          Map<String, Object> respMap = (Map<String, Object>) JSON.deserializeUntyped(
+            res.getBody()
+          );
+          List<Object> records = (List<Object>) respMap.get('records');
+          if (records != null) {
+            for (Object recObj : records) {
+              Map<String, Object> rec = (Map<String, Object>) recObj;
+              String verId = (String) rec.get('SubscriberPackageVersionId');
+              String pkgId = (String) rec.get('SubscriberPackageId');
+              if (String.isNotBlank(verId)) {
+                installedIds.add(verId);
+                if (verId.length() >= 15) {
+                  installedIds.add(verId.substring(0, 15));
+                }
+              }
+              if (String.isNotBlank(pkgId)) {
+                installedIds.add(pkgId);
+                if (pkgId.length() >= 15) {
+                  installedIds.add(pkgId.substring(0, 15));
+                }
+              }
+            }
+          }
+        }
+      } catch (Exception ex) {
+      }
+    }
+
+    // Match tokens (VersionId, PackageId, and Namespaces) per integration
+    Map<String, List<String>> targetMap = new Map<String, List<String>>{
+      '04tTN000000C1rZYAS' => new List<String>{
+        '04tTN000000C1rZYAS',
+        '0334x000000dEX3AAM',
+        'Five9BYOT'
+      },
+      '04t8Z0000012JNXQA2' => new List<String>{
+        '04t8Z0000012JNXQA2',
+        '0338Z0000009aZ0QAI',
+        'TwilioFlexCTI',
+        'TwilioFlex'
+      },
+      '04tUi000000L76XIAS' => new List<String>{
+        '04tUi000000L76XIAS',
+        'nice_cxone',
+        'NICECXone',
+        'inContact'
+      },
+      '04tQp000000ngyzIAA' => new List<String>{
+        '04tQp000000ngyzIAA',
+        'genesyscloud',
+        'purecloud',
+        'Genesys'
+      }
+    };
+
+    for (String targetId : result.keySet()) {
+      List<String> matchTokens = targetMap.get(targetId);
+      for (String token : matchTokens) {
+        String token15 = token.length() >= 15 ? token.substring(0, 15) : token;
+        if (installedIds.contains(token) || installedIds.contains(token15)) {
+          result.put(targetId, true);
+          break;
+        }
+      }
+    }
+
+    // Strategy 3: Check PackageLicense by NamespacePrefix (standard SOQL fallback)
+    try {
+      List<PackageLicense> licenses = [
+        SELECT Id, NamespacePrefix
+        FROM PackageLicense
+      ];
+      for (PackageLicense lic : licenses) {
+        if (String.isNotBlank(lic.NamespacePrefix)) {
+          String ns = lic.NamespacePrefix.toLowerCase();
+          for (String targetId : targetMap.keySet()) {
+            List<String> matchTokens = targetMap.get(targetId);
+            for (String token : matchTokens) {
+              if (token.toLowerCase() == ns) {
+                result.put(targetId, true);
+                break;
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception ex) {
+    }
+
+    return result;
   }
 }

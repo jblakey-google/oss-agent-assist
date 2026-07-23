@@ -321,6 +321,7 @@ export default class AgentAssistContainer extends LightningElement {
   async waitForConversationName() {
     this.debugLog(`waiting for a conversationName to init UI Modules...`);
     return new Promise((resolve) => {
+      // eslint-disable-next-line @lwc/lwc/no-async-operation
       this.conversationNamePollingInterval = setInterval(() => {
         if (this.conversationName) {
           clearInterval(this.conversationNamePollingInterval);

@@ -63,12 +63,13 @@
     </div>
 
     <!-- Sub Pages Tabset -->
-    <lightning-tabset active-tab-value={activeTab} onselect={handleTabSelect}>
+    <lightning-tabset active-tab-value={activeTab}>
       <!-- 1. LWC Configuration Profiles -->
       <lightning-tab
         label="LWC Configuration Profiles"
         value="configurationProfiles"
         icon-name="utility:bundle_config"
+        onactive={handleTabActive}
       >
         <div class="slds-p-top_medium">
           <!-- Responsive Layout Grid -->
@@ -422,7 +423,9 @@
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="slds-text-link"
-                                      >Read more about how Agent Assist authentication works in Salesforce.</a>
+                                        >Read more about how Agent Assist
+                                        authentication works in Salesforce.</a
+                                      >
                                     </div>
                                   </div>
                                 </div>
@@ -643,6 +646,7 @@
         label="Simulator"
         value="simulator"
         icon-name="utility:chat"
+        onactive={handleTabActive}
       >
         <div class="slds-p-top_medium">
           <lightning-card
@@ -653,12 +657,14 @@
               <p class="slds-text-body_regular slds-m-bottom_medium">
                 Select any LWC configuration profile to instantiate and test the
                 live&#32;<strong>agentAssistContainer</strong>&#32;or&#32;<strong>agentAssistCompanionAgent</strong>&#32;LWC
-                component directly inside the simulator. You can also test your conversation profile using the&#32;<a
+                component directly inside the simulator. You can also test your
+                conversation profile using the&#32;<a
                   href="https://docs.cloud.google.com/agent-assist/docs/simulator"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="slds-text-link"
-                >Agent Assist Simulator documentation</a>.
+                  >Agent Assist Simulator documentation</a
+                >.
               </p>
 
               <!-- Profile Selector for Simulator -->
@@ -715,22 +721,35 @@
                 <div
                   class="slds-col slds-size_1-of-1 slds-large-size_5-of-12 slds-m-bottom_medium"
                 >
-                  <div class="slds-card slds-card_boundary slds-p-around_medium">
-                    <div class="simulator-card-header slds-text-align_center slds-m-bottom_medium">
-                      <h3 class="slds-text-heading_medium slds-text-title_bold slds-text-align_center">
+                  <div
+                    class="slds-card slds-card_boundary slds-p-around_medium"
+                  >
+                    <div
+                      class="simulator-card-header slds-text-align_center slds-m-bottom_medium"
+                    >
+                      <h3
+                        class="slds-text-heading_medium slds-text-title_bold slds-text-align_center"
+                      >
                         Start a conversation
                       </h3>
-                      <p class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small slds-text-align_center">
-                        Use the chat inputs below to simulate conversation messages.
+                      <p
+                        class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small slds-text-align_center"
+                      >
+                        Use the chat inputs below to simulate conversation
+                        messages.
                       </p>
                     </div>
 
                     <!-- Customer Input Section -->
                     <div class="slds-m-bottom_medium">
-                      <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                      <div
+                        class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small"
+                      >
                         <span class="slds-text-title_bold">Customer</span>
                       </div>
-                      <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+                      <div
+                        class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center"
+                      >
                         <div class="slds-col slds-grow">
                           <lightning-input
                             type="text"
@@ -756,10 +775,14 @@
 
                     <!-- Agent Input Section -->
                     <div class="slds-m-bottom_medium">
-                      <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                      <div
+                        class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small"
+                      >
                         <span class="slds-text-title_bold">Agent</span>
                       </div>
-                      <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+                      <div
+                        class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center"
+                      >
                         <div class="slds-col slds-grow">
                           <lightning-input
                             type="text"
@@ -782,7 +805,6 @@
                         </div>
                       </div>
                     </div>
-
                   </div>
                 </div>
 
@@ -817,6 +839,7 @@
         label="CX Platform Setup"
         value="cxPlatformSetup"
         icon-name="utility:call"
+        onactive={handleTabActive}
       >
         <div class="slds-p-top_medium">
           <lightning-card
@@ -837,23 +860,28 @@
                 >
                   <div class="slds-p-around_small slds-theme_shade">
                     <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Connect Salesforce Enhanced Chat or Salesforce Chat sessions directly to Google Cloud Agent Assist.
+                      Connect Salesforce Enhanced Chat or Salesforce Chat
+                      sessions directly to Google Cloud Agent Assist.
                     </p>
                     <ul
                       class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
                     >
                       <li>
-                        Configure Messaging Channels and Omni-Channel Routing in Salesforce Setup.
+                        Configure Messaging Channels and Omni-Channel Routing in
+                        Salesforce Setup.
                       </li>
                       <li>
                         Place the&#32;<code class="xml-code"
                           >agentAssistContainer</code
                         >&#32;or&#32;<code class="xml-code"
                           >agentAssistCompanionAgent</code
-                        >&#32;LWC on MessagingSession / LiveChatTranscript record pages.
+                        >&#32;LWC on MessagingSession / LiveChatTranscript
+                        record pages.
                       </li>
                       <li>
-                        Configure MessagingPlatformService to listen for chat payload dispatches and push real-time suggestions to agents.
+                        Configure MessagingPlatformService to listen for chat
+                        payload dispatches and push real-time suggestions to
+                        agents.
                       </li>
                     </ul>
                     <a
@@ -878,26 +906,47 @@
                 >
                   <div class="slds-p-around_small slds-theme_shade">
                     <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Integrate Five9 Bring Your Own Telephony (BYOT) and Service Cloud Voice real-time audio streams with Agent Assist.
+                      Integrate Five9 Bring Your Own Telephony (BYOT) and
+                      Service Cloud Voice real-time audio streams with Agent
+                      Assist.
                     </p>
+                    <div class="slds-m-bottom_small">
+                      <template lwc:if={isFive9PackageInstalled}>
+                        <span class="pkg-status-pill pkg-status-pill_pass">
+                          <span class="status-led status-led_pass"></span>
+                          Installed (04tTN000000C1rZYAS)
+                        </span>
+                      </template>
+                      <template lwc:else>
+                        <span class="pkg-status-pill pkg-status-pill_warn">
+                          <span class="status-led status-led_warn"></span>
+                          Package Not Detected (04tTN000000C1rZYAS)
+                        </span>
+                      </template>
+                    </div>
                     <ul
                       class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
                     >
                       <li>
-                        Install and configure Five9 BYOT managed package in Salesforce.
+                        Install and configure Five9 BYOT managed package in
+                        Salesforce.
                       </li>
                       <li>
-                        Enable Service Cloud Voice real-time audio streaming and Five9 telephony connector.
+                        Enable Service Cloud Voice real-time audio streaming and
+                        Five9 telephony connector.
                       </li>
                       <li>
                         Place the&#32;<code class="xml-code"
                           >agentAssistContainer</code
                         >&#32;or&#32;<code class="xml-code"
                           >agentAssistCompanionAgent</code
-                        >&#32;LWC on VoiceCall record pages with Five9 platform handler enabled.
+                        >&#32;LWC on VoiceCall record pages with Five9 platform
+                        handler enabled.
                       </li>
                     </ul>
-                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                    <div
+                      class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+                    >
                       <a
                         href="https://docs.cloud.google.com/agent-assist/priv/docs/salesforce-voice-five9"
                         target="_blank"
@@ -934,26 +983,46 @@
                 >
                   <div class="slds-p-around_small slds-theme_shade">
                     <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Integrate NICE CXone Service Cloud Voice (SCV) audio streams directly with Google Cloud Agent Assist.
+                      Integrate NICE CXone Service Cloud Voice (SCV) audio
+                      streams directly with Google Cloud Agent Assist.
                     </p>
+                    <div class="slds-m-bottom_small">
+                      <template lwc:if={isNicePackageInstalled}>
+                        <span class="pkg-status-pill pkg-status-pill_pass">
+                          <span class="status-led status-led_pass"></span>
+                          Installed (04tUi000000L76XIAS)
+                        </span>
+                      </template>
+                      <template lwc:else>
+                        <span class="pkg-status-pill pkg-status-pill_warn">
+                          <span class="status-led status-led_warn"></span>
+                          Package Not Detected (04tUi000000L76XIAS)
+                        </span>
+                      </template>
+                    </div>
                     <ul
                       class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
                     >
                       <li>
-                        Configure NICE CXone Service Cloud Voice partner integration and AudioStream connector.
+                        Configure NICE CXone Service Cloud Voice partner
+                        integration and AudioStream connector.
                       </li>
                       <li>
-                        Enable real-time audio streaming from NICE CXone contact center to Agent Assist backend.
+                        Enable real-time audio streaming from NICE CXone contact
+                        center to Agent Assist backend.
                       </li>
                       <li>
                         Place the&#32;<code class="xml-code"
                           >agentAssistContainer</code
                         >&#32;or&#32;<code class="xml-code"
                           >agentAssistCompanionAgent</code
-                        >&#32;LWC on VoiceCall record pages to display real-time suggestions.
+                        >&#32;LWC on VoiceCall record pages to display real-time
+                        suggestions.
                       </li>
                     </ul>
-                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                    <div
+                      class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+                    >
                       <a
                         href="https://docs.cloud.google.com/agent-assist/docs/salesforce-voice-nice"
                         target="_blank"
@@ -993,6 +1062,20 @@
                       Integrate with Genesys Cloud via AudioHook WebSocket
                       streams and custom Client Application widgets.
                     </p>
+                    <div class="slds-m-bottom_small">
+                      <template lwc:if={isGenesysPackageInstalled}>
+                        <span class="pkg-status-pill pkg-status-pill_pass">
+                          <span class="status-led status-led_pass"></span>
+                          Installed (04tQp000000ngyzIAA)
+                        </span>
+                      </template>
+                      <template lwc:else>
+                        <span class="pkg-status-pill pkg-status-pill_warn">
+                          <span class="status-led status-led_warn"></span>
+                          Package Not Detected (04tQp000000ngyzIAA)
+                        </span>
+                      </template>
+                    </div>
                     <ul
                       class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
                     >
@@ -1008,7 +1091,9 @@
                         Widget in Genesys Agent Workspace.
                       </li>
                     </ul>
-                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                    <div
+                      class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+                    >
                       <a
                         href="https://docs.cloud.google.com/agent-assist/docs"
                         target="_blank"
@@ -1048,6 +1133,20 @@
                       Deploy the Agent Assist Flex Plugin to Twilio Flex UI and
                       route media streams to the UI Connector backend.
                     </p>
+                    <div class="slds-m-bottom_small">
+                      <template lwc:if={isTwilioPackageInstalled}>
+                        <span class="pkg-status-pill pkg-status-pill_pass">
+                          <span class="status-led status-led_pass"></span>
+                          Installed (04t8Z0000012JNXQA2)
+                        </span>
+                      </template>
+                      <template lwc:else>
+                        <span class="pkg-status-pill pkg-status-pill_warn">
+                          <span class="status-led status-led_warn"></span>
+                          Package Not Detected (04t8Z0000012JNXQA2)
+                        </span>
+                      </template>
+                    </div>
                     <ul
                       class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
                     >
@@ -1063,7 +1162,9 @@
                         sessions to Salesforce.
                       </li>
                     </ul>
-                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small">
+                    <div
+                      class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+                    >
                       <a
                         href="https://docs.cloud.google.com/agent-assist/docs"
                         target="_blank"
@@ -1104,6 +1205,7 @@
         label={diagnosticsTabLabel}
         value="diagnostics"
         icon-name={diagnosticsTabIcon}
+        onactive={handleTabActive}
       >
         <div class="slds-p-top_medium">
           <!-- 1. System Diagnostics & Category Master Overview -->
@@ -1170,6 +1272,18 @@
                       >
                         {card.subtitle}
                       </p>
+
+                      <template lwc:if={card.isPackageSection}>
+                        <div class="slds-m-bottom_medium">
+                          <lightning-button
+                            label={packageAlertsToggleLabel}
+                            icon-name={packageAlertsToggleIcon}
+                            variant="neutral"
+                            size="small"
+                            onclick={togglePackageAlerts}
+                          ></lightning-button>
+                        </div>
+                      </template>
                     </div>
 
                     <!-- Clean Scannable Footer with Metric & Setup Link -->
@@ -1186,7 +1300,12 @@
                           class="slds-text-link slds-text-body_small"
                           title="Open in Salesforce Setup"
                         >
-                          <strong>{card.setupUrlLabel} Setup ↗</strong>
+                          <template lwc:if={card.isPackageSection}>
+                            <strong>Manage ↗</strong>
+                          </template>
+                          <template lwc:else>
+                            <strong>Manage {card.setupUrlLabel} ↗</strong>
+                          </template>
                         </a>
                       </template>
                     </div>
@@ -1263,7 +1382,14 @@
                                   class="slds-text-link slds-m-left_small slds-text-body_small"
                                   title="Open in Salesforce Setup"
                                 >
-                                  <strong>Manage {sec.setupUrlLabel} ↗</strong>
+                                  <template lwc:if={sec.isPackageSection}>
+                                    <strong>Manage ↗</strong>
+                                  </template>
+                                  <template lwc:else>
+                                    <strong
+                                      >Manage {sec.setupUrlLabel} ↗</strong
+                                    >
+                                  </template>
                                 </a>
                               </template>
                             </div>
@@ -1274,13 +1400,22 @@
                             </div>
                           </div>
                         </div>
-                        <span
-                          class={sec.secPillClass}
-                          style="flex-shrink: 0; margin-left: 12px"
-                        >
-                          <span class={sec.secLedClass}></span>
-                          <span>{sec.secStatusText}</span>
-                        </span>
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                          <template lwc:if={sec.isPackageSection}>
+                            <lightning-button
+                              label={packageAlertsToggleLabel}
+                              icon-name={packageAlertsToggleIcon}
+                              variant="neutral"
+                              size="small"
+                              class="slds-m-right_small"
+                              onclick={togglePackageAlerts}
+                            ></lightning-button>
+                          </template>
+                          <span class={sec.secPillClass} style="flex-shrink: 0">
+                            <span class={sec.secLedClass}></span>
+                            <span>{sec.secStatusText}</span>
+                          </span>
+                        </div>
                       </div>
 
                       <!-- Section Items Table / List -->
@@ -1306,6 +1441,19 @@
                                   class="slds-text-body_small slds-text-color_weak"
                                 >
                                   {item.subLabel}
+                                  <template lwc:if={sec.isPackageSection}>
+                                    <span class="slds-m-left_x-small">
+                                      &#183;&#32;<a
+                                        href={item.setupUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="slds-text-link"
+                                        title="View Listing on Salesforce AppExchange"
+                                      >
+                                        <strong>AppExchange Listing ↗</strong>
+                                      </a>
+                                    </span>
+                                  </template>
                                 </div>
                               </div>
                               <span
@@ -1422,8 +1570,8 @@
             <p
               class="slds-m-top_x-small slds-text-body_small slds-text-color_weak"
             >
-              Choose an LWC configuration profile type to create for your contact
-              center agents.
+              Choose an LWC configuration profile type to create for your
+              contact center agents.
             </p>
           </header>
 

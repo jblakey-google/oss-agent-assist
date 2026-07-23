@@ -23,6 +23,7 @@ import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getO
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
+import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigController.getInstalledPackageStatus";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 
 const DEFAULT_DIAGNOSTIC_SECTIONS = [
@@ -197,6 +198,57 @@ const DEFAULT_DIAGNOSTIC_SECTIONS = [
         assignees: []
       }
     ]
+  },
+  {
+    id: "installed_packages",
+    title: "Installed Contact Center (CX) Packages",
+    subtitle:
+      "Checks for required third-party telephony/CTI packages in Salesforce.",
+    iconName: "utility:package",
+    statusBadge: "Checking...",
+    badgeVariant: "warning",
+    setupUrl: "/lightning/setup/ImportedPackage/home",
+    setupUrlLabel: "Packages",
+    items: [
+      {
+        id: "check-pkg-five9",
+        label: "Salesforce voice integration with Five9 (Five9 Fusion)",
+        subLabel: "Package Five9 Fusion (04tTN000000C1rZYAS)",
+        status: "pending",
+        errorMessage: "",
+        setupUrl:
+          "https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GuYVdUAN"
+      },
+      {
+        id: "check-pkg-twilio",
+        label:
+          "Salesforce voice integration with Twilio Flex (Twilio Flex CTI)",
+        subLabel: "Package Twilio Flex CTI (04t8Z0000012JNXQA2)",
+        status: "pending",
+        errorMessage: "",
+        setupUrl:
+          "https://appexchange.salesforce.com/appxListingDetail?listingId=175e1542-c700-459c-8f9b-6fcb1bce7a14"
+      },
+      {
+        id: "check-pkg-nice",
+        label: "Salesforce voice integration with NICE CXone (NICE CXone)",
+        subLabel: "Package NICE CXone (04tUi000000L76XIAS)",
+        status: "pending",
+        errorMessage: "",
+        setupUrl:
+          "https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GZ7AuUAL"
+      },
+      {
+        id: "check-pkg-genesys",
+        label:
+          "Salesforce voice integration with Genesys Cloud CX (Genesys Cloud CX)",
+        subLabel: "Package Genesys Cloud CX (04tQp000000ngyzIAA)",
+        status: "pending",
+        errorMessage: "",
+        setupUrl:
+          "https://appexchange.salesforce.com/appxListingDetail?listingId=7f59a36f-86c0-4cac-b8af-2c1722ede4d1"
+      }
+    ]
   }
 ];
 
@@ -206,8 +258,14 @@ const CHAT_PLATFORM_OPTIONS = [
 ];
 
 const VOICE_PLATFORM_OPTIONS = [
-  { label: "Salesforce voice integration with Twilio Flex", value: "twilioflex" },
-  { label: "Salesforce voice integration with NICE CXone", value: "servicecloudvoice-nice" },
+  {
+    label: "Salesforce voice integration with Twilio Flex",
+    value: "twilioflex"
+  },
+  {
+    label: "Salesforce voice integration with NICE CXone",
+    value: "servicecloudvoice-nice"
+  },
   {
     label: "Salesforce voice integration with Five9",
     value: "servicecloudvoice-byot-five9"
@@ -288,6 +346,62 @@ export default class AgentAssistSetupWizard extends LightningElement {
   endpointDebounceTimeout;
   wiredConfigsResult;
   wiredDiagnosticsResult;
+  @track packageStatus = {};
+  @track packageAlertsDisabled =
+    localStorage.getItem("agent_assist_package_alerts_disabled") === "true";
+
+  async togglePackageAlerts() {
+    this.packageAlertsDisabled = !this.packageAlertsDisabled;
+    localStorage.setItem(
+      "agent_assist_package_alerts_disabled",
+      this.packageAlertsDisabled ? "true" : "false"
+    );
+    if (this.wiredDiagnosticsResult) {
+      try {
+        await refreshApex(this.wiredDiagnosticsResult);
+      } catch {
+        // Ignore refresh errors
+      }
+    }
+    if (this.wiredDiagnosticsResult?.data) {
+      this.processDiagnosticsData(this.wiredDiagnosticsResult.data, true);
+    }
+  }
+
+  get packageAlertsToggleLabel() {
+    return this.packageAlertsDisabled ? "Enable Alerts" : "Disable Alerts";
+  }
+
+  get packageAlertsToggleIcon() {
+    return this.packageAlertsDisabled
+      ? "utility:notification"
+      : "utility:volume_off";
+  }
+
+  @wire(getInstalledPackageStatus)
+  wiredPackageStatus({ error, data }) {
+    if (data) {
+      this.packageStatus = data;
+    } else if (error) {
+      console.warn("Could not load installed package status", error);
+    }
+  }
+
+  get isFive9PackageInstalled() {
+    return !!this.packageStatus?.["04tTN000000C1rZYAS"];
+  }
+
+  get isTwilioPackageInstalled() {
+    return !!this.packageStatus?.["04t8Z0000012JNXQA2"];
+  }
+
+  get isNicePackageInstalled() {
+    return !!this.packageStatus?.["04tUi000000L76XIAS"];
+  }
+
+  get isGenesysPackageInstalled() {
+    return !!this.packageStatus?.["04tQp000000ngyzIAA"];
+  }
 
   handleConversationEvent = (event) => {
     if (event?.detail?.conversationName) {
@@ -299,14 +413,57 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
   };
 
+  hasInitializedTab = false;
+  isTabsetInitialized = false;
+
+  renderedCallback() {
+    if (!this.hasInitializedTab) {
+      this.hasInitializedTab = true;
+      try {
+        const savedTab =
+          localStorage.getItem("agent_assist_setup_active_tab") ||
+          sessionStorage.getItem("agent_assist_setup_active_tab");
+        console.log(
+          "[SetupWizard] renderedCallback - Restoring active tab from storage:",
+          savedTab
+        );
+        if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
+          this.activeTab = savedTab;
+        }
+      } catch (e) {
+        console.error(
+          "[SetupWizard] renderedCallback - Error reading saved tab:",
+          e
+        );
+      }
+      // eslint-disable-next-line @lwc/lwc/no-async-operation
+      setTimeout(() => {
+        this.isTabsetInitialized = true;
+        console.log(
+          "[SetupWizard] Tabset marked initialized for user interactions. Current activeTab:",
+          this.activeTab
+        );
+      }, 500);
+    }
+  }
+
   connectedCallback() {
     try {
-      const savedTab = sessionStorage.getItem("agent_assist_setup_active_tab");
+      const savedTab =
+        localStorage.getItem("agent_assist_setup_active_tab") ||
+        sessionStorage.getItem("agent_assist_setup_active_tab");
+      console.log(
+        "[SetupWizard] connectedCallback - Read active tab from storage:",
+        savedTab
+      );
       if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
         this.activeTab = savedTab;
       }
     } catch (e) {
-      // Ignore storage errors in restricted contexts
+      console.error(
+        "[SetupWizard] connectedCallback - Error reading saved tab:",
+        e
+      );
     }
     window.addEventListener(
       "active-conversation-selected",
@@ -407,6 +564,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
         "color: #0176d3; font-weight: bold;"
       );
 
+      const isPackageSection = sec.id === "installed_packages";
+      const hasAtLeastOnePackage =
+        isPackageSection &&
+        (sec.items || []).some((i) => i.status === "pass" || i.status === "ok");
+
       const items = (sec.items || []).map((item) => {
         let status = item.status;
         if (queryError) status = "fail";
@@ -415,8 +577,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
         let ledClass = "status-led status-led_pass";
         let statusLabel = "OK";
         const isFail = status === "fail";
-        const isWarn = status === "warning";
+        let isWarn = status === "warning";
         const isPending = status === "pending";
+
         const isPass = status === "pass" || (!isFail && !isWarn && !isPending);
 
         if (isFail) {
@@ -429,10 +592,15 @@ export default class AgentAssistSetupWizard extends LightningElement {
             "color: #ea001e; font-weight: bold;"
           );
         } else if (isWarn) {
-          totalWarn++;
+          if (
+            !isPackageSection ||
+            (!hasAtLeastOnePackage && !this.packageAlertsDisabled)
+          ) {
+            totalWarn++;
+          }
           statusPillClass = "status-pill status-pill_warn";
           ledClass = "status-led status-led_warn";
-          statusLabel = "Warning";
+          statusLabel = "Attention Needed";
           console.warn(
             `%c⚠️ [WARN] ${item.label}\n   └─ Note: ${item.errorMessage || item.subLabel}`,
             "color: #fe9339; font-weight: bold;"
@@ -444,6 +612,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
           console.log(`%c⏳ [CHECKING] ${item.label}...`, "color: #eab308;");
         } else {
           totalPass++;
+          statusPillClass = "status-pill status-pill_pass";
+          ledClass = "status-led status-led_pass";
+          statusLabel = "OK";
           console.log(
             `%c✅ [OK] ${item.label} ─ ${item.subLabel}`,
             "color: #2e844a; font-weight: bold;"
@@ -496,7 +667,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
         secPillClass = "status-pill status-pill_fail";
         secStatusText = "Action Required";
         secLedClass = "status-led status-led_fail";
-      } else if (secHasWarn) {
+      } else if (
+        secHasWarn &&
+        !hasAtLeastOnePackage &&
+        !this.packageAlertsDisabled
+      ) {
         secPillClass = "status-pill status-pill_warn";
         secStatusText = "Attention Needed";
         secLedClass = "status-led status-led_warn";
@@ -506,9 +681,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
         secLedClass = "status-led status-led_pending";
       }
 
-      const summaryMetricText = secHasPending
-        ? "Evaluating..."
-        : `${secPassCount} of ${secTotalCount} OK`;
+      const summaryMetricText = isPackageSection
+        ? `${secPassCount} of ${secTotalCount} Installed`
+        : secHasPending
+          ? "Evaluating..."
+          : `${secPassCount} of ${secTotalCount} OK`;
 
       return {
         ...sec,
@@ -518,6 +695,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
         secStatusText,
         secLedClass,
         summaryMetricText,
+        isPackageSection,
         items
       };
     });
@@ -840,9 +1018,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
       try {
         const controller =
           typeof AbortController !== "undefined" ? new AbortController() : null;
+        /* eslint-disable @lwc/lwc/no-async-operation */
         const timeoutId = controller
           ? setTimeout(() => controller.abort(), 4000)
           : null;
+        /* eslint-enable @lwc/lwc/no-async-operation */
         const resp = await fetch(trimmed, {
           method: "GET",
           mode: "cors",
@@ -854,7 +1034,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
           httpCode = resp.status;
           httpStatusText = resp.statusText;
         }
-      } catch (fetchErr) {
+      } catch {
         // Direct browser fetch rejected (DNS error, connection refused, 404, or CORS)
       }
     }
@@ -871,7 +1051,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
           httpCode = apexResult.statusCode;
           httpStatusText = apexResult.statusText || "";
         }
-      } catch (apexErr) {
+      } catch {
         // Apex wire or unmocked error
       }
     }
@@ -916,23 +1096,39 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
   }
 
-  handleTabSelect(event) {
-    const selectedTab =
-      event.target?.activeTabValue ||
-      event.detail?.value ||
-      event.target?.value ||
-      event.detail?.activeTabValue;
+  handleTabActive(event) {
+    const selectedTab = event.target?.value;
+    console.log(
+      "[SetupWizard] handleTabActive triggered for tab:",
+      selectedTab,
+      "isTabsetInitialized:",
+      this.isTabsetInitialized
+    );
 
     if (!selectedTab || selectedTab === "undefined" || selectedTab === "null") {
       return;
     }
 
     this.activeTab = selectedTab;
-    try {
-      sessionStorage.setItem("agent_assist_setup_active_tab", selectedTab);
-    } catch (e) {
-      // Ignore storage errors in restricted contexts
+
+    if (this.isTabsetInitialized) {
+      try {
+        localStorage.setItem("agent_assist_setup_active_tab", selectedTab);
+        sessionStorage.setItem("agent_assist_setup_active_tab", selectedTab);
+        console.log(
+          "[SetupWizard] Persisted activeTab to storage:",
+          selectedTab
+        );
+      } catch (e) {
+        console.error("[SetupWizard] Error storing activeTab:", e);
+      }
+    } else {
+      console.log("[SetupWizard] Initial mount activation for:", selectedTab);
     }
+  }
+
+  handleTabSelect(event) {
+    this.handleTabActive(event);
   }
 
   handleOpenNewProfileModal() {
@@ -1057,8 +1253,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
     if (typeof window.dispatchAgentAssistEvent === "function") {
       window.dispatchAgentAssistEvent("analyze-content-requested", payload);
-    } else if (typeof dispatchAgentAssistEvent === "function") {
-      dispatchAgentAssistEvent("analyze-content-requested", payload);
     } else {
       window.dispatchEvent(
         new CustomEvent("analyze-content-requested", payload)

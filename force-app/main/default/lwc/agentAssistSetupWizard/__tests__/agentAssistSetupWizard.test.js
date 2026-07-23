@@ -18,7 +18,6 @@ import { createElement } from "@lwc/engine-dom";
 import AgentAssistSetupWizard from "c/agentAssistSetupWizard";
 import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
-import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 
 jest.mock(
@@ -351,8 +350,14 @@ describe("c-agent-assist-setup-wizard", () => {
 
     // Platform options should now be voice platforms and platform auto-updated to twilioflex
     expect(platformCombobox.options).toEqual([
-      { label: "Salesforce voice integration with Twilio Flex", value: "twilioflex" },
-      { label: "Salesforce voice integration with NICE CXone", value: "servicecloudvoice-nice" },
+      {
+        label: "Salesforce voice integration with Twilio Flex",
+        value: "twilioflex"
+      },
+      {
+        label: "Salesforce voice integration with NICE CXone",
+        value: "servicecloudvoice-nice"
+      },
       {
         label: "Salesforce voice integration with Five9",
         value: "servicecloudvoice-byot-five9"
@@ -376,4 +381,3 @@ describe("c-agent-assist-setup-wizard", () => {
     expect(platformCombobox.value).toBe("base");
   });
 });
-
