@@ -17,6 +17,11 @@
     -->
 
     <hasActivationRequired>false</hasActivationRequired>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal
+    >Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
     <label>Messaging Agents Permission Set</label>
     <objectPermissions>
         <allowCreate>true</allowCreate>
