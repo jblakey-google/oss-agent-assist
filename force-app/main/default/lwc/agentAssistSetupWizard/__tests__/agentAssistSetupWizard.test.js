@@ -36,6 +36,19 @@ jest.mock(
 );
 
 jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.registerAuthToken",
+  () => {
+    return {
+      default: jest.fn().mockResolvedValue({
+        status: "success",
+        token: "mock-jwt-token-12345"
+      })
+    };
+  },
+  { virtual: true }
+);
+
+jest.mock(
   "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics",
   () => {
     const { createApexTestWireAdapter } = require("@salesforce/sfdx-lwc-jest");

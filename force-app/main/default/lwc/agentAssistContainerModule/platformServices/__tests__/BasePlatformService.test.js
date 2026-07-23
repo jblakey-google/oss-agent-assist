@@ -21,6 +21,17 @@ import {
   createMockRefs
 } from "../testUtils";
 import { DIALOGFLOW_API_VERSION } from "../../config";
+import registerAuthTokenApex from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.registerAuthToken",
+  () => ({
+    default: jest.fn().mockResolvedValue({
+      token: "test-ui-connector-token"
+    })
+  }),
+  { virtual: true }
+);
 
 describe("BasePlatformService", () => {
   let mockLwc;
@@ -127,26 +138,19 @@ describe("BasePlatformService", () => {
       errorSpy.mockRestore();
     });
 
-    it("registers auth token successfully via Apex callout or browser fallback", async () => {
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ access_token: "test-access-token" })
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ token: "test-ui-connector-token" })
-        });
+    it("registers auth token successfully via Apex callout", async () => {
+      registerAuthTokenApex.mockResolvedValueOnce({
+        token: "test-ui-connector-token"
+      });
 
       const result = await basePlatformService.registerAuthToken();
 
       expect(result).toBe("test-ui-connector-token");
     });
 
-    it("handles OAuth token request failure", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        statusText: "OAuth failed"
+    it("handles Apex callout error response", async () => {
+      registerAuthTokenApex.mockResolvedValueOnce({
+        error: "OAuth token request failed"
       });
 
       const result = await basePlatformService.registerAuthToken();
@@ -155,16 +159,10 @@ describe("BasePlatformService", () => {
       expect(mockLwc.loadError).toBeInstanceOf(Error);
     });
 
-    it("handles UI Connector registration failure", async () => {
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ access_token: "test-access-token" })
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          statusText: "Bad Request"
-        });
+    it("handles Apex invocation failure", async () => {
+      registerAuthTokenApex.mockRejectedValueOnce(
+        new Error("Callout failed")
+      );
 
       const result = await basePlatformService.registerAuthToken();
 

@@ -23,6 +23,8 @@ import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getO
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
+import registerAuthToken from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
+import createRemoteSiteSetting from "@salesforce/apex/AgentAssistConfigController.createRemoteSiteSetting";
 import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigController.getInstalledPackageStatus";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 
@@ -344,6 +346,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track endpointStatusLabel = "Checking...";
   @track endpointStatusMessage = "";
   endpointDebounceTimeout;
+
+  @track registerHealthState = "pending"; // 'pending', 'pass', 'warning', 'fail'
+  @track registerStatusCode = 200;
+  @track registerStatusLabel = "Checking...";
+  @track registerStatusMessage = "";
+  registerDebounceTimeout;
   wiredConfigsResult;
   wiredDiagnosticsResult;
   @track packageStatus = {};
@@ -475,6 +483,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
     );
     this.initPendingDiagnostics();
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
+    this.evaluateRegisterEndpointHealth();
   }
 
   disconnectedCallback() {
@@ -1096,6 +1105,173 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
   }
 
+  get registerStatusPillClass() {
+    if (this.registerHealthState === "pass") {
+      return "status-pill status-pill_pass";
+    }
+    if (this.registerHealthState === "warning") {
+      return "status-pill status-pill_warn";
+    }
+    if (this.registerHealthState === "fail") {
+      return "status-pill status-pill_fail";
+    }
+    return "status-pill status-pill_pending";
+  }
+
+  get registerStatusLedClass() {
+    if (this.registerHealthState === "pass") {
+      return "status-led status-led_pass";
+    }
+    if (this.registerHealthState === "warning") {
+      return "status-led status-led_warn";
+    }
+    if (this.registerHealthState === "fail") {
+      return "status-led status-led_fail";
+    }
+    return "status-led status-led_pending";
+  }
+
+  get registerStatusTooltip() {
+    return `/register Route Status: ${this.registerStatusLabel}. ${this.registerStatusMessage || ""}`;
+  }
+
+  get registerStatusMessageClass() {
+    if (this.registerHealthState === "fail") {
+      return "endpoint-msg-fail";
+    }
+    if (this.registerHealthState === "warning") {
+      return "endpoint-msg-warn";
+    }
+    return "slds-text-body_small slds-text-color_weak slds-m-top_xxx-small";
+  }
+
+  handleRecheckRegisterEndpoint() {
+    this.evaluateRegisterEndpointHealth();
+  }
+
+  async evaluateRegisterEndpointHealth() {
+    const url = this.currentProfile?.endpointUrl;
+    const consumerKey = this.currentProfile?.consumerKey;
+    const consumerSecret = this.currentProfile?.consumerSecret;
+    const clientCredentialsUser = this.currentProfile?.clientCredentialsUser;
+
+    if (!url || !url.trim()) {
+      this.registerHealthState = "warning";
+      this.registerStatusCode = 0;
+      this.registerStatusLabel = "No URL";
+      this.registerStatusMessage = "Please enter a UI Connector Endpoint URL.";
+      return;
+    }
+
+    const trimmedUrl = url.trim().replace(/\/$/, "");
+    if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+      this.registerHealthState = "warning";
+      this.registerStatusCode = 400;
+      this.registerStatusLabel = "400 Bad Request";
+      this.registerStatusMessage =
+        "HTTP 400 Bad Request — URL must start with https:// or http://.";
+      return;
+    }
+
+    if (this.endpointStatusCode === null || this.endpointStatusCode === undefined) {
+      await this.evaluateEndpointHealth();
+    }
+
+    this.registerHealthState = "pending";
+    this.registerStatusCode = 0;
+    this.registerStatusLabel = "Checking...";
+    this.registerStatusMessage = "Checking /register route auth connectivity via Apex callout...";
+
+    try {
+      let result = await registerAuthToken({
+        configName: this.currentProfile?.developerName || "Default",
+        endpointUrl: trimmedUrl,
+        consumerKey: consumerKey || "",
+        consumerSecret: consumerSecret || "",
+        clientCredentialsUser: clientCredentialsUser || ""
+      });
+
+      let errorMsg = result && result.error ? String(result.error) : "";
+      if (errorMsg.includes("Unauthorized endpoint")) {
+        // If UI Connector endpoint base health check passed (200 OK) and /register callout failed due to missing Remote Site Setting
+        if (this.endpointHealthState === "pass" || this.endpointStatusCode === 200) {
+          console.log(
+            "[SetupWizard] UI Connector endpoint base check passed (200 OK), but /register Apex callout blocked by Remote Site Settings. Creating Remote Site Setting dynamically via Apex Tooling API..."
+          );
+          const created = await createRemoteSiteSetting({ endpointUrl: trimmedUrl });
+          if (created) {
+            console.log(
+              "[SetupWizard] Remote Site Setting created successfully. Re-evaluating /register health check..."
+            );
+            result = await registerAuthToken({
+              configName: this.currentProfile?.developerName || "Default",
+              endpointUrl: trimmedUrl,
+              consumerKey: consumerKey || "",
+              consumerSecret: consumerSecret || "",
+              clientCredentialsUser: clientCredentialsUser || ""
+            });
+            errorMsg = result && result.error ? String(result.error) : "";
+          } else {
+            console.warn(
+              "[SetupWizard] Remote Site Setting creation returned false from Apex Tooling API callout."
+            );
+          }
+        }
+      }
+
+      if (result && result.status === "success" && result.token) {
+        this.registerHealthState = "pass";
+        this.registerStatusCode = 200;
+        this.registerStatusLabel = "200 OK";
+        this.registerStatusMessage =
+          "HTTP 200 OK — /register route authenticated and reachable via Apex callout.";
+      } else if (result && result.error) {
+        const errorMsg = String(result.error);
+        if (errorMsg.includes("Unauthorized endpoint")) {
+          this.registerHealthState = "warning";
+          this.registerStatusCode = 401;
+          this.registerStatusLabel = "Setup Warning";
+          this.registerStatusMessage =
+            `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
+        } else if (errorMsg.includes("401") || errorMsg.includes("403")) {
+          this.registerHealthState = "fail";
+          this.registerStatusCode = 401;
+          this.registerStatusLabel = "401 Unauthorized";
+          this.registerStatusMessage = `HTTP 401 Unauthorized — /register auth failed: ${errorMsg}`;
+        } else if (errorMsg.includes("404")) {
+          this.registerHealthState = "warning";
+          this.registerStatusCode = 404;
+          this.registerStatusLabel = "404 Not Found";
+          this.registerStatusMessage = `HTTP 404 Not Found — /register route unreachable: ${errorMsg}`;
+        } else {
+          this.registerHealthState = "fail";
+          this.registerStatusCode = 500;
+          this.registerStatusLabel = "Auth Error";
+          this.registerStatusMessage = `/register health check error: ${errorMsg}`;
+        }
+      } else {
+        this.registerHealthState = "warning";
+        this.registerStatusCode = 0;
+        this.registerStatusLabel = "No Response";
+        this.registerStatusMessage = "No response from /register route.";
+      }
+    } catch (err) {
+      const errMsg = err?.body?.message || err?.message || String(err);
+      if (errMsg.includes("Unauthorized endpoint")) {
+        this.registerHealthState = "warning";
+        this.registerStatusCode = 401;
+        this.registerStatusLabel = "Setup Warning";
+        this.registerStatusMessage =
+          `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
+      } else {
+        this.registerHealthState = "fail";
+        this.registerStatusCode = 500;
+        this.registerStatusLabel = "Callout Error";
+        this.registerStatusMessage = `/register callout error: ${errMsg}`;
+      }
+    }
+  }
+
   handleTabActive(event) {
     const selectedTab = event.target?.value;
     console.log(
@@ -1323,6 +1499,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.currentProfile = { ...this.profiles[0] };
     }
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
+    this.evaluateRegisterEndpointHealth();
   }
 
   handleSelectProfile(event) {
@@ -1362,12 +1539,21 @@ export default class AgentAssistSetupWizard extends LightningElement {
       }
     }
 
-    if (field === "endpointUrl") {
+    if (
+      field === "endpointUrl" ||
+      field === "consumerKey" ||
+      field === "consumerSecret" ||
+      field === "clientCredentialsUser"
+    ) {
       clearTimeout(this.endpointDebounceTimeout);
+      clearTimeout(this.registerDebounceTimeout);
       // eslint-disable-next-line @lwc/lwc/no-async-operation
       this.endpointDebounceTimeout = setTimeout(() => {
-        this.evaluateEndpointHealth(value);
-      }, 200);
+        if (field === "endpointUrl") {
+          this.evaluateEndpointHealth(value);
+        }
+        this.evaluateRegisterEndpointHealth();
+      }, 300);
     }
 
     this.currentProfile = updated;

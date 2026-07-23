@@ -445,28 +445,46 @@
                                       set to
                                       <code class="xml-code">SalesforceLWC</code
                                       >. Read more in the
-                                      <a
+                                      &#32;<a
                                         href="https://docs.cloud.google.com/agent-assist/docs/backend-basics"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="slds-text-link"
                                         >backend basics documentation</a
-                                      >
+                                      >&#32;
                                       and
-                                      <a
+                                      &#32;<a
                                         href="https://docs.cloud.google.com/agent-assist/docs/backend-module-install#customize_the_user_authentication_method"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="slds-text-link"
                                         >Salesforce authentication guide</a
-                                      >.
+                                      >&#32;.
                                     </div>
                                   </div>
                                 </div>
                                 <div
-                                  class="slds-col slds-no-flex slds-size_1-of-1 slds-medium-size_auto"
+                                  class="slds-col slds-no-flex slds-size_1-of-1 slds-medium-size_auto slds-grid slds-grid_vertical-align-center slds-grid_align-end slds-wrap"
                                   style="min-width: 250px"
                                 >
+                                  <div class="slds-grid slds-grid_vertical-align-center slds-m-right_small slds-m-bottom_xx-small slds-medium-m-bottom_none">
+                                    <span
+                                      class={registerStatusPillClass}
+                                      title={registerStatusTooltip}
+                                    >
+                                      <span class={registerStatusLedClass}></span>
+                                      <span>{registerStatusLabel}</span>
+                                    </span>
+                                    <lightning-button-icon
+                                      icon-name="utility:refresh"
+                                      variant="border-filled"
+                                      size="x-small"
+                                      alternative-text="Re-check /register Route Health"
+                                      title="Re-check /register Route Health"
+                                      onclick={handleRecheckRegisterEndpoint}
+                                      class="slds-m-left_xx-small"
+                                    ></lightning-button-icon>
+                                  </div>
                                   <a
                                     href="/lightning/setup/ManageExternalClientApplication/home"
                                     target="_blank"
@@ -481,6 +499,11 @@
                                     <span>External Client App Manager</span>
                                   </a>
                                 </div>
+                                <template lwc:if={registerStatusMessage}>
+                                  <div class={registerStatusMessageClass}>
+                                    {registerStatusMessage}
+                                  </div>
+                                </template>
                               </div>
                             </div>
 

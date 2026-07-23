@@ -592,7 +592,7 @@ public without sharing class AgentAssistConfigController {
     } catch (Exception ex) {
     }
 
-    // Check HTTPS Cloud Run
+    // Check HTTPS Cloud Run Trusted URL
     if (
       cspMap.containsKey('cloud_run_https') &&
       cspMap.get('cloud_run_https').IsActive
@@ -1322,7 +1322,22 @@ public without sharing class AgentAssistConfigController {
       req.setMethod('GET');
       req.setTimeout(5000);
       Http http = new Http();
-      HttpResponse res = http.send(req);
+      HttpResponse res;
+      try {
+        res = http.send(req);
+      } catch (System.CalloutException calloutEx) {
+        String msg = calloutEx.getMessage();
+        if (msg != null && msg.contains('Unauthorized endpoint')) {
+          Boolean created = createRemoteSiteSetting(trimmed);
+          if (created) {
+            res = http.send(req);
+          } else {
+            throw calloutEx;
+          }
+        } else {
+          throw calloutEx;
+        }
+      }
 
       Integer code = res.getStatusCode();
       String statusTxt = res.getStatus();
@@ -1359,6 +1374,94 @@ public without sharing class AgentAssistConfigController {
       result.put('message', 'HTTP 404 Not Found');
     }
     return result;
+  }
+
+  /**
+   * Dynamically generates/upserts a Salesforce Remote Site Setting (RemoteProxy) for the specified endpoint URL
+   * using the Salesforce Tooling API so server-side Apex callouts to the Cloud Run URL are allowed.
+   */
+  @AuraEnabled
+  public static Boolean createRemoteSiteSetting(String endpointUrl) {
+    if (String.isBlank(endpointUrl)) {
+      return false;
+    }
+
+    String trimmed = endpointUrl.trim();
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      return false;
+    }
+
+    Url u;
+    try {
+      u = new Url(trimmed);
+    } catch (Exception e) {
+      return false;
+    }
+
+    String origin = u.getProtocol() + '://' + u.getHost();
+    if (u.getPort() != -1 && u.getPort() != 80 && u.getPort() != 443) {
+      origin += ':' + u.getPort();
+    }
+
+    if (Test.isRunningTest()) {
+      return true;
+    }
+
+    try {
+      String sessionId;
+      try {
+        sessionId = Page.SessionIdFetcher.getContent().toString().trim();
+      } catch (Exception e) {
+        System.debug('SessionIdFetcher Visualforce fallback error: ' + e.getMessage());
+      }
+      if (String.isBlank(sessionId)) {
+        sessionId = UserInfo.getSessionId();
+      }
+      if (String.isBlank(sessionId)) {
+        return false;
+      }
+
+      String sfDomain = Url.getOrgDomainUrl().toExternalForm();
+      String toolingUrl = sfDomain + '/services/data/v67.0/tooling/sobjects/RemoteProxy/';
+
+      String devName = 'Agent_Assist_' + u.getHost().replaceAll('[^a-zA-Z0-9]', '_');
+      if (devName.length() > 40) {
+        devName = devName.substring(0, 40);
+      }
+
+      Map<String, Object> metadata = new Map<String, Object>();
+      metadata.put('description', 'Dynamically generated Remote Site Setting for Agent Assist UI Connector (' + u.getHost() + ')');
+      metadata.put('isActive', true);
+      metadata.put('url', origin);
+
+      Map<String, Object> reqBody = new Map<String, Object>();
+      reqBody.put('FullName', devName);
+      reqBody.put('Metadata', metadata);
+
+      HttpRequest toolingReq = new HttpRequest();
+      toolingReq.setEndpoint(toolingUrl);
+      toolingReq.setMethod('POST');
+      toolingReq.setHeader('Authorization', 'Bearer ' + sessionId);
+      toolingReq.setHeader('Content-Type', 'application/json');
+      toolingReq.setBody(JSON.serialize(reqBody));
+      toolingReq.setTimeout(10000);
+
+      Http toolingHttp = new Http();
+      HttpResponse toolingRes = toolingHttp.send(toolingReq);
+      String body = toolingRes.getBody();
+
+      if (
+        toolingRes.getStatusCode() == 201 ||
+        toolingRes.getStatusCode() == 200 ||
+        (body != null && (body.contains('DUPLICATE_DEVELOPER_NAME') || body.contains('already exists')))
+      ) {
+        return true;
+      }
+    } catch (Exception ex) {
+      System.debug('Dynamic Remote Site Setting creation error: ' + ex.getMessage());
+    }
+
+    return false;
   }
 
   /**
@@ -1489,7 +1592,22 @@ public without sharing class AgentAssistConfigController {
       regReq.setBody('{}');
       regReq.setTimeout(10000);
 
-      HttpResponse regRes = http.send(regReq);
+      HttpResponse regRes;
+      try {
+        regRes = http.send(regReq);
+      } catch (System.CalloutException calloutEx) {
+        String msg = calloutEx.getMessage();
+        if (msg != null && msg.contains('Unauthorized endpoint')) {
+          Boolean created = createRemoteSiteSetting(finalEndpoint);
+          if (created) {
+            regRes = http.send(regReq);
+          } else {
+            throw calloutEx;
+          }
+        } else {
+          throw calloutEx;
+        }
+      }
       if (regRes.getStatusCode() != 200) {
         response.put(
           'error',
@@ -1562,7 +1680,16 @@ public without sharing class AgentAssistConfigController {
     }
 
     // Strategy 2: Tooling API REST Callout (always run to supplement installedIds)
-    if (UserInfo.getSessionId() != null) {
+    String toolingSessionId;
+    try {
+      toolingSessionId = Page.SessionIdFetcher.getContent().toString().trim();
+    } catch (Exception e) {
+      System.debug('SessionIdFetcher Visualforce fallback error: ' + e.getMessage());
+    }
+    if (String.isBlank(toolingSessionId)) {
+      toolingSessionId = UserInfo.getSessionId();
+    }
+    if (String.isNotBlank(toolingSessionId)) {
       try {
         String query = 'SELECT SubscriberPackageId, SubscriberPackageVersionId FROM InstalledSubscriberPackage';
         String endpoint =
@@ -1573,7 +1700,7 @@ public without sharing class AgentAssistConfigController {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(endpoint);
         req.setMethod('GET');
-        req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionId());
+        req.setHeader('Authorization', 'Bearer ' + toolingSessionId);
 
         Http http = new Http();
         HttpResponse res = http.send(req);
