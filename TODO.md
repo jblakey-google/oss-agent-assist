@@ -5,14 +5,14 @@
 - [ ] Add CX Platform Setup accordion logos. You can just embed them as svgs or base64-encoded images.
 - [ ] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
 - [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
-- [ ] Create a standalone Transcript LWC.
-- [ ] Create a toggle that allows disabling the integrated transcript.
-- [ ] Make the integrated transcript break to 2 columns at a narrower width. Breakpoints should be based not on viewport width but element width.
+- [ ] Create a toggle that allows disabling the integrated chat transcript and suggests using the standalone LWC instead.
+- [ ] Test standalone transcript with a voice platform,.
 
 ## Doing
 
 ## Done
 
+- [x] Create a standalone Transcript LWC.
 - [x] Update Messaging for In-App and Web to "Enhanced Chat" Throughout
   - [x] Create a CL to make this update in the public docs: MIAW -> "Enhanced Chat"
 - [x] Perhaps we should call them LWC Configuration Profiles, to disambiguate from Conversation Profiles (which are configured in the Agent Assist Admin Console).

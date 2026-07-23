@@ -1,0 +1,73 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template>
+  <div class="agent-assist-component">
+    <!-- Missing/Deleted Profile Error View -->
+    <template lwc:if={isProfileMissing}>
+      <div
+        class="missing-profile-box slds-p-around_medium slds-m-around_small slds-size_1-of-1"
+      >
+        <div class="slds-media slds-media_center">
+          <div class="slds-media__figure">
+            <lightning-icon
+              icon-name="utility:warning"
+              variant="warning"
+              size="medium"
+            ></lightning-icon>
+          </div>
+          <div class="slds-media__body">
+            <div class="slds-text-heading_small slds-text-color_error">
+              <strong>LWC Configuration Profile Deleted or Missing</strong>
+            </div>
+            <p class="slds-text-body_regular slds-m-top_xx-small">
+              The assigned profile
+              <code class="missing-code">{configName}</code> was deleted from
+              the Setup Wizard or does not exist.
+            </p>
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-m-top_x-small"
+            >
+              Please select an active profile in
+              &#32;<strong>Lightning App Builder</strong>&#32;or create
+              &#32;<strong>{configName}</strong>&#32;in the
+              &#32;<strong>Google Cloud Agent Assist Setup Wizard</strong>&#32;tab.
+            </p>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Normal Transcript View -->
+    <template lwc:else>
+      <div class="load-error" lwc:if={loadError} lwc:ref="loadError">
+        <h3>Load Error</h3>
+        <p>{loadError.message}</p>
+      </div>
+
+      <div
+        class={transcriptContainerClass}
+        lwc:ref="transcriptContainer"
+      >
+        <div
+          class="agent-assist-transcript"
+          lwc:dom="manual"
+          lwc:ref="agentAssistTranscript"
+        ></div>
+      </div>
+    </template>
+  </div>
+</template>

@@ -235,7 +235,7 @@ export default class AgentAssistContainer extends LightningElement {
         const comp = this.template.querySelector(".agent-assist-component");
         comp?.classList.add("dark-mode");
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
