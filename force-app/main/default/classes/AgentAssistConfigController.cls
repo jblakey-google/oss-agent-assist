@@ -1328,11 +1328,19 @@ public without sharing class AgentAssistConfigController {
       } catch (System.CalloutException calloutEx) {
         String msg = calloutEx.getMessage();
         if (msg != null && msg.contains('Unauthorized endpoint')) {
-          Boolean created = createRemoteSiteSetting(trimmed);
-          if (created) {
-            res = http.send(req);
-          } else {
-            throw calloutEx;
+          try {
+            HttpRequest ncReq = new HttpRequest();
+            ncReq.setEndpoint('callout:Agent_Assist_UI_Connector');
+            ncReq.setMethod('GET');
+            ncReq.setTimeout(5000);
+            res = http.send(ncReq);
+          } catch (Exception ncEx) {
+            Boolean created = createRemoteSiteSetting(trimmed);
+            if (created) {
+              res = http.send(req);
+            } else {
+              throw calloutEx;
+            }
           }
         } else {
           throw calloutEx;
@@ -1598,11 +1606,24 @@ public without sharing class AgentAssistConfigController {
       } catch (System.CalloutException calloutEx) {
         String msg = calloutEx.getMessage();
         if (msg != null && msg.contains('Unauthorized endpoint')) {
-          Boolean created = createRemoteSiteSetting(finalEndpoint);
-          if (created) {
-            regRes = http.send(regReq);
-          } else {
-            throw calloutEx;
+          try {
+            HttpRequest ncRegReq = new HttpRequest();
+            ncRegReq.setEndpoint('callout:Agent_Assist_UI_Connector/register');
+            ncRegReq.setMethod('POST');
+            ncRegReq.setHeader('Content-Type', 'application/json');
+            if (String.isNotBlank(accessToken)) {
+              ncRegReq.setHeader('Authorization', 'Bearer ' + accessToken);
+            }
+            ncRegReq.setBody('{}');
+            ncRegReq.setTimeout(10000);
+            regRes = http.send(ncRegReq);
+          } catch (Exception ncEx) {
+            Boolean created = createRemoteSiteSetting(finalEndpoint);
+            if (created) {
+              regRes = http.send(regReq);
+            } else {
+              throw calloutEx;
+            }
           }
         } else {
           throw calloutEx;
