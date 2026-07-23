@@ -253,9 +253,24 @@ export default class BasePlatformService {
         console.log(config);
       }
 
-      // Check if Dark Mode is (still) on from another UIM instance
-      if (document.body.classList.contains("dark-mode")) {
+      // Check if Dark Mode is (still) on from localStorage or another UIM instance
+      let savedDarkMode = false;
+      try {
+        savedDarkMode =
+          localStorage.getItem("agent_assist_dark_mode") === "true";
+      } catch (e) {
+        // ignore storage restrictions
+      }
+
+      if (savedDarkMode || document.body.classList.contains("dark-mode")) {
         this.handleDarkModeToggled({ detail: { on: true } });
+        if (typeof dispatchAgentAssistEvent === "function") {
+          dispatchAgentAssistEvent(
+            "dark-mode-toggled",
+            { detail: { on: true } },
+            { namespace: this.lwc.recordId }
+          );
+        }
       }
 
       // Make the UI Modules visible
@@ -535,11 +550,34 @@ export default class BasePlatformService {
   }
 
   handleDarkModeToggled(event) {
-    // Toggle dark mode for the transcript container.
-    if (event.detail.on) {
-      this.lwc.refs.transcriptContainer.classList.add("dark-mode");
+    // Toggle dark mode for the transcript container and component wrapper, and persist state across reloads.
+    const isDark = !!(event?.detail?.on ?? event?.detail);
+    if (this.lwc.refs?.transcriptContainer?.classList) {
+      if (isDark) {
+        this.lwc.refs.transcriptContainer.classList.add("dark-mode");
+      } else {
+        this.lwc.refs.transcriptContainer.classList.remove("dark-mode");
+      }
+    }
+    const componentEl = this.lwc.template?.querySelector(
+      ".agent-assist-component"
+    );
+    if (componentEl) {
+      if (isDark) {
+        componentEl.classList.add("dark-mode");
+      } else {
+        componentEl.classList.remove("dark-mode");
+      }
+    }
+    if (isDark) {
+      document.body.classList.add("dark-mode");
     } else {
-      this.lwc.refs.transcriptContainer.classList.remove("dark-mode");
+      document.body.classList.remove("dark-mode");
+    }
+    try {
+      localStorage.setItem("agent_assist_dark_mode", isDark ? "true" : "false");
+    } catch (e) {
+      // ignore storage quota / sandbox errors
     }
   }
 
