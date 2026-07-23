@@ -279,6 +279,28 @@ lightning-service-cloud-voice-toolkit-api {
   line-height: 1.5;
 }
 
+/* Dark Mode Empty State View =============================================== */
+.agent-assist-component.dark-mode .empty-state-container {
+  background: #212124;
+  color: #e8eaed;
+}
+
+.agent-assist-component.dark-mode .empty-state-container h3 {
+  color: #e8eaed !important;
+}
+
+.agent-assist-component.dark-mode .empty-state-description {
+  color: #9aa0a6 !important;
+}
+
+.agent-assist-component.dark-mode .empty-state-description a {
+  color: #8ab4f8 !important;
+}
+
+.agent-assist-component.dark-mode .empty-state-illustration {
+  background: #303134;
+}
+
 .slds-hide {
   display: none !important;
 }

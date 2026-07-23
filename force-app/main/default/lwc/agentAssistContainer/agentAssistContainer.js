@@ -227,6 +227,18 @@ export default class AgentAssistContainer extends LightningElement {
       this._heightApplied = true;
     }
 
+    try {
+      if (
+        localStorage.getItem("agent_assist_dark_mode") === "true" ||
+        document.body.classList.contains("dark-mode")
+      ) {
+        const comp = this.template.querySelector(".agent-assist-component");
+        comp?.classList.add("dark-mode");
+      }
+    } catch (e) {
+      // ignore
+    }
+
     if (
       this.resolvedState?.isFound &&
       !this.platformService &&
