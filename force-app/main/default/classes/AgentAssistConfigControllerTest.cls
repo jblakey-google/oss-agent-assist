@@ -358,4 +358,24 @@ private class AgentAssistConfigControllerTest {
     );
     Assert.isNotNull(res.get('token'), 'JWT token should be returned');
   }
+
+  @IsTest
+  static void testUserPermissionSetManagement() {
+    Test.startTest();
+    List<Map<String, Object>> userList = AgentAssistConfigController.getUsersWithPermissionSetStatus();
+    Assert.isNotNull(userList, 'User list with permission set status should not be null');
+
+    Map<String, Object> assignRes = AgentAssistConfigController.toggleUserPermissionSetAssignment(
+      UserInfo.getUserId(),
+      true
+    );
+    Assert.isTrue((Boolean) assignRes.get('success'), 'Assign permission set should succeed');
+
+    Map<String, Object> unassignRes = AgentAssistConfigController.toggleUserPermissionSetAssignment(
+      UserInfo.getUserId(),
+      false
+    );
+    Assert.isTrue((Boolean) unassignRes.get('success'), 'Unassign permission set should succeed');
+    Test.stopTest();
+  }
 }

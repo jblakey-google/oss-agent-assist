@@ -3,6 +3,7 @@
 - [ ] Test with various SF licenses, using the project-scratch-def.json.
 - [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 - [ ] Add CX Platform Setup accordion logos. You can just embed them as svgs or base64-encoded images.
+- [ ] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
 
 ## Doing
 

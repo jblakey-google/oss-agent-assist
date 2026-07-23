@@ -25,6 +25,8 @@ import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteCon
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import registerAuthToken from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
 import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigController.getInstalledPackageStatus";
+import getUsersWithPermissionSetStatus from "@salesforce/apex/AgentAssistConfigController.getUsersWithPermissionSetStatus";
+import toggleUserPermissionSetAssignment from "@salesforce/apex/AgentAssistConfigController.toggleUserPermissionSetAssignment";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 
 const DEFAULT_DIAGNOSTIC_SECTIONS = [
@@ -483,6 +485,157 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.initPendingDiagnostics();
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
     this.evaluateRegisterEndpointHealth();
+    this.loadAgentUsers();
+  }
+
+  @track agentUsersList = [];
+  @track selectedAgentUserId = "";
+  @track isSelectedUserAssigned = false;
+  @track isUserPermissionLoading = false;
+
+  get agentUserOptions() {
+    return this.agentUsersList.map((u) => ({
+      label: u.label,
+      value: u.value
+    }));
+  }
+
+  get selectedUserBadgeClass() {
+    return this.isSelectedUserAssigned
+      ? "slds-badge slds-theme_success"
+      : "slds-badge slds-badge_inverse";
+  }
+
+  get selectedUserStatusText() {
+    return this.isSelectedUserAssigned ? "Assigned" : "Not Assigned";
+  }
+
+  get userAssignButtonLabel() {
+    return this.isSelectedUserAssigned
+      ? "Remove Permission Set"
+      : "Assign Permission Set";
+  }
+
+  get userAssignButtonVariant() {
+    return this.isSelectedUserAssigned ? "destructive" : "brand";
+  }
+
+  get userAssignButtonIcon() {
+    return this.isSelectedUserAssigned ? "utility:close" : "utility:add";
+  }
+
+  get isAssignUserDisabled() {
+    return !this.selectedAgentUserId || this.isUserPermissionLoading;
+  }
+
+  get assignedAgentUsers() {
+    return this.agentUsersList.filter((u) => u.isAssigned);
+  }
+
+  get hasAssignedAgentUsers() {
+    return this.assignedAgentUsers.length > 0;
+  }
+
+  get assignedUsersCount() {
+    return this.assignedAgentUsers.length;
+  }
+
+  async loadAgentUsers() {
+    try {
+      const data = await getUsersWithPermissionSetStatus();
+      if (data && data.length > 0) {
+        this.agentUsersList = data;
+        if (!this.selectedAgentUserId) {
+          this.selectedAgentUserId = data[0].value;
+        }
+        this.updateSelectedUserStatus();
+      }
+    } catch {
+      // Ignore fetch error
+    }
+  }
+
+  handleAgentUserSelect(event) {
+    this.selectedAgentUserId = event.detail.value;
+    this.updateSelectedUserStatus();
+  }
+
+  updateSelectedUserStatus() {
+    const found = this.agentUsersList.find(
+      (u) => u.value === this.selectedAgentUserId
+    );
+    this.isSelectedUserAssigned = found ? found.isAssigned : false;
+  }
+
+  async handleAssignUserPermissionSet() {
+    if (!this.selectedAgentUserId) return;
+    this.isUserPermissionLoading = true;
+    const shouldAssign = !this.isSelectedUserAssigned;
+    try {
+      await toggleUserPermissionSetAssignment({
+        userId: this.selectedAgentUserId,
+        assign: shouldAssign
+      });
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Success",
+          message: `Permission set Google Cloud Agent Assist User (${
+            shouldAssign ? "assigned to" : "removed from"
+          }) user.`,
+          variant: "success"
+        })
+      );
+      await this.loadAgentUsers();
+      if (this.wiredDiagnosticsResult) {
+        refreshApex(this.wiredDiagnosticsResult);
+      }
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error Managing Permission Set",
+          message: error?.body?.message || error?.message || "Operation failed",
+          variant: "error"
+        })
+      );
+    } finally {
+      this.isUserPermissionLoading = false;
+    }
+  }
+
+  async handleQuickRemoveUserPermissionSet(event) {
+    const userId =
+      event.detail?.name ||
+      event.target?.name ||
+      event.currentTarget?.dataset?.userId;
+    if (!userId) return;
+    this.isUserPermissionLoading = true;
+    try {
+      await toggleUserPermissionSetAssignment({
+        userId: userId,
+        assign: false
+      });
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Success",
+          message: "Permission set Google Cloud Agent Assist User removed.",
+          variant: "success"
+        })
+      );
+      await this.loadAgentUsers();
+      if (this.wiredDiagnosticsResult) {
+        refreshApex(this.wiredDiagnosticsResult);
+      }
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error Removing Permission Set",
+          message: error?.body?.message || error?.message || "Operation failed",
+          variant: "error"
+        })
+      );
+    } finally {
+      this.isUserPermissionLoading = false;
+    }
   }
 
   disconnectedCallback() {

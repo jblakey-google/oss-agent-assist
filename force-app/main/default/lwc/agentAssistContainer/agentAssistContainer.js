@@ -206,7 +206,12 @@ export default class AgentAssistContainer extends LightningElement {
         "Error loading Agent Assist Container configuration:",
         error
       );
-      this.resolvedState = { isFound: false };
+      const errorMsg =
+        error?.body?.message ||
+        error?.message ||
+        "Access denied to AgentAssistConfigController Apex class.";
+      this.loadError = new Error(`Configuration access error: ${errorMsg}`);
+      this.resolvedState = { isFound: true };
     }
   }
 

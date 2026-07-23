@@ -19,6 +19,13 @@
   margin: 0 auto;
 }
 
+.assigned-users-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
 .wizard-header-clean {
   padding: 4px 8px 12px 8px;
 }

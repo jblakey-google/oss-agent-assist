@@ -408,6 +408,10 @@ public without sharing class AgentAssistConfigController {
   /**
    * Retrieves active users in the org for the OAuth Client Credentials user picklist.
    */
+  /**
+   * Retrieves active users in the org for the OAuth Client Credentials user picklist.
+   * Only includes standard CRM users eligible for full CRM feature access.
+   */
   @AuraEnabled(cacheable=true)
   public static List<Map<String, String>> getActiveUsers() {
     List<Map<String, String>> options = new List<Map<String, String>>();
@@ -415,7 +419,7 @@ public without sharing class AgentAssistConfigController {
       for (User u : [
         SELECT Id, Name, Username
         FROM User
-        WHERE IsActive = TRUE
+        WHERE IsActive = TRUE AND UserType = 'Standard'
         ORDER BY Name ASC
         LIMIT 1000
       ]) {
@@ -433,6 +437,98 @@ public without sharing class AgentAssistConfigController {
       // Return empty list if user cannot query User object
     }
     return options;
+  }
+
+  /**
+   * Retrieves active standard users along with their Agent_Assist_User permission set assignment status.
+   */
+  @AuraEnabled
+  public static List<Map<String, Object>> getUsersWithPermissionSetStatus() {
+    List<Map<String, Object>> userList = new List<Map<String, Object>>();
+    try {
+      List<PermissionSet> permSets = [
+        SELECT Id
+        FROM PermissionSet
+        WHERE Name = 'Agent_Assist_User'
+        LIMIT 1
+      ];
+
+      Set<Id> assignedUserIds = new Set<Id>();
+      if (!permSets.isEmpty()) {
+        for (PermissionSetAssignment psa : [
+          SELECT AssigneeId
+          FROM PermissionSetAssignment
+          WHERE PermissionSetId = :permSets[0].Id
+        ]) {
+          assignedUserIds.add(psa.AssigneeId);
+        }
+      }
+
+      for (User u : [
+        SELECT Id, Name, Username
+        FROM User
+        WHERE IsActive = TRUE AND UserType = 'Standard'
+        ORDER BY Name ASC
+        LIMIT 1000
+      ]) {
+        Boolean isAssigned = assignedUserIds.contains(u.Id);
+        userList.add(
+          new Map<String, Object>{
+            'label' => u.Name + ' (' + u.Username + ')',
+            'value' => u.Id,
+            'isAssigned' => isAssigned
+          }
+        );
+      }
+    } catch (Exception ex) {
+      throw new AuraHandledException('Error fetching user status: ' + ex.getMessage());
+    }
+    return userList;
+  }
+
+  /**
+   * Assigns or unassigns the Agent_Assist_User permission set for a given User ID.
+   */
+  @AuraEnabled
+  public static Map<String, Object> toggleUserPermissionSetAssignment(Id userId, Boolean assign) {
+    if (userId == null) {
+      throw new AuraHandledException('User ID is required.');
+    }
+
+    List<PermissionSet> permSets = [
+      SELECT Id
+      FROM PermissionSet
+      WHERE Name = 'Agent_Assist_User'
+      LIMIT 1
+    ];
+
+    if (permSets.isEmpty()) {
+      throw new AuraHandledException('Permission Set "Agent_Assist_User" is not deployed in this org.');
+    }
+
+    Id permSetId = permSets[0].Id;
+    List<PermissionSetAssignment> existing = [
+      SELECT Id
+      FROM PermissionSetAssignment
+      WHERE PermissionSetId = :permSetId AND AssigneeId = :userId
+    ];
+
+    try {
+      if (assign && existing.isEmpty()) {
+        insert new PermissionSetAssignment(PermissionSetId = permSetId, AssigneeId = userId);
+      } else if (!assign && !existing.isEmpty()) {
+        delete existing;
+      }
+    } catch (DmlException ex) {
+      throw new AuraHandledException('Unable to toggle permission set assignment: ' + ex.getDmlMessage(0));
+    } catch (Exception ex) {
+      throw new AuraHandledException('Unable to toggle permission set assignment: ' + ex.getMessage());
+    }
+
+    return new Map<String, Object>{
+      'success' => true,
+      'isAssigned' => assign
+    };
   }
 
   public class DiagnosticItemDetail {
@@ -764,7 +860,7 @@ public without sharing class AgentAssistConfigController {
           )
         FROM PermissionSet
         WHERE
-          Name IN ('Agent_Assist_Admin', 'Messaging_Agent')
+          Name IN ('Agent_Assist_Admin', 'Agent_Assist_User')
           OR Name LIKE '%Agent_Assist%'
       ]) {
         permMap.put(ps.Name, ps);
@@ -824,9 +920,9 @@ public without sharing class AgentAssistConfigController {
       );
     }
 
-    // Check Messaging_Agent
-    if (permMap.containsKey('Messaging_Agent')) {
-      PermissionSet ps = permMap.get('Messaging_Agent');
+    // Check Agent_Assist_User
+    if (permMap.containsKey('Agent_Assist_User')) {
+      PermissionSet ps = permMap.get('Agent_Assist_User');
       List<String> assignees = new List<String>();
       Integer totalAssigned = 0;
       try {
@@ -849,9 +945,9 @@ public without sharing class AgentAssistConfigController {
       }
       authSection.items.add(
         new DiagnosticItemDetail(
-          'check-perm-agent',
-          'Messaging Agent Permission Set (Messaging_Agent)',
-          'Contact center agent permission set deployed (' +
+          'check-perm-user',
+          'Google Cloud Agent Assist User (Agent_Assist_User)',
+          'Agent user permission set deployed (' +
             totalAssigned +
             ' active user(s) assigned).',
           'pass',
@@ -864,11 +960,11 @@ public without sharing class AgentAssistConfigController {
     } else {
       authSection.items.add(
         new DiagnosticItemDetail(
-          'check-perm-agent',
-          'Messaging Agent Permission Set (Messaging_Agent)',
-          'Optional messaging permission set not deployed.',
-          'warning',
-          'Permission Set "Messaging_Agent" is not present.',
+          'check-perm-user',
+          'Google Cloud Agent Assist User (Agent_Assist_User)',
+          'Agent user permission set not deployed.',
+          'fail',
+          'Permission Set "Agent_Assist_User" is not present.',
           null,
           0,
           '/lightning/setup/PermSets/home'
