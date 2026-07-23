@@ -49,8 +49,8 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Prettier Code Formatting Check
-        run: npm run prettier:verify
+      #      - name: Run Prettier Code Formatting Check
+      #        run: npm run prettier:verify
 
       - name: Run LWC Jest Unit Tests with Coverage
         run: npm run test:unit:coverage

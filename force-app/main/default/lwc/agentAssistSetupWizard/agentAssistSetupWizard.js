@@ -1163,7 +1163,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
 
     const trimmedUrl = url.trim().replace(/\/$/, "");
-    if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+    if (
+      !trimmedUrl.startsWith("http://") &&
+      !trimmedUrl.startsWith("https://")
+    ) {
       this.registerHealthState = "warning";
       this.registerStatusCode = 400;
       this.registerStatusLabel = "400 Bad Request";
@@ -1172,14 +1175,18 @@ export default class AgentAssistSetupWizard extends LightningElement {
       return;
     }
 
-    if (this.endpointStatusCode === null || this.endpointStatusCode === undefined) {
+    if (
+      this.endpointStatusCode === null ||
+      this.endpointStatusCode === undefined
+    ) {
       await this.evaluateEndpointHealth();
     }
 
     this.registerHealthState = "pending";
     this.registerStatusCode = 0;
     this.registerStatusLabel = "Checking...";
-    this.registerStatusMessage = "Checking /register route auth connectivity via Apex callout...";
+    this.registerStatusMessage =
+      "Checking /register route auth connectivity via Apex callout...";
 
     try {
       let result = await registerAuthToken({
@@ -1189,8 +1196,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
         consumerSecret: consumerSecret || "",
         clientCredentialsUser: clientCredentialsUser || ""
       });
-
-
 
       if (result && result.status === "success" && result.token) {
         this.registerHealthState = "pass";
@@ -1204,8 +1209,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
           this.registerHealthState = "warning";
           this.registerStatusCode = 401;
           this.registerStatusLabel = "Setup Warning";
-          this.registerStatusMessage =
-            `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
+          this.registerStatusMessage = `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
         } else if (errorMsg.includes("401") || errorMsg.includes("403")) {
           this.registerHealthState = "fail";
           this.registerStatusCode = 401;
@@ -1234,8 +1238,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
         this.registerHealthState = "warning";
         this.registerStatusCode = 401;
         this.registerStatusLabel = "Setup Warning";
-        this.registerStatusMessage =
-          `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
+        this.registerStatusMessage = `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
       } else {
         this.registerHealthState = "fail";
         this.registerStatusCode = 500;

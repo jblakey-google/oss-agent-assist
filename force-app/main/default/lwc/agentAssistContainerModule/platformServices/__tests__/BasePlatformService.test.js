@@ -160,9 +160,7 @@ describe("BasePlatformService", () => {
     });
 
     it("handles Apex invocation failure", async () => {
-      registerAuthTokenApex.mockRejectedValueOnce(
-        new Error("Callout failed")
-      );
+      registerAuthTokenApex.mockRejectedValueOnce(new Error("Callout failed"));
 
       const result = await basePlatformService.registerAuthToken();
 
