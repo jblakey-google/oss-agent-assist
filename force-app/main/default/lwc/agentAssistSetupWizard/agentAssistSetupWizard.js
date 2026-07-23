@@ -24,7 +24,6 @@ import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig"
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import registerAuthToken from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
-import createRemoteSiteSetting from "@salesforce/apex/AgentAssistConfigController.createRemoteSiteSetting";
 import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigController.getInstalledPackageStatus";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 
@@ -1191,33 +1190,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
         clientCredentialsUser: clientCredentialsUser || ""
       });
 
-      let errorMsg = result && result.error ? String(result.error) : "";
-      if (errorMsg.includes("Unauthorized endpoint")) {
-        // If UI Connector endpoint base health check passed (200 OK) and /register callout failed due to missing Remote Site Setting
-        if (this.endpointHealthState === "pass" || this.endpointStatusCode === 200) {
-          console.log(
-            "[SetupWizard] UI Connector endpoint base check passed (200 OK), but /register Apex callout blocked by Remote Site Settings. Creating Remote Site Setting dynamically via Apex Tooling API..."
-          );
-          const created = await createRemoteSiteSetting({ endpointUrl: trimmedUrl });
-          if (created) {
-            console.log(
-              "[SetupWizard] Remote Site Setting created successfully. Re-evaluating /register health check..."
-            );
-            result = await registerAuthToken({
-              configName: this.currentProfile?.developerName || "Default",
-              endpointUrl: trimmedUrl,
-              consumerKey: consumerKey || "",
-              consumerSecret: consumerSecret || "",
-              clientCredentialsUser: clientCredentialsUser || ""
-            });
-            errorMsg = result && result.error ? String(result.error) : "";
-          } else {
-            console.warn(
-              "[SetupWizard] Remote Site Setting creation returned false from Apex Tooling API callout."
-            );
-          }
-        }
-      }
+
 
       if (result && result.status === "success" && result.token) {
         this.registerHealthState = "pass";

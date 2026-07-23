@@ -1328,20 +1328,11 @@ public without sharing class AgentAssistConfigController {
       } catch (System.CalloutException calloutEx) {
         String msg = calloutEx.getMessage();
         if (msg != null && msg.contains('Unauthorized endpoint')) {
-          try {
-            HttpRequest ncReq = new HttpRequest();
-            ncReq.setEndpoint('callout:Agent_Assist_UI_Connector');
-            ncReq.setMethod('GET');
-            ncReq.setTimeout(5000);
-            res = http.send(ncReq);
-          } catch (Exception ncEx) {
-            Boolean created = createRemoteSiteSetting(trimmed);
-            if (created) {
-              res = http.send(req);
-            } else {
-              throw calloutEx;
-            }
-          }
+          HttpRequest ncReq = new HttpRequest();
+          ncReq.setEndpoint('callout:Agent_Assist_UI_Connector');
+          ncReq.setMethod('GET');
+          ncReq.setTimeout(5000);
+          res = http.send(ncReq);
         } else {
           throw calloutEx;
         }
@@ -1382,94 +1373,6 @@ public without sharing class AgentAssistConfigController {
       result.put('message', 'HTTP 404 Not Found');
     }
     return result;
-  }
-
-  /**
-   * Dynamically generates/upserts a Salesforce Remote Site Setting (RemoteProxy) for the specified endpoint URL
-   * using the Salesforce Tooling API so server-side Apex callouts to the Cloud Run URL are allowed.
-   */
-  @AuraEnabled
-  public static Boolean createRemoteSiteSetting(String endpointUrl) {
-    if (String.isBlank(endpointUrl)) {
-      return false;
-    }
-
-    String trimmed = endpointUrl.trim();
-    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-      return false;
-    }
-
-    Url u;
-    try {
-      u = new Url(trimmed);
-    } catch (Exception e) {
-      return false;
-    }
-
-    String origin = u.getProtocol() + '://' + u.getHost();
-    if (u.getPort() != -1 && u.getPort() != 80 && u.getPort() != 443) {
-      origin += ':' + u.getPort();
-    }
-
-    if (Test.isRunningTest()) {
-      return true;
-    }
-
-    try {
-      String sessionId;
-      try {
-        sessionId = Page.SessionIdFetcher.getContent().toString().trim();
-      } catch (Exception e) {
-        System.debug('SessionIdFetcher Visualforce fallback error: ' + e.getMessage());
-      }
-      if (String.isBlank(sessionId)) {
-        sessionId = UserInfo.getSessionId();
-      }
-      if (String.isBlank(sessionId)) {
-        return false;
-      }
-
-      String sfDomain = Url.getOrgDomainUrl().toExternalForm();
-      String toolingUrl = sfDomain + '/services/data/v67.0/tooling/sobjects/RemoteProxy/';
-
-      String devName = 'Agent_Assist_' + u.getHost().replaceAll('[^a-zA-Z0-9]', '_');
-      if (devName.length() > 40) {
-        devName = devName.substring(0, 40);
-      }
-
-      Map<String, Object> metadata = new Map<String, Object>();
-      metadata.put('description', 'Dynamically generated Remote Site Setting for Agent Assist UI Connector (' + u.getHost() + ')');
-      metadata.put('isActive', true);
-      metadata.put('url', origin);
-
-      Map<String, Object> reqBody = new Map<String, Object>();
-      reqBody.put('FullName', devName);
-      reqBody.put('Metadata', metadata);
-
-      HttpRequest toolingReq = new HttpRequest();
-      toolingReq.setEndpoint(toolingUrl);
-      toolingReq.setMethod('POST');
-      toolingReq.setHeader('Authorization', 'Bearer ' + sessionId);
-      toolingReq.setHeader('Content-Type', 'application/json');
-      toolingReq.setBody(JSON.serialize(reqBody));
-      toolingReq.setTimeout(10000);
-
-      Http toolingHttp = new Http();
-      HttpResponse toolingRes = toolingHttp.send(toolingReq);
-      String body = toolingRes.getBody();
-
-      if (
-        toolingRes.getStatusCode() == 201 ||
-        toolingRes.getStatusCode() == 200 ||
-        (body != null && (body.contains('DUPLICATE_DEVELOPER_NAME') || body.contains('already exists')))
-      ) {
-        return true;
-      }
-    } catch (Exception ex) {
-      System.debug('Dynamic Remote Site Setting creation error: ' + ex.getMessage());
-    }
-
-    return false;
   }
 
   /**
@@ -1606,25 +1509,16 @@ public without sharing class AgentAssistConfigController {
       } catch (System.CalloutException calloutEx) {
         String msg = calloutEx.getMessage();
         if (msg != null && msg.contains('Unauthorized endpoint')) {
-          try {
-            HttpRequest ncRegReq = new HttpRequest();
-            ncRegReq.setEndpoint('callout:Agent_Assist_UI_Connector/register');
-            ncRegReq.setMethod('POST');
-            ncRegReq.setHeader('Content-Type', 'application/json');
-            if (String.isNotBlank(accessToken)) {
-              ncRegReq.setHeader('Authorization', 'Bearer ' + accessToken);
-            }
-            ncRegReq.setBody('{}');
-            ncRegReq.setTimeout(10000);
-            regRes = http.send(ncRegReq);
-          } catch (Exception ncEx) {
-            Boolean created = createRemoteSiteSetting(finalEndpoint);
-            if (created) {
-              regRes = http.send(regReq);
-            } else {
-              throw calloutEx;
-            }
+          HttpRequest ncRegReq = new HttpRequest();
+          ncRegReq.setEndpoint('callout:Agent_Assist_UI_Connector/register');
+          ncRegReq.setMethod('POST');
+          ncRegReq.setHeader('Content-Type', 'application/json');
+          if (String.isNotBlank(accessToken)) {
+            ncRegReq.setHeader('Authorization', 'Bearer ' + accessToken);
           }
+          ncRegReq.setBody('{}');
+          ncRegReq.setTimeout(10000);
+          regRes = http.send(ncRegReq);
         } else {
           throw calloutEx;
         }
@@ -1701,15 +1595,7 @@ public without sharing class AgentAssistConfigController {
     }
 
     // Strategy 2: Tooling API REST Callout (always run to supplement installedIds)
-    String toolingSessionId;
-    try {
-      toolingSessionId = Page.SessionIdFetcher.getContent().toString().trim();
-    } catch (Exception e) {
-      System.debug('SessionIdFetcher Visualforce fallback error: ' + e.getMessage());
-    }
-    if (String.isBlank(toolingSessionId)) {
-      toolingSessionId = UserInfo.getSessionId();
-    }
+    String toolingSessionId = UserInfo.getSessionId();
     if (String.isNotBlank(toolingSessionId)) {
       try {
         String query = 'SELECT SubscriberPackageId, SubscriberPackageVersionId FROM InstalledSubscriberPackage';
