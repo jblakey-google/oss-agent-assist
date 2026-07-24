@@ -18,7 +18,7 @@
 
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Google Cloud Agent Assist Setup Wizard</masterLabel>
+    <masterLabel>Agent Assist Setup Wizard</masterLabel>
     <description
   >Setup Wizard to configure and manage shared Google Cloud Agent Assist container profiles.</description>
     <targets>

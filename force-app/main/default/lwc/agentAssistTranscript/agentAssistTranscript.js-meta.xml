@@ -18,7 +18,7 @@
 
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Google Cloud Agent Assist Transcript</masterLabel>
+    <masterLabel>Agent Assist Transcript</masterLabel>
     <description
   >Google Cloud Agent Assist Standalone Transcript Component</description>
     <targets>

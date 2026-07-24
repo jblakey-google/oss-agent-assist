@@ -19,28 +19,35 @@ import { LightningElement, api, track } from "lwc";
 /**
  * AgentAssistCustomStarterKit
  *
- * Starter kit LWC component demonstrating how developers can integrate custom
- * chat or telephony platforms (e.g., Acme Chat, LivePerson, Genesys) by dispatching
- * events directly to the active Agent Assist event bus initialized on the page.
+ * Starter kit LWC component demonstrating how developers can develop a custom
+ * chat integration by subscribing to incoming message events from a third-party
+ * chat provider and dispatching Agent Assist events (`analyze-content-requested`)
+ * to the Agent Assist Connector in their own LWC.
+ *
+ * NOTE: To use this component, ensure an `agentAssistContainer` or `agentAssistCompanionAgent`
+ * component is placed on the same Lightning page to instantiate the Agent Assist Connector.
+ *
+ * Documentation:
+ * - UI Modules Overview: https://docs.cloud.google.com/agent-assist/docs/ui-modules
+ * - Events Reference: https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested
  */
 export default class AgentAssistCustomStarterKit extends LightningElement {
   @api recordId;
   @api configName = "Default";
   @api debugMode = false;
 
-  @track statusMessage = "Connected to Agent Assist event bus.";
+  @track statusMessage = "Connected to Agent Assist Connector.";
   @track userMessageInput = "";
   @track agentMessageInput = "";
-  @track receivedSuggestions = [];
   @track transcriptLogs = [];
 
   connectedCallback() {
-    this.log("AgentAssistCustomStarterKit connected to event bus.");
+    this.log("AgentAssistCustomStarterKit connected to Agent Assist Connector.");
     this.registerAgentAssistEventListeners();
   }
 
   /**
-   * Registers event listeners on the active Agent Assist UI Modules event bus.
+   * Registers event listeners on the active Agent Assist Connector event bus.
    */
   registerAgentAssistEventListeners() {
     const namespace = this.recordId;
@@ -51,16 +58,6 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
         "suggestion-received",
         (event) => {
           this.log("Received 'suggestion-received' event:", event);
-          if (event && event.detail) {
-            this.receivedSuggestions = [
-              ...this.receivedSuggestions,
-              {
-                id: Date.now(),
-                time: new Date().toLocaleTimeString(),
-                detail: JSON.stringify(event.detail, null, 2)
-              }
-            ];
-          }
         },
         { namespace }
       );
@@ -77,7 +74,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   }
 
   /**
-   * Dispatches an event to the active Agent Assist UI Modules event bus.
+   * Dispatches an event to the active Agent Assist Connector event bus.
    */
   dispatchCustomEvent(eventName, payload = {}) {
     const detailData = payload.detail ? payload.detail : payload;
@@ -163,8 +160,22 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     this.userMessageInput = event.target.value;
   }
 
+  handleUserInputKeyUp(event) {
+    this.userMessageInput = event.target.value;
+    if (event.key === "Enter") {
+      this.handleSendUserMessage();
+    }
+  }
+
   handleAgentInputChange(event) {
     this.agentMessageInput = event.target.value;
+  }
+
+  handleAgentInputKeyUp(event) {
+    this.agentMessageInput = event.target.value;
+    if (event.key === "Enter") {
+      this.handleSendAgentMessage();
+    }
   }
 
   log(...args) {

@@ -18,7 +18,7 @@
 
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Google Cloud Agent Assist Container</masterLabel>
+    <masterLabel>Agent Assist Container</masterLabel>
     <description
   >Google Cloud Agent Assist Container for Record Pages and Utility Bar</description>
     <targets>

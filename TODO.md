@@ -1,5 +1,6 @@
 ## Tasks
 
+- [ ] Promote the Users Permission Set assignment card out of the Profiles panel into its own dedicated top-level **"Users"** tab in the Setup Wizard, allowing admins to search users and manage `Agent_Assist_Admin`, `Agent_Assist_User`, and CX platform permission set assignments directly.
 - [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
 
 ## Doing
@@ -62,6 +63,7 @@
 
 ## Questions
 
+- [x] **Admin App Permission Strategy**: We provide two dedicated Permission Sets: `Agent_Assist_Admin` (Setup App/Tab + read/write config) and `Agent_Assist_User` (LWCs + read-only runtime config). Integrators without System Administrator profile access simply receive the `Agent_Assist_Admin` Permission Set, allowing them to manage setup in locked-down orgs without exposing configuration modification capabilities to regular call center agents.
 - Test with various SF licenses, using the project-scratch-def.json?
 - To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 - How can we solve the problem of it being difficult to test e2e? Can we automate it? Can we test all platforms from a single ephemeral scratch org? How to define these integration tests, possibly Playwright?
