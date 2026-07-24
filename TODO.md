@@ -2,7 +2,7 @@
 - [ ] Please update the benefit in the TODO.md related to managing permissions with recent changes like supporting assignment of all profiles for Agents, Admins, and CX platforms, searching, etc.
 - [ ] Health checks are broken, validating invalid urls and ignoring connection errors: 
 - [ ] Custom Toolkit Connected check is not working: https://screenshot-v2.corp.google.com/3XXnN55ebYtabRt
-- [ ] These logs should be conditioned on debug mode being true https://screenshot-v2.corp.google.com/5eetjp4fr1vr0
+- [ ] These logs should be conditioned on debug mode being true: https://screenshot-v2.corp.google.com/5eetjp4fr1vr0
 
 ## Doing
 
