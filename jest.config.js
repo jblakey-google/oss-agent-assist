@@ -28,8 +28,6 @@ module.exports = {
     "^lightning/conversationToolkitApi$":
       "<rootDir>/test-mocks/lightningToolkitApi.js",
     "^lightning/serviceCloudVoiceToolkitApi$":
-      "<rootDir>/test-mocks/lightningToolkitApi.js",
-    "^c/agentAssistContainerModule$":
-      "<rootDir>/force-app/main/default/lwc/agentAssistContainerModule/agentAssistContainerModule.js"
+      "<rootDir>/test-mocks/lightningToolkitApi.js"
   }
 };

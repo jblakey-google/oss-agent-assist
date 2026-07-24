@@ -53,6 +53,8 @@ public without sharing class AgentAssistConfigController {
     @AuraEnabled
     public Boolean showCorrectnessFeedback { get; set; }
     @AuraEnabled
+    public Boolean disableIntegratedTranscript { get; set; }
+    @AuraEnabled
     public String disabledFeatures { get; set; }
 
     // Companion Agent Schema Fields
@@ -102,6 +104,7 @@ public without sharing class AgentAssistConfigController {
     result.showDarkModeToggle = true;
     result.showHeader = false;
     result.showCorrectnessFeedback = false;
+    result.disableIntegratedTranscript = false;
     result.disabledFeatures = '';
 
     // Companion Agent Defaults
@@ -130,6 +133,7 @@ public without sharing class AgentAssistConfigController {
           Show_Dark_Mode_Toggle__c,
           Show_Header__c,
           Show_Correctness_Feedback__c,
+          Disable_Integrated_Transcript__c,
           Disabled_Features__c,
           Model_Name__c,
           Welcome_Message__c,
@@ -195,6 +199,9 @@ public without sharing class AgentAssistConfigController {
         }
         if (cfg.Show_Correctness_Feedback__c != null) {
           result.showCorrectnessFeedback = cfg.Show_Correctness_Feedback__c;
+        }
+        if (cfg.Disable_Integrated_Transcript__c != null) {
+          result.disableIntegratedTranscript = cfg.Disable_Integrated_Transcript__c;
         }
         if (String.isNotBlank(cfg.Disabled_Features__c)) {
           result.disabledFeatures = cfg.Disabled_Features__c;
@@ -275,6 +282,7 @@ public without sharing class AgentAssistConfigController {
           Show_Dark_Mode_Toggle__c,
           Show_Header__c,
           Show_Correctness_Feedback__c,
+          Disable_Integrated_Transcript__c,
           Disabled_Features__c,
           Model_Name__c,
           Welcome_Message__c,
@@ -302,6 +310,7 @@ public without sharing class AgentAssistConfigController {
             Show_Dark_Mode_Toggle__c = true,
             Show_Header__c = false,
             Show_Correctness_Feedback__c = false,
+            Disable_Integrated_Transcript__c = false,
             Disabled_Features__c = '',
             Is_Active__c = true
           ),
@@ -345,6 +354,7 @@ public without sharing class AgentAssistConfigController {
         Show_Dark_Mode_Toggle__c = true,
         Show_Header__c = false,
         Show_Correctness_Feedback__c = false,
+        Disable_Integrated_Transcript__c = false,
         Disabled_Features__c = '',
         Is_Active__c = true
       ),

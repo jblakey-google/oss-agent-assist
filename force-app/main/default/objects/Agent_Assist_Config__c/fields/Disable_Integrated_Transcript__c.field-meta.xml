@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Disable_Integrated_Transcript__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description
+  >Disable the integrated transcript UI module inside the container, encouraging use of the standalone transcript LWC.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Disable integrated transcript in container</inlineHelpText>
+    <label>Disable Integrated Transcript</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

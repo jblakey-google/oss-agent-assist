@@ -54,7 +54,9 @@ export default class AgentAssistTranscript extends LightningElement {
   }
 
   get resolvedContainerHeight() {
-    return this.containerHeight || this.resolvedState?.containerHeight || "530px";
+    return (
+      this.containerHeight || this.resolvedState?.containerHeight || "530px"
+    );
   }
 
   @wire(getResolvedConfig, { configName: "$configName" })
@@ -174,10 +176,7 @@ export default class AgentAssistTranscript extends LightningElement {
     if (!height || isNaN(parseInt(height, 10))) {
       return;
     }
-    this.template.host?.style.setProperty(
-      "--aa-container-height",
-      height
-    );
+    this.template.host?.style.setProperty("--aa-container-height", height);
   }
 
   disconnectedCallback() {

@@ -85,4 +85,32 @@ describe("c-agent-assist-container", () => {
     expect(mockEventTarget.cloneNode).toHaveBeenCalledWith(true);
     delete window._uiModuleEventTarget;
   });
+
+  it("disables transcript when disableIntegratedTranscript is true", () => {
+    const element = createElement("c-agent-assist-container", {
+      is: AgentAssistContainer
+    });
+    element.configName = "Default";
+
+    document.body.appendChild(element);
+
+    getResolvedConfig.emit({
+      id: "mock-2",
+      name: "Default Profile",
+      developerName: "Default",
+      profileType: "Container",
+      channel: "voice",
+      debugMode: true,
+      disableIntegratedTranscript: true,
+      isFound: true
+    });
+
+    return Promise.resolve().then(() => {
+      expect(element.disableIntegratedTranscript).toBe(true);
+      const transcriptEl = element.shadowRoot.querySelector(
+        ".transcript-container"
+      );
+      expect(transcriptEl).toBeNull();
+    });
+  });
 });

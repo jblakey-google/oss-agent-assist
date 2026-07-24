@@ -157,7 +157,11 @@
               >
                 <div class="slds-p-around_medium">
                   <p class="slds-text-body_regular slds-m-bottom_small">
-                    Assign the&#32;<strong>Google Cloud Agent Assist User</strong>&#32;(<code>Agent_Assist_User</code>) permission set to contact center agents who will be using the Agent Assist or Companion Agent LWC components in Salesforce.
+                    Assign the&#32;<strong
+                      >Google Cloud Agent Assist User</strong
+                    >&#32;(<code>Agent_Assist_User</code>) permission set to
+                    contact center agents who will be using the Agent Assist or
+                    Companion Agent LWC components in Salesforce.
                   </p>
                   <div
                     class="slds-grid slds-gutters slds-wrap slds-grid_vertical-align-end"
@@ -203,16 +207,11 @@
                         size="x-small"
                         class="slds-m-right_x-small"
                       ></lightning-icon>
-                      <span
-                        >Assigned Agent Users ({assignedUsersCount})</span
-                      >
+                      <span>Assigned Agent Users ({assignedUsersCount})</span>
                     </div>
                     <template lwc:if={hasAssignedAgentUsers}>
                       <div class="assigned-users-container">
-                        <template
-                          for:each={assignedAgentUsers}
-                          for:item="u"
-                        >
+                        <template for:each={assignedAgentUsers} for:item="u">
                           <lightning-pill
                             key={u.value}
                             label={u.label}
@@ -224,7 +223,8 @@
                     </template>
                     <template lwc:else>
                       <p class="slds-text-color_weak slds-text-body_small">
-                        No active users are currently assigned the Agent Assist User permission set.
+                        No active users are currently assigned the Agent Assist
+                        User permission set.
                       </p>
                     </template>
                   </div>
@@ -642,8 +642,12 @@
                                 >
                                   Feature Flags & UI Toggles
                                 </div>
-                                <div class="slds-grid slds-wrap slds-gutters_small toggle-grid slds-m-top_x-small">
-                                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <div
+                                  class="slds-grid slds-wrap slds-gutters_small toggle-grid slds-m-top_x-small"
+                                >
+                                  <div
+                                    class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Debug Mode"
@@ -653,7 +657,9 @@
                                     >
                                     </lightning-input>
                                   </div>
-                                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                  <div
+                                    class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Dark Mode Toggle"
@@ -663,7 +669,9 @@
                                     >
                                     </lightning-input>
                                   </div>
-                                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                  <div
+                                    class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Show Header"
@@ -673,13 +681,29 @@
                                     >
                                     </lightning-input>
                                   </div>
-                                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                  <div
+                                    class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                                  >
                                     <lightning-input
                                       type="toggle"
                                       label="Correctness Feedback"
                                       checked={currentProfile.showCorrectnessFeedback}
                                       data-field="showCorrectnessFeedback"
                                       onchange={handleFieldChange}
+                                    >
+                                    </lightning-input>
+                                  </div>
+                                  <div
+                                    class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+                                  >
+                                    <lightning-input
+                                      type="toggle"
+                                      label="Disable Integrated Transcript"
+                                      checked={currentProfile.disableIntegratedTranscript}
+                                      data-field="disableIntegratedTranscript"
+                                      onchange={handleFieldChange}
+                                      message-toggle-active="Disabled (Use Standalone LWC)"
+                                      message-toggle-inactive="Enabled"
                                     >
                                     </lightning-input>
                                   </div>

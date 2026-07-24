@@ -41,10 +41,11 @@
             <p
               class="slds-text-body_small slds-text-color_weak slds-m-top_x-small"
             >
-              Please select an active profile in
-              &#32;<strong>Lightning App Builder</strong>&#32;or create
-              &#32;<strong>{configName}</strong>&#32;in the
-              &#32;<strong>Google Cloud Agent Assist Setup Wizard</strong>&#32;tab.
+              Please select an active profile in &#32;<strong
+                >Lightning App Builder</strong
+              >&#32;or create &#32;<strong>{configName}</strong>&#32;in the
+              &#32;<strong>Google Cloud Agent Assist Setup Wizard</strong
+              >&#32;tab.
             </p>
           </div>
         </div>
@@ -58,10 +59,7 @@
         <p>{loadError.message}</p>
       </div>
 
-      <div
-        class={transcriptContainerClass}
-        lwc:ref="transcriptContainer"
-      >
+      <div class={transcriptContainerClass} lwc:ref="transcriptContainer">
         <div
           class="agent-assist-transcript"
           lwc:dom="manual"

@@ -96,8 +96,12 @@ lightning-service-cloud-voice-toolkit-api {
 
 .agent-assist-component.dark-mode .agent-assist-ui-modules,
 .agent-assist-component.dark-mode .agent-assist-ui-modules .main,
-.agent-assist-component.dark-mode .agent-assist-ui-modules .suggestions-container,
-.agent-assist-component.dark-mode .agent-assist-ui-modules .empty-suggestions-wrapper {
+.agent-assist-component.dark-mode
+  .agent-assist-ui-modules
+  .suggestions-container,
+.agent-assist-component.dark-mode
+  .agent-assist-ui-modules
+  .empty-suggestions-wrapper {
   background-color: #212124 !important;
   color: #e8eaed !important;
 }

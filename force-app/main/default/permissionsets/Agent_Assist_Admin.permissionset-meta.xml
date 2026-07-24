@@ -85,6 +85,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Agent_Assist_Config__c.Disable_Integrated_Transcript__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Agent_Assist_Config__c.Disabled_Features__c</field>
         <readable>true</readable>
     </fieldPermissions>

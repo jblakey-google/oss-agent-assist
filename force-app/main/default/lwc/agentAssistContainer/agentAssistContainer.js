@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* global dispatchAgentAssistEvent, addAgentAssistEventListener */
+
 import { LightningElement, api, wire, track } from "lwc";
 import { loadScript } from "lightning/platformResourceLoader";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
@@ -137,6 +139,11 @@ export default class AgentAssistContainer extends LightningElement {
       ? this.resolvedState.showCorrectnessFeedback
       : false;
   }
+  @api get disableIntegratedTranscript() {
+    return this.resolvedState?.disableIntegratedTranscript !== undefined
+      ? this.resolvedState.disableIntegratedTranscript
+      : false;
+  }
 
   get voiceCallFields() {
     if (this.objectApiName !== "VoiceCall") {
@@ -199,7 +206,9 @@ export default class AgentAssistContainer extends LightningElement {
     if (data) {
       this.resolvedState = data;
       if (data.isFound) {
-        this.showTranscript = this.channel === "voice" || this.debugMode;
+        this.showTranscript =
+          !this.disableIntegratedTranscript &&
+          (this.channel === "voice" || this.debugMode);
       }
     } else if (error) {
       console.error(
@@ -217,7 +226,9 @@ export default class AgentAssistContainer extends LightningElement {
 
   connectedCallback() {
     this.debugLog("connectedCallback called");
-    this.showTranscript = this.channel === "voice" || this.debugMode;
+    this.showTranscript =
+      !this.disableIntegratedTranscript &&
+      (this.channel === "voice" || this.debugMode);
   }
 
   async renderedCallback() {
@@ -295,7 +306,15 @@ export default class AgentAssistContainer extends LightningElement {
         await loadScript(this, ui_modules + "/common.js");
         this.debugLog("UI Modules scripts loaded.");
 
-        if (this.debugMode) this.platformService.initEventDragnet();
+        if (this.debugMode) {
+          console.log("agentAssistContainer:");
+          console.log(this);
+          console.log(`dispatchAgentAssistEvent:`);
+          console.log(dispatchAgentAssistEvent);
+          console.log("addAgentAssistEventListener");
+          console.log(addAgentAssistEventListener);
+          this.platformService.initEventDragnet();
+        }
 
         // Initialize Agent Assist UI Modules
         this.platformService.initAgentAssistEvents();

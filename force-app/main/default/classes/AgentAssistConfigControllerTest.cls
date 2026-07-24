@@ -55,6 +55,7 @@ private class AgentAssistConfigControllerTest {
         Show_Dark_Mode_Toggle__c = true,
         Show_Header__c = false,
         Show_Correctness_Feedback__c = false,
+        Disable_Integrated_Transcript__c = false,
         Disabled_Features__c = 'smart-reply',
         Is_Active__c = true
       ),

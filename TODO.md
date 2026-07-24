@@ -3,15 +3,16 @@
 - [ ] Test with various SF licenses, using the project-scratch-def.json.
 - [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 - [ ] Add CX Platform Setup accordion logos. You can just embed them as svgs or base64-encoded images.
-- [ ] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
+
 - [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
-- [ ] Create a toggle that allows disabling the integrated chat transcript and suggests using the standalone LWC instead.
-- [ ] Test standalone transcript with a voice platform,.
 
 ## Doing
 
 ## Done
 
+- [x] Test standalone transcript using the .
+- [x] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
+- [x] Create a toggle that allows disabling the integrated chat transcript and suggests using the standalone LWC instead.
 - [x] Create a standalone Transcript LWC.
 - [x] Update Messaging for In-App and Web to "Enhanced Chat" Throughout
   - [x] Create a CL to make this update in the public docs: MIAW -> "Enhanced Chat"
@@ -51,7 +52,7 @@
 - [x] Fix read-only Apex runtime 500 error in `getResolvedConfig` and `getAllConfigs` by removing DML operations from cacheable `@AuraEnabled(cacheable=true)` methods.
 - [x] Support the generation of static resources for `companion_agent.js` (https://storage.googleapis.com/jblakey-ui-modules-bugfix-tests/companion_agent.js) and include in static resource checks.
 - [x] Migrate integration callouts (`/register`) to Salesforce Named Credentials (`callout:Agent_Assist_UI_Connector`) and completely purge legacy Remote Site Settings.
-- [x] Implement CSS Container Queries (`@container`) and responsive flex layout rules for `agentAssistContainer` and `agentAssistContainerModule`.
+- [x] Implement CSS Container Queries (`@container`) and responsive flex layout rules for `agentAssistContainer`.
 - [x] Streamline LWC Simulator & Transcript UI: Remove redundant Transcript header, right-align Reload Component button, and fix 1px border clipping in stacked responsive views.
 
 ---
@@ -83,11 +84,13 @@
 ### UI, UX & Responsive Layout
 
 - **Container Queries & Responsive Layout Flexibility**: Implemented modern CSS container queries (`@container`) to make components dynamically adapt to their parent container dimensions. In wide views, the transcript fills 100% container height; in narrow sidebars or stacked layouts, it cleanly contracts to a compact 160px scrollable view, ensuring high-density usability across Salesforce Utility Bars, sidebars, and full-page layouts.
+- **Standalone Transcript LWC (`agentAssistTranscript`)**: Introduced a dedicated standalone transcript LWC component (`agentAssistTranscript`) along with a configuration profile toggle (`Disable Integrated Transcript`) in `agentAssistContainer`. This allows contact centers to decouple the live transcript UI from suggestions and place them in separate utility bars, sidebars, or page tabs.
 - **Polished Simulator Experience**: Streamlined the Simulator UI by removing redundant column headers, right-aligning action controls, and ensuring zero-clipping borders across all viewport sizes.
 
 ### Testing & Onboarding
 
 - **Simulator Auth Flexibility**: Simulator works with AUTH_OPTION "Skip", so customer can test their conversation profile with the Base API Connector in Salesforce, before they get auth set up (or implementing their own as may very well be the case). Improves user experience and reduces friction.
+- **Console Transcript Simulator Script**: Created a developer-friendly 10-turn conversation simulation script (`simulateAgentAssistTranscript.js`) executable directly from the browser Developer Console on any record page. This enables immediate testing of live transcript rendering, UI module events, and suggestion triggers without requiring active telephony hardware or live messaging sessions.
 
 ### Multi-Platform & Architecture Flexibility
 

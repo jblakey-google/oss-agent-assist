@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <!--
      Copyright 2026 Google LLC
@@ -31,10 +31,12 @@
     <hasActivationRequired>false</hasActivationRequired>
     <externalCredentialPrincipalAccesses>
         <enabled>true</enabled>
-        <externalCredentialPrincipal>Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+        <externalCredentialPrincipal
+    >Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
     <label>Google Cloud Agent Assist User</label>
-    <description>Grants contact center agents standard access to Google Cloud Agent Assist &amp; Companion Agent LWCs and UI Connector callouts.</description>
+    <description
+  >Grants contact center agents standard access to Google Cloud Agent Assist &amp; Companion Agent LWCs and UI Connector callouts.</description>
     <fieldPermissions>
         <editable>false</editable>
         <field>Agent_Assist_Config__c.Additional_Config_JSON__c</field>
@@ -73,6 +75,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Agent_Assist_Config__c.Debug_Mode__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Agent_Assist_Config__c.Disable_Integrated_Transcript__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

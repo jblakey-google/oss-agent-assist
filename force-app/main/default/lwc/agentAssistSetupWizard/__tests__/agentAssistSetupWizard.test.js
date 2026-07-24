@@ -322,7 +322,7 @@ describe("c-agent-assist-setup-wizard", () => {
     expect(toggleGroup).not.toBeNull();
 
     const toggles = toggleGroup.querySelectorAll("lightning-input");
-    expect(toggles.length).toBe(4);
+    expect(toggles.length).toBe(5);
   });
 
   it("filters platform options based on conversation channel and auto-updates platform on channel change", async () => {

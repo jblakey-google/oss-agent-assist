@@ -17,14 +17,20 @@
 /**
  * Agent Assist 10-Turn Conversation Simulator for Salesforce Lightning Experience
  *
- * Usage: Copy and paste this script into the browser Developer Console on any Salesforce
- * record page (Case, VoiceCall, MessagingSession, Account, etc.) where Agent Assist LWC
- * components (agentAssistContainer, agentAssistContainerModule, or agentAssistTranscript) are loaded.
+ * Instructions:
+ * 1. Ensure an Agent Assist LWC component (agentAssistContainer) with debugMode enabled is loaded on the page.
+ * 2. Open the browser Developer Console (F12 / Cmd+Option+I) and find the console log for `dispatchAgentAssistEvent:`.
+ * 3. Right-click the `dispatchAgentAssistEvent` function in the console log and click "Store as global variable" (assigned to `temp1`).
+ * 4. Copy and paste this script into the browser Developer Console and press Enter to run the simulation.
  *
  * Optional Configuration Parameters (pass an object):
  *   simulateAgentAssistTranscript({ recordId: '001xx000003DGGZAA4', delayMs: 1000 })
  */
 (function simulateAgentAssistTranscript(options = {}) {
+  if (typeof temp1 !== "undefined") {
+    window.dispatchAgentAssistEvent = temp1;
+  }
+
   // 1. Automatically detect Record ID from URL or fallback
   function detectRecordId() {
     if (options.recordId) return options.recordId;
@@ -32,9 +38,7 @@
       /\/r\/(?:[A-Za-z0-9_]+)\/([a-zA-Z0-9]{15,18})\//
     );
     if (match && match[1]) return match[1];
-    const matchAlt = window.location.pathname.match(
-      /\b([a-zA-Z0-9]{15,18})\b/
-    );
+    const matchAlt = window.location.pathname.match(/\b([a-zA-Z0-9]{15,18})\b/);
     return matchAlt ? matchAlt[1] : "001xx000003DGGZAA4";
   }
 
@@ -119,7 +123,11 @@
     );
 
     if (typeof window.dispatchAgentAssistEvent === "function") {
-      window.dispatchAgentAssistEvent("analyze-content-requested", payload, opts);
+      window.dispatchAgentAssistEvent(
+        "analyze-content-requested",
+        payload,
+        opts
+      );
     } else if (
       window._uiModuleEventTarget &&
       typeof window._uiModuleEventTarget.dispatchEvent === "function"

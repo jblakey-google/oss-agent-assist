@@ -25,7 +25,6 @@ module.exports = defineConfig([
   {
     ignores: [
       "**/agentAssistContainerLegacy/**",
-      "**/agentAssistContainerModule/**",
       "**/platformServices/**",
       "**/data/**",
       "**/test-mocks/**",
