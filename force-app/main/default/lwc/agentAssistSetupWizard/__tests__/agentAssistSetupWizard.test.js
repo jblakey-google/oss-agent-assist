@@ -19,6 +19,22 @@ import AgentAssistSetupWizard from "c/agentAssistSetupWizard";
 import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
+import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.saveConfig",
+  () => {
+    return {
+      default: jest.fn().mockImplementation(({ configRecord }) =>
+        Promise.resolve({
+          ...configRecord,
+          Id: configRecord.Id || "mock-saved-id"
+        })
+      )
+    };
+  },
+  { virtual: true }
+);
 
 jest.mock(
   "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth",
@@ -413,5 +429,47 @@ describe("c-agent-assist-setup-wizard", () => {
     expect(logoSrcs).toContain("platform_logos/cxone_logo.svg");
     expect(logoSrcs).toContain("platform_logos/genesys_logo.svg");
     expect(logoSrcs).toContain("platform_logos/twilio_logo.svg");
+  });
+
+  it("persists Disable_Integrated_Transcript__c when saving profile", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const toggles = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-input")
+    );
+    const disableTranscriptToggle = toggles.find(
+      (t) => t.dataset.field === "disableIntegratedTranscript"
+    );
+    expect(disableTranscriptToggle).not.toBeUndefined();
+
+    // Toggle to checked (Disable Integrated Transcript = true)
+    disableTranscriptToggle.checked = true;
+    disableTranscriptToggle.dispatchEvent(
+      new CustomEvent("change", { detail: { checked: true } })
+    );
+    await Promise.resolve();
+
+    // Click Save Profile button
+    const buttons = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-button")
+    );
+    const saveButton = buttons.find((b) => b.label === "Save Profile");
+    expect(saveButton).not.toBeUndefined();
+
+    saveButton.click();
+    await Promise.resolve();
+
+    expect(saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configRecord: expect.objectContaining({
+          Disable_Integrated_Transcript__c: true
+        })
+      })
+    );
   });
 });

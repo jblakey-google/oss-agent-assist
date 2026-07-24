@@ -296,6 +296,7 @@ const INITIAL_PROFILES = [
     showDarkModeToggle: true,
     showHeader: false,
     showCorrectnessFeedback: false,
+    disableIntegratedTranscript: false,
     modelName: "gemini-1.5-pro",
     welcomeMessage: "Hello! I am your AI Companion Agent.",
     enableAutonomousActions: true,
@@ -320,6 +321,7 @@ const INITIAL_PROFILES = [
     showDarkModeToggle: true,
     showHeader: false,
     showCorrectnessFeedback: false,
+    disableIntegratedTranscript: false,
     modelName: "gemini-1.5-pro",
     welcomeMessage:
       "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -1011,6 +1013,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
         showCorrectnessFeedback:
           item.Show_Correctness_Feedback__c !== undefined
             ? item.Show_Correctness_Feedback__c
+            : false,
+        disableIntegratedTranscript:
+          item.Disable_Integrated_Transcript__c !== undefined
+            ? item.Disable_Integrated_Transcript__c
             : false,
         modelName: item.Model_Name__c || "gemini-1.5-pro",
         welcomeMessage:
@@ -1736,6 +1742,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       showDarkModeToggle: true,
       showHeader: false,
       showCorrectnessFeedback: false,
+      disableIntegratedTranscript: false,
       modelName: "gemini-1.5-pro",
       welcomeMessage:
         "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
@@ -1767,6 +1774,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
         Show_Header__c: this.currentProfile.showHeader,
         Show_Correctness_Feedback__c:
           this.currentProfile.showCorrectnessFeedback,
+        Disable_Integrated_Transcript__c:
+          this.currentProfile.disableIntegratedTranscript !== undefined
+            ? this.currentProfile.disableIntegratedTranscript
+            : false,
         Model_Name__c: this.currentProfile.modelName,
         Welcome_Message__c: this.currentProfile.welcomeMessage,
         Enable_Autonomous_Actions__c:
