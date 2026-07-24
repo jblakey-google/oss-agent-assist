@@ -93,4 +93,8 @@ public with sharing class AgentAssistCompanionPicklist extends VisualEditor.Dyna
 
     return myValues;
   }
+
+  public override Boolean isValid(Object attributeValue) {
+    return true;
+  }
 }

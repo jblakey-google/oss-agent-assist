@@ -1008,7 +1008,89 @@
                 Agent Assist & Companion Agent.
               </p>
 
-              <lightning-accordion active-section-name="messaging">
+              <lightning-accordion active-section-name="base">
+                <lightning-accordion-section
+                  name="base"
+                  label="Salesforce Base Connector"
+                >
+                  <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                      <div class="platform-logo-badge slds-m-right_small">
+                        <img
+                          src={salesforceLogoUrl}
+                          alt="Salesforce logo"
+                          class="platform-logo-img"
+                        />
+                      </div>
+                      <div>
+                        <h3 class="slds-text-heading_small platform-header-title">Google Cloud Agent Assist Base Connector</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Standard platform connector supporting Salesforce Chat, Messaging, Case, Contact, and custom record pages out of the box.
+                        </p>
+                      </div>
+                    </div>
+                    <ul
+                      class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+                    >
+                      <li>
+                        Provides core event handling, session lifecycle management, and UI module rendering for Salesforce LWCs.
+                      </li>
+                      <li>
+                        Place the&#32;<code class="xml-code"
+                          >agentAssistContainer</code
+                        >&#32;or&#32;<code class="xml-code"
+                          >agentAssistCompanionAgent</code
+                        >&#32;LWC on standard record pages (Case, Contact, MessagingSession, etc.).
+                      </li>
+                      <li>
+                        Select&#32;<code class="xml-code">base</code>&#32;in the Platform dropdown when configuring LWC Configuration Profiles.
+                      </li>
+                      <li>
+                        Bring your own custom chat or telephony system and communicate directly with Agent Assist using&#32;<a
+                          href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="slds-text-link"
+                          >Agent Assist UI Module Events</a
+                        >&#32;(e.g.,&#32;<code class="xml-code">dispatchAgentAssistEvent</code>).
+                      </li>
+                      <li>
+                        Use the&#32;<code class="xml-code">agentAssistCustomStarterKit</code>&#32;LWC to test the base connector and custom event stream on any Lightning Experience page.
+                      </li>
+                    </ul>
+                    <div
+                      class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+                    >
+                      <a
+                        href="https://docs.cloud.google.com/agent-assist/docs/modules-overview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:new_window"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        View UI Modules Overview
+                      </a>
+                      <a
+                        href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                      >
+                        <lightning-icon
+                          icon-name="utility:new_window"
+                          size="xx-small"
+                          class="slds-m-right_xx-small"
+                        ></lightning-icon>
+                        UI Modules Events Guide
+                      </a>
+                    </div>
+                  </div>
+                </lightning-accordion-section>
+
                 <lightning-accordion-section
                   name="messaging"
                   label="Salesforce chat integration"

@@ -35,7 +35,7 @@ export default class AgentAssistTranscript extends LightningElement {
   @track resolvedState = {};
   @track isLoading = true;
 
-  _heightApplied = false;
+  _appliedHeight = null;
   _transcriptMounted = false;
   _scriptsLoaded = false;
 
@@ -86,9 +86,8 @@ export default class AgentAssistTranscript extends LightningElement {
   async renderedCallback() {
     this.debugLog("AgentAssistTranscript renderedCallback called");
 
-    if (this.resolvedContainerHeight && !this._heightApplied) {
+    if (this.resolvedContainerHeight !== this._appliedHeight) {
       this.applyHeightOverride();
-      this._heightApplied = true;
     }
 
     try {
@@ -177,6 +176,7 @@ export default class AgentAssistTranscript extends LightningElement {
       return;
     }
     this.template.host?.style.setProperty("--aa-container-height", height);
+    this._appliedHeight = height;
   }
 
   disconnectedCallback() {

@@ -173,4 +173,17 @@ describe("c-agent-assist-transcript", () => {
     expect(mockEventTarget.cloneNode).toHaveBeenCalledWith(true);
     delete window._uiModuleEventTarget;
   });
+
+  it("applies containerHeight to CSS variable --aa-container-height", async () => {
+    const element = createElement("c-agent-assist-transcript", {
+      is: AgentAssistTranscript
+    });
+    element.containerHeight = "600px";
+
+    document.body.appendChild(element);
+
+    await Promise.resolve();
+
+    expect(element.style.getPropertyValue("--aa-container-height")).toBe("600px");
+  });
 });

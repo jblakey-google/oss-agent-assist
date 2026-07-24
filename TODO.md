@@ -1,7 +1,5 @@
 ## Tasks
 
-- [ ] Test with various SF licenses, using the project-scratch-def.json.
-- [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 - [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
 
 ## Doing
@@ -55,11 +53,17 @@
 - [x] Migrate integration callouts (`/register`) to Salesforce Named Credentials (`callout:Agent_Assist_UI_Connector`) and completely purge legacy Remote Site Settings.
 - [x] Implement CSS Container Queries (`@container`) and responsive flex layout rules for `agentAssistContainer`.
 - [x] Streamline LWC Simulator & Transcript UI: Remove redundant Transcript header, right-align Reload Component button, and fix 1px border clipping in stacked responsive views.
+- [x] Add Salesforce Base Connector accordion item to CX Platform Setup Wizard with UI Modules documentation links.
+- [x] Create `agentAssistCustomStarterKit` boilerplate LWC component for Bring-Your-Own (BYO) chat/telephony platforms.
+- [x] Implement robust dynamic picklists (`AgentAssistConfigPicklist` & `AgentAssistCompanionPicklist`) with `isValid()` validation overrides for error-free App Builder saving.
+- [x] Add automated Apex package detection in CX Platform Setup accordion for Five9, Twilio Flex, NICE CXone, and Genesys Cloud.
 
 ---
 
 ## Questions
 
+- Test with various SF licenses, using the project-scratch-def.json?
+- To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
 - How can we solve the problem of it being difficult to test e2e? Can we automate it? Can we test all platforms from a single ephemeral scratch org? How to define these integration tests, possibly Playwright?
 - `canvas/` is obsolete. Prove it and remove it with this PR. Then, migrate `aa-lwc` to `..`
 - Can we bring Genesys integration in as a PlatformConnector? What testing is involved? Does it use the existing audiohook connector? Do we have a Genesys Test environment that will work for this? If so Add Public Docs, release with CompanionAgent support.
@@ -78,7 +82,7 @@
 ### Admin Experience & Diagnostics
 
 - **Centralized Configuration Management**: ConfigurationName based LWC will allow centrally managing configurations, which can be used for many profile types. Suppose an enterprise customer has 10 different teams in the contact center and each want's to set them up differently. Now they don't have to do it at the page level, but in our centralized configuration wizard. This makes for an easier life for admins.
-- **CX Platform Specific Setup Panel**: This points to the documentation, 3rd party links, etc. Accordion for each platform. Checklist (Is app installed, permission sets assigned, etc. But less hand holding to avoid introducing brittleness.)
+- **CX Platform Specific Setup Panel**: This points to the documentation, 3rd party links, setup instructions, and package installation status via Apex for each platform (Five9, Twilio Flex, NICE CXone, Genesys Cloud, and Base Connector).
 - **Detailed Diagnostics Page**: Detailed diagnostics page with troubleshooting steps for common issues. All the tools needed to integrate in one place. Deep links to fix issues in SF config. The app is aware of its deps, like the UI Modules static resources, connectivity, and auth, and can report on their status.
 - **Terminology Alignment ("Enhanced Chat")**: Updated messaging terminology from MIAW to "Enhanced Chat" across documentation and component UI, aligning with current Salesforce product standards to minimize admin and agent confusion.
 
@@ -95,7 +99,7 @@
 
 ### Multi-Platform & Architecture Flexibility
 
-- **Base API Connector**: Base API Connector facilitates use of the LWC with other messaging platforms (e.g. SF + Quiq, which Warner Bros. Discovery uses).
+- **Base API Connector & `agentAssistCustomStarterKit`**: Introduced the `agentAssistCustomStarterKit` LWC boilerplate enabling enterprise developers to connect Bring-Your-Own (BYO) chat or telephony platforms (e.g. Acme Chat, LivePerson, Genesys) directly to Agent Assist. By dispatching standard UI module events (`analyze-content-requested`) directly to the active event bus, custom platforms can be integrated cleanly without re-initializing connectors or managing separate auth tokens.
 - **Multi-Instance Page Support**: Allows multiple configurations on the same page to be used, and is very flexible. Could be used to support both voice and chat side by side, which (probably) requires 2 different conversation profiles.
 - **Companion Agent & Container Support**: Supports the transition to Companion Agent, while still supporting Container.
 

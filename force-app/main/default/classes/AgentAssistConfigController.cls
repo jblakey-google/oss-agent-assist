@@ -1558,6 +1558,7 @@ public without sharing class AgentAssistConfigController {
     String finalKey = consumerKey;
     String finalSecret = consumerSecret;
     String finalUser = clientCredentialsUser;
+    String finalConvProfile = '';
 
     // Retrieve credentials securely from database config record if configName is provided
     if (String.isNotBlank(configName)) {
@@ -1565,6 +1566,7 @@ public without sharing class AgentAssistConfigController {
         SELECT
           Id,
           Endpoint_URL__c,
+          Conversation_Profile__c,
           Consumer_Key__c,
           Consumer_Secret__c,
           Client_Credentials_User__c
@@ -1574,6 +1576,7 @@ public without sharing class AgentAssistConfigController {
       ];
       if (!configs.isEmpty()) {
         Agent_Assist_Config__c cfg = configs[0];
+        finalConvProfile = cfg.Conversation_Profile__c;
         if (String.isBlank(finalEndpoint)) {
           finalEndpoint = cfg.Endpoint_URL__c;
         }
@@ -1710,6 +1713,10 @@ public without sharing class AgentAssistConfigController {
 
       response.put('token', jwtToken);
       response.put('status', 'success');
+      response.put('endpointUrl', finalEndpoint);
+      if (String.isNotBlank(finalConvProfile)) {
+        response.put('conversationProfile', finalConvProfile);
+      }
     } catch (Exception ex) {
       response.put(
         'error',

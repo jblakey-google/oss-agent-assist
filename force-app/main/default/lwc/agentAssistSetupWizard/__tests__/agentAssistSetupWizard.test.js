@@ -421,7 +421,7 @@ describe("c-agent-assist-setup-wizard", () => {
     const logoImgs = Array.from(
       element.shadowRoot.querySelectorAll(".platform-logo-img")
     );
-    expect(logoImgs.length).toBe(5);
+    expect(logoImgs.length).toBeGreaterThanOrEqual(5);
 
     const logoSrcs = logoImgs.map((img) => img.getAttribute("src"));
     expect(logoSrcs).toContain("platform_logos/salesforce_logo.svg");

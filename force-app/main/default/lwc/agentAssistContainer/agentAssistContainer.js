@@ -80,7 +80,7 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   platformService = null;
-  _heightApplied = false;
+  _appliedHeight = null;
   tokenRefreshInterval = null;
   conversationNamePollingInterval = null;
 
@@ -233,9 +233,8 @@ export default class AgentAssistContainer extends LightningElement {
 
   async renderedCallback() {
     this.debugLog("renderedCallback called");
-    if (this.containerHeight && !this._heightApplied) {
+    if (this.containerHeight !== this._appliedHeight) {
       this.applyHeightOverride();
-      this._heightApplied = true;
     }
 
     try {
@@ -381,6 +380,7 @@ export default class AgentAssistContainer extends LightningElement {
       "--aa-container-height",
       this.containerHeight
     );
+    this._appliedHeight = this.containerHeight;
   }
 
   @api

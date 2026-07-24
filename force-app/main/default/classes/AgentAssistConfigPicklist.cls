@@ -40,30 +40,11 @@ public with sharing class AgentAssistConfigPicklist extends VisualEditor.Dynamic
           String.isNotBlank(cfg.Developer_Name__c) &&
           !addedDevNames.contains(cfg.Developer_Name__c)
         ) {
-          Boolean isContainer = (cfg.Profile_Type__c != 'Companion Agent' ||
-          cfg.Developer_Name__c == 'Default');
-          if (isContainer) {
-            String label = cfg.Name + ' (' + cfg.Developer_Name__c + ')';
-            myValues.addRow(
-              new VisualEditor.DataRow(label, cfg.Developer_Name__c)
-            );
-            addedDevNames.add(cfg.Developer_Name__c);
-          }
-        }
-      }
-
-      if (myValues.size() == 0) {
-        for (Agent_Assist_Config__c cfg : configs) {
-          if (
-            String.isNotBlank(cfg.Developer_Name__c) &&
-            !addedDevNames.contains(cfg.Developer_Name__c)
-          ) {
-            String label = cfg.Name + ' (' + cfg.Developer_Name__c + ')';
-            myValues.addRow(
-              new VisualEditor.DataRow(label, cfg.Developer_Name__c)
-            );
-            addedDevNames.add(cfg.Developer_Name__c);
-          }
+          String label = cfg.Name + ' (' + cfg.Developer_Name__c + ')';
+          myValues.addRow(
+            new VisualEditor.DataRow(label, cfg.Developer_Name__c)
+          );
+          addedDevNames.add(cfg.Developer_Name__c);
         }
       }
 
@@ -79,5 +60,9 @@ public with sharing class AgentAssistConfigPicklist extends VisualEditor.Dynamic
     }
 
     return myValues;
+  }
+
+  public override Boolean isValid(Object attributeValue) {
+    return true;
   }
 }

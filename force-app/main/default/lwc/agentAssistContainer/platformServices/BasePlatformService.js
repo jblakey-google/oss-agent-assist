@@ -304,10 +304,6 @@ export default class BasePlatformService {
   ////////////////////////////////////////////////////////////////////////////
 
   initAgentAssistEvents() {
-    console.log("--- LWC Event Functions ---");
-    console.log(dispatchAgentAssistEvent);
-    console.log(addAgentAssistEventListener);
-
     this.lwc.debugLog("initAgentAssistEvents called");
     if (typeof addAgentAssistEventListener !== "function") {
       return;
