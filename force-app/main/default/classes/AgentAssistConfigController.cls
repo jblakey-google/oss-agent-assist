@@ -984,6 +984,48 @@ public without sharing class AgentAssistConfigController {
         )
       );
     }
+
+    // Check Agent Assist Named Credentials (prefixed with Agent_Assist_)
+    List<String> ncNames = new List<String>();
+    try {
+      for (SObject nc : Database.query(
+        'SELECT Id, DeveloperName FROM NamedCredential WHERE DeveloperName LIKE \'Agent\\_Assist%\' ORDER BY DeveloperName ASC'
+      )) {
+        ncNames.add((String) nc.get('DeveloperName'));
+      }
+    } catch (Exception ex) {
+    }
+
+    if (!ncNames.isEmpty()) {
+      authSection.items.add(
+        new DiagnosticItemDetail(
+          'check-named-credentials',
+          'Agent Assist Named Credentials (Agent_Assist_*)',
+          'Verified ' +
+            ncNames.size() +
+            ' Named Credential(s) prefixed with "Agent_Assist_": ' +
+            String.join(ncNames, ', '),
+          'pass',
+          null,
+          ncNames,
+          ncNames.size(),
+          '/lightning/setup/NamedCredentials/home'
+        )
+      );
+    } else {
+      authSection.items.add(
+        new DiagnosticItemDetail(
+          'check-named-credentials',
+          'Agent Assist Named Credentials (Agent_Assist_*)',
+          'No Named Credentials found with prefix "Agent_Assist_".',
+          'warning',
+          'No Named Credentials starting with "Agent_Assist_" were found in Setup > Named Credentials.',
+          null,
+          0,
+          '/lightning/setup/NamedCredentials/home'
+        )
+      );
+    }
     wrapper.sections.add(authSection);
 
     // 3. Static Resources & UI Modules

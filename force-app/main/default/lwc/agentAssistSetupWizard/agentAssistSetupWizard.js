@@ -102,9 +102,18 @@ const DEFAULT_DIAGNOSTIC_SECTIONS = [
         assignees: []
       },
       {
-        id: "check-perm-agent",
-        label: "Messaging Agent Permission Set (Messaging_Agent)",
-        subLabel: "Contact center agent permission set deployed.",
+        id: "check-perm-user",
+        label: "Google Cloud Agent Assist User (Agent_Assist_User)",
+        subLabel: "Agent user permission set deployed.",
+        status: "pending",
+        errorMessage: "",
+        totalCount: 0,
+        assignees: []
+      },
+      {
+        id: "check-named-credentials",
+        label: "Agent Assist Named Credentials (Agent_Assist_*)",
+        subLabel: "Named Credentials for secure callout authentication.",
         status: "pending",
         errorMessage: "",
         totalCount: 0,
