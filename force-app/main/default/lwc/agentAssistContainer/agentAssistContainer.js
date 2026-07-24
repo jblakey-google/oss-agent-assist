@@ -20,6 +20,7 @@ import { LightningElement, api, wire, track } from "lwc";
 import { loadScript } from "lightning/platformResourceLoader";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { MessageContext } from "lightning/messageService";
+import { refreshApex } from "@salesforce/apex";
 import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getResolvedConfig";
 
 // Static Resources
@@ -55,8 +56,15 @@ export default class AgentAssistContainer extends LightningElement {
   @track cancelSummarizationTimeout = null;
   @track token = null;
   @track showTranscript = false;
-  @track voiceCallData;
-  @track resolvedState = {};
+  @track _resolvedState = {};
+  @api configOverride;
+
+  get resolvedState() {
+    return this.configOverride || this._resolvedState;
+  }
+  set resolvedState(value) {
+    this._resolvedState = value;
+  }
   @track isLoading = true;
 
   get showEmptyState() {
@@ -80,6 +88,7 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   platformService = null;
+  wiredConfigResult;
   _appliedHeight = null;
   tokenRefreshInterval = null;
   conversationNamePollingInterval = null;
@@ -199,16 +208,27 @@ export default class AgentAssistContainer extends LightningElement {
     return this.resolvedState && this.resolvedState.isFound === false;
   }
 
+  _refreshKey;
+  @api
+  get refreshKey() {
+    return this._refreshKey;
+  }
+  set refreshKey(value) {
+    this._refreshKey = value;
+    if (this.wiredConfigResult) {
+      refreshApex(this.wiredConfigResult);
+    }
+  }
+
   @wire(getResolvedConfig, { configName: "$configName" })
   wiredConfig(result) {
+    this.wiredConfigResult = result;
     const { data, error } = result;
     this.isLoading = false;
     if (data) {
       this.resolvedState = data;
       if (data.isFound) {
-        this.showTranscript =
-          !this.disableIntegratedTranscript &&
-          (this.channel === "voice" || this.debugMode);
+        this.showTranscript = !this.disableIntegratedTranscript;
       }
     } else if (error) {
       console.error(
@@ -226,9 +246,18 @@ export default class AgentAssistContainer extends LightningElement {
 
   connectedCallback() {
     this.debugLog("connectedCallback called");
-    this.showTranscript =
-      !this.disableIntegratedTranscript &&
-      (this.channel === "voice" || this.debugMode);
+    if (this.wiredConfigResult) {
+      refreshApex(this.wiredConfigResult);
+    }
+    this.showTranscript = !this.disableIntegratedTranscript;
+  }
+
+  @api
+  async refreshConfig() {
+    if (this.wiredConfigResult) {
+      return refreshApex(this.wiredConfigResult);
+    }
+    return Promise.resolve();
   }
 
   async renderedCallback() {
@@ -259,13 +288,13 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   async initPlatformService() {
-    console.log("DEBUG: initPlatformService called");
+    this.debugLog("initPlatformService called");
     const refs = {
       conversationToolkitApi: this.refs.conversationToolkitApi,
       serviceCloudVoiceToolkitApi: this.refs.serviceCloudVoiceToolkitApi
     };
 
-    console.log("DEBUG: Platform: ", this.platform);
+    this.debugLog(`Platform: ${this.platform}`);
     if (this.platform === "messaging") {
       this.platformService = new MessagingPlatformService(this, refs);
     } else if (this.platform === "twilioflex") {

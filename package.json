@@ -22,6 +22,8 @@
     "predeploy": "node scripts/predeployment-tasks.js",
     "deploy": "sf project deploy start --source-dir force-app --ignore-conflicts",
     "assign": "sf apex run --file scripts/apex/assignPermsets.apex | grep 'USER_DEBUG' | sed 's/.*|DEBUG|/[Apex Log] /' || true",
+    "create-fake-users": "sf apex run --file scripts/apex/createFakeUsers.apex | grep 'USER_DEBUG' | sed 's/.*|DEBUG|/[Apex Log] /' || true",
+    "delete-fake-users": "sf apex run --file scripts/apex/deleteFakeUsers.apex | grep 'USER_DEBUG' | sed 's/.*|DEBUG|/[Apex Log] /' || true",
     "open": "sf org open",
     "generate-aa-static-resources": "./generate-aa-static-resources.sh",
     "install-five9-package": "sf package install --package 04tTN000000C1rZYAS --security-type AllUsers --wait 30",

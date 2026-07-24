@@ -27,7 +27,15 @@ export default class AgentAssistCompanionAgent extends LightningElement {
   @api configName = "Default_Companion";
 
   // Component Reactive State
-  @track resolvedState = {};
+  @track _resolvedState = {};
+  @api configOverride;
+
+  get resolvedState() {
+    return this.configOverride || this._resolvedState;
+  }
+  set resolvedState(value) {
+    this._resolvedState = value;
+  }
   @track isLoading = true;
   @track showConfigDetails = false;
   @track userPrompt = "";
@@ -35,6 +43,18 @@ export default class AgentAssistCompanionAgent extends LightningElement {
   @track messages = [];
 
   wiredConfigResult;
+
+  _refreshKey;
+  @api
+  get refreshKey() {
+    return this._refreshKey;
+  }
+  set refreshKey(value) {
+    this._refreshKey = value;
+    if (this.wiredConfigResult) {
+      refreshApex(this.wiredConfigResult);
+    }
+  }
 
   @wire(getResolvedConfig, {
     configName: "$configName"
@@ -64,6 +84,20 @@ export default class AgentAssistCompanionAgent extends LightningElement {
         resolutionSource: "Error Loading Configuration"
       };
     }
+  }
+
+  connectedCallback() {
+    if (this.wiredConfigResult) {
+      refreshApex(this.wiredConfigResult);
+    }
+  }
+
+  @api
+  async refreshConfig() {
+    if (this.wiredConfigResult) {
+      return refreshApex(this.wiredConfigResult);
+    }
+    return Promise.resolve();
   }
 
   initWelcomeMessage() {

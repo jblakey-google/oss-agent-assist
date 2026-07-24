@@ -61,6 +61,7 @@ export default class AgentAssistTranscript extends LightningElement {
 
   @wire(getResolvedConfig, { configName: "$configName" })
   wiredConfig(result) {
+    this.wiredConfigResult = result;
     const { data, error } = result;
     this.isLoading = false;
     if (data) {

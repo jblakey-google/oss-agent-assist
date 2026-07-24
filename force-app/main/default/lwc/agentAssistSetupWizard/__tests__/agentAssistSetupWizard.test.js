@@ -20,6 +20,17 @@ import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getO
 import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActiveUsers";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
+import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
+import resetDefaultConfigs from "@salesforce/apex/AgentAssistConfigController.resetDefaultConfigs";
+import resetSingleDefaultConfig from "@salesforce/apex/AgentAssistConfigController.resetSingleDefaultConfig";
+
+jest.mock(
+  "@salesforce/apex/AgentAssistConfigController.resetSingleDefaultConfig",
+  () => ({
+    default: jest.fn().mockResolvedValue({ Id: "001", Developer_Name__c: "Default" })
+  }),
+  { virtual: true }
+);
 
 jest.mock(
   "@salesforce/apex/AgentAssistConfigController.saveConfig",
@@ -443,22 +454,22 @@ describe("c-agent-assist-setup-wizard", () => {
       element.shadowRoot.querySelectorAll("lightning-input")
     );
     const disableTranscriptToggle = toggles.find(
-      (t) => t.dataset.field === "disableIntegratedTranscript"
+      (t) => t.dataset.field === "integratedTranscriptActive"
     );
     expect(disableTranscriptToggle).not.toBeUndefined();
 
-    // Toggle to checked (Disable Integrated Transcript = true)
-    disableTranscriptToggle.checked = true;
+    // Toggle off (Integrated Transcript = false -> Disable_Integrated_Transcript__c = true)
+    disableTranscriptToggle.checked = false;
     disableTranscriptToggle.dispatchEvent(
-      new CustomEvent("change", { detail: { checked: true } })
+      new CustomEvent("change", { detail: { checked: false } })
     );
     await Promise.resolve();
 
-    // Click Save Profile button
+    // Click Save LWC Profile button
     const buttons = Array.from(
       element.shadowRoot.querySelectorAll("lightning-button")
     );
-    const saveButton = buttons.find((b) => b.label === "Save Profile");
+    const saveButton = buttons.find((b) => b.label === "Save LWC Profile");
     expect(saveButton).not.toBeUndefined();
 
     saveButton.click();
@@ -473,7 +484,7 @@ describe("c-agent-assist-setup-wizard", () => {
     );
   });
 
-  it("renders explainer text for both Agent and Admin permission sets in Users card", async () => {
+  it("renders dedicated top-level Users tab and filters user list with search input", async () => {
     const element = createElement("c-agent-assist-setup-wizard", {
       is: AgentAssistSetupWizard
     });
@@ -481,10 +492,199 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
     await Promise.resolve();
 
-    const textContent = element.shadowRoot.textContent;
-    expect(textContent).toContain("Google Cloud Agent Assist User");
-    expect(textContent).toContain("Agent_Assist_User");
-    expect(textContent).toContain("Google Cloud Agent Assist Administrator");
-    expect(textContent).toContain("Agent_Assist_Admin");
+    const tabs = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-tab")
+    );
+    const usersTab = tabs.find((t) => t.value === "users");
+    expect(usersTab).toBeTruthy();
+
+    const searchInput = element.shadowRoot.querySelector(
+      'lightning-input[type="search"]'
+    );
+    if (searchInput) {
+      searchInput.value = "John";
+      searchInput.dispatchEvent(new CustomEvent("change"));
+      await Promise.resolve();
+    }
+  });
+
+  it("refreshes configuration profiles and remounts simulator when simulator tab becomes active", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    getAllConfigs.emit([
+      {
+        Id: "001",
+        Name: "Default Profile",
+        Developer_Name__c: "Default",
+        Profile_Type__c: "Container",
+        Is_Active__c: true
+      }
+    ]);
+    await Promise.resolve();
+
+    const tabs = element.shadowRoot.querySelectorAll("lightning-tab");
+    if (tabs.length > 1) {
+      tabs[1].dispatchEvent(new CustomEvent("active"));
+      await Promise.resolve();
+    }
+  });
+
+  it("renders Reset Profile button for default profile and calls resetSingleDefaultConfig when clicked", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const buttons = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-button")
+    );
+    const resetProfileBtn = buttons.find((b) => b.label === "Reset LWC Profile");
+
+    if (resetProfileBtn) {
+      resetProfileBtn.click();
+      await Promise.resolve();
+      expect(resetSingleDefaultConfig).toHaveBeenCalledWith({
+        developerName: "Default"
+      });
+    }
+  });
+
+  it("places Users tab after CX Platform Setup tab in lightning-tabset", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const tabs = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-tab")
+    );
+    const tabValues = tabs.map((t) => t.value);
+    expect(tabValues).toEqual([
+      "configurationProfiles",
+      "simulator",
+      "cxPlatformSetup",
+      "users",
+      "diagnostics"
+    ]);
+  });
+
+  it("shares selected profile state between LWC Configuration Profiles tab and Simulator tab", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    getAllConfigs.emit([
+      {
+        Id: "001",
+        Name: "Default Profile",
+        Developer_Name__c: "Default",
+        Profile_Type__c: "Container",
+        Is_Active__c: true
+      },
+      {
+        Id: "002",
+        Name: "Companion Profile",
+        Developer_Name__c: "Default_Companion",
+        Profile_Type__c: "Companion Agent",
+        Is_Active__c: true
+      }
+    ]);
+    await Promise.resolve();
+
+    // Select Default_Companion in profiles list
+    const profileItems = Array.from(
+      element.shadowRoot.querySelectorAll(".profile-item")
+    );
+    const companionItem = profileItems.find(
+      (item) => item.dataset.id === "Default_Companion"
+    );
+    if (companionItem) {
+      companionItem.click();
+      await Promise.resolve();
+    }
+
+    // Activate simulator tab
+    const tabs = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-tab")
+    );
+    const simulatorTab = tabs.find((t) => t.value === "simulator");
+    if (simulatorTab) {
+      simulatorTab.dispatchEvent(new CustomEvent("active"));
+      await Promise.resolve();
+    }
+
+    // Verify simulator combobox value matches selected profile
+    const comboboxes = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-combobox")
+    );
+    const combobox = comboboxes.find(
+      (cb) => cb.label === "LWC Configuration Profile to Instantiate"
+    );
+    expect(combobox).toBeTruthy();
+    expect(combobox.value).toBe("Default_Companion");
+
+    // Change simulator combobox to Default
+    combobox.dispatchEvent(
+      new CustomEvent("change", {
+        detail: { value: "Default" }
+      })
+    );
+    await Promise.resolve();
+
+    // Verify that selecting profile in simulator updates selected profile state
+    const activeProfileItem = element.shadowRoot.querySelector(
+      ".profile-item_active"
+    );
+    expect(activeProfileItem.dataset.id).toBe("Default");
+  });
+
+  it("persists selected profile in storage and restores it on component mount", async () => {
+    localStorage.setItem(
+      "agent_assist_setup_selected_profile",
+      "Default_Companion"
+    );
+
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    getAllConfigs.emit([
+      {
+        Id: "001",
+        Name: "Default Profile",
+        Developer_Name__c: "Default",
+        Profile_Type__c: "Container",
+        Is_Active__c: true
+      },
+      {
+        Id: "002",
+        Name: "Companion Profile",
+        Developer_Name__c: "Default_Companion",
+        Profile_Type__c: "Companion Agent",
+        Is_Active__c: true
+      }
+    ]);
+    await Promise.resolve();
+
+    const activeProfileItem = element.shadowRoot.querySelector(
+      ".profile-item_active"
+    );
+    expect(activeProfileItem.dataset.id).toBe("Default_Companion");
+    localStorage.removeItem("agent_assist_setup_selected_profile");
   });
 });

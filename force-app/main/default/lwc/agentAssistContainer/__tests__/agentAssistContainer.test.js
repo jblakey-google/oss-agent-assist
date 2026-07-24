@@ -113,4 +113,32 @@ describe("c-agent-assist-container", () => {
       expect(transcriptEl).toBeNull();
     });
   });
+
+  it("enables transcript in chat channel when disableIntegratedTranscript is false and debugMode is false", () => {
+    const element = createElement("c-agent-assist-container", {
+      is: AgentAssistContainer
+    });
+    element.configName = "Default";
+
+    document.body.appendChild(element);
+
+    getResolvedConfig.emit({
+      id: "mock-3",
+      name: "Default Profile",
+      developerName: "Default",
+      profileType: "Container",
+      channel: "chat",
+      debugMode: false,
+      disableIntegratedTranscript: false,
+      isFound: true
+    });
+
+    return Promise.resolve().then(() => {
+      expect(element.disableIntegratedTranscript).toBe(false);
+      const transcriptEl = element.shadowRoot.querySelector(
+        ".transcript-container"
+      );
+      expect(transcriptEl).not.toBeNull();
+    });
+  });
 });

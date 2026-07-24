@@ -5,10 +5,10 @@
   >
     <div slot="actions">
       <template lwc:if={isConnected}>
-        <span class="slds-badge slds-theme_success" title={statusMessage}>Connected</span>
+        <span class="status-pill status-pill_pass" title={statusMessage}><span class="status-led status-led_pass"></span>Connected</span>
       </template>
       <template lwc:else>
-        <span class="slds-badge slds-theme_error" title={statusMessage}>Disconnected</span>
+        <span class="status-pill status-pill_fail" title={statusMessage}><span class="status-led status-led_fail"></span>Disconnected</span>
       </template>
     </div>
     <div class="slds-p-around_medium">
@@ -20,126 +20,133 @@
         </div>
       </template>
 
-      <!-- Integration Guidance -->
-      <div
-        class="slds-p-around_small slds-m-bottom_medium slds-radius_medium"
-        style="background: #f0f7ff; color: #1e40af; border: 1px solid #bfdbfe;"
-      >
-        <div class="slds-media slds-media_center">
-          <div class="slds-media__figure">
-            <lightning-icon
-              icon-name="utility:info"
-              variant="brand"
-              size="small"
-            ></lightning-icon>
-          </div>
-          <div class="slds-media__body">
-            <p class="slds-text-body_small">
-              This component demonstrates how you could develop a custom chat integration by dispatching Agent Assist events in your own LWC.
-            </p>
-            <ul class="slds-list_bullet slds-m-top_xx-small slds-text-body_small">
-              <li>
-                <strong>Connector Setup:</strong> Place an <code>agentAssistContainer</code> or <code>agentAssistCompanionAgent</code> component on the same page to instantiate the <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist Connector</a>.
-              </li>
-              <li>
-                <strong>Source Code Reference:</strong> Inspect <code>agentAssistCustomStarterKit.js</code> to see how custom chat turns dispatch <code>analyze-content-requested</code> events to the Connector.
-              </li>
-              <li>
-                <strong>Event Flow:</strong> Subscribe to incoming message events from your third-party chat provider and dispatch corresponding <code>analyze-content-requested</code> events to the Agent Assist Connector whenever chat turns occur.
-              </li>
-              <li>
-                <strong>Console Event Logging:</strong> Open your browser's Developer Console (F12 / Cmd+Option+I) to inspect the complete, verbose event payload objects dispatched and received in real-time.
-              </li>
-              <li>
-                <strong>Documentation:</strong> Read the official <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist UI Modules Overview</a> and <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Events Documentation</a> for more details.
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="slds-text-heading_small slds-m-bottom_small">
-        Simulate Custom Chat Turns
-      </div>
-
-      <!-- Customer Input Section -->
-      <div class="slds-m-bottom_medium">
-        <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
-          <span class="slds-text-title_bold">Customer (END_USER)</span>
-        </div>
-        <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
-          <div class="slds-col slds-grow">
-            <lightning-input
-              type="text"
-              variant="label-hidden"
-              label="Type a customer's message"
-              placeholder="Type a customer's message"
-              value={userMessageInput}
-              onchange={handleUserInputChange}
-              onkeyup={handleUserInputKeyUp}
-            ></lightning-input>
-          </div>
-          <div class="slds-col slds-no-flex">
-            <lightning-button-icon
-              icon-name="utility:send"
-              variant="brand"
-              alternative-text="Send as Customer"
-              title="Send as Customer"
-              onclick={handleSendUserMessage}
-            ></lightning-button-icon>
-          </div>
-        </div>
-      </div>
-
-      <!-- Agent Input Section -->
-      <div class="slds-m-bottom_medium">
-        <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
-          <span class="slds-text-title_bold">Agent (HUMAN_AGENT)</span>
-        </div>
-        <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
-          <div class="slds-col slds-grow">
-            <lightning-input
-              type="text"
-              variant="label-hidden"
-              label="Type an agent's message"
-              placeholder="Type an agent's message"
-              value={agentMessageInput}
-              onchange={handleAgentInputChange}
-              onkeyup={handleAgentInputKeyUp}
-            ></lightning-input>
-          </div>
-          <div class="slds-col slds-no-flex">
-            <lightning-button-icon
-              icon-name="utility:send"
-              variant="brand"
-              alternative-text="Send as Agent"
-              title="Send as Agent"
-              onclick={handleSendAgentMessage}
-            ></lightning-button-icon>
-          </div>
-        </div>
-      </div>
-
-      <!-- Transcript History -->
-      <div class="slds-m-top_medium">
-        <div class="slds-text-title_caps slds-m-bottom_x-small">
-          Conversation Turn Log
-        </div>
-        <div class="slds-box slds-box_x-small slds-scrollable_y" style="max-height: 200px; background: #fafafa;">
-          <template lwc:if={transcriptLogs.length}>
-            <template for:each={transcriptLogs} for:item="turn">
-              <div key={turn.id} class="slds-p-vertical_xxx-small slds-text-body_small">
-                <strong>{turn.sender}:</strong> {turn.text}
+      <div class="starter-kit-layout">
+        <!-- Integration Guidance (Left column on large screens) -->
+        <div class="starter-kit-col">
+          <div
+            class="guidance-box slds-p-around_small slds-m-bottom_medium slds-radius_medium"
+            style="background: #f0f7ff; color: #1e40af; border: 1px solid #bfdbfe;"
+          >
+            <div class="slds-media slds-media_center">
+              <div class="slds-media__figure">
+                <lightning-icon
+                  icon-name="utility:info"
+                  variant="brand"
+                  size="small"
+                ></lightning-icon>
               </div>
-            </template>
-          </template>
-          <template lwc:else>
-            <span class="slds-text-color_weak slds-text-body_small">No chat turns sent yet.</span>
-          </template>
+              <div class="slds-media__body">
+                <p class="slds-text-body_small">
+                  This component demonstrates how you could develop a custom chat integration by dispatching Agent Assist events in your own LWC.
+                </p>
+                <ul class="slds-list_bullet slds-m-top_xx-small slds-text-body_small">
+                  <li>
+                    <strong>Connector Setup:</strong>&#32;Place an&#32;<code>agentAssistContainer</code>&#32;or&#32;<code>agentAssistCompanionAgent</code>&#32;component on the same page to instantiate the&#32;<a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist Connector</a>.
+                  </li>
+                  <li>
+                    <strong>Source Code Reference:</strong>&#32;Inspect&#32;<code>agentAssistCustomStarterKit.js</code>&#32;to see how custom chat turns dispatch&#32;<code>analyze-content-requested</code>&#32;events to the Connector.
+                  </li>
+                  <li>
+                    <strong>Event Flow:</strong>&#32;Subscribe to incoming message events from your third-party chat provider and dispatch corresponding&#32;<code>analyze-content-requested</code>&#32;events to the Agent Assist Connector whenever chat turns occur.
+                  </li>
+                  <li>
+                    <strong>Console Event Logging:</strong>&#32;Open your browser's Developer Console (F12 / Cmd+Option+I) to inspect the complete, verbose event payload objects dispatched and received in real-time.
+                  </li>
+                  <li>
+                    <strong>Documentation:</strong>&#32;Read the official&#32;<a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist UI Modules Overview</a>&#32;and&#32;<a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Events Documentation</a>&#32;for more details.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="slds-m-top_x-small slds-text-body_small slds-text-color_weak slds-grid slds-grid_vertical-align-center">
-          <lightning-icon icon-name="utility:console" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
-          <span><strong>Developer Tip:</strong> Open your browser Developer Console (F12 / Cmd+Option+I) to inspect full dispatched and received event payloads.</span>
+
+        <!-- Chat Controls and Logs (Right column on large screens) -->
+        <div class="starter-kit-col">
+          <div class="slds-text-heading_small slds-m-bottom_small">
+            Simulate Custom Chat Turns
+          </div>
+
+          <!-- Customer Input Section -->
+          <div class="slds-m-bottom_medium">
+            <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+              <span class="slds-text-title_bold">Customer (END_USER)</span>
+            </div>
+            <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+              <div class="slds-col slds-grow">
+                <lightning-input
+                  type="text"
+                  variant="label-hidden"
+                  label="Type a customer's message"
+                  placeholder="Type a customer's message"
+                  value={userMessageInput}
+                  onchange={handleUserInputChange}
+                  onkeyup={handleUserInputKeyUp}
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-no-flex">
+                <lightning-button-icon
+                  icon-name="utility:send"
+                  variant="brand"
+                  alternative-text="Send as Customer"
+                  title="Send as Customer"
+                  onclick={handleSendUserMessage}
+                ></lightning-button-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Input Section -->
+          <div class="slds-m-bottom_medium">
+            <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+              <span class="slds-text-title_bold">Agent (HUMAN_AGENT)</span>
+            </div>
+            <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+              <div class="slds-col slds-grow">
+                <lightning-input
+                  type="text"
+                  variant="label-hidden"
+                  label="Type an agent's message"
+                  placeholder="Type an agent's message"
+                  value={agentMessageInput}
+                  onchange={handleAgentInputChange}
+                  onkeyup={handleAgentInputKeyUp}
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-no-flex">
+                <lightning-button-icon
+                  icon-name="utility:send"
+                  variant="brand"
+                  alternative-text="Send as Agent"
+                  title="Send as Agent"
+                  onclick={handleSendAgentMessage}
+                ></lightning-button-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transcript History -->
+          <div class="slds-m-top_medium">
+            <div class="slds-text-title_caps slds-m-bottom_x-small">
+              Conversation Turn Log
+            </div>
+            <div class="slds-box slds-box_x-small slds-scrollable_y" style="max-height: 200px; background: #fafafa;">
+              <template lwc:if={transcriptLogs.length}>
+                <template for:each={transcriptLogs} for:item="turn">
+                  <div key={turn.id} class="slds-p-vertical_xxx-small slds-text-body_small">
+                    <strong>{turn.sender}:</strong> {turn.text}
+                  </div>
+                </template>
+              </template>
+              <template lwc:else>
+                <span class="slds-text-color_weak slds-text-body_small">No chat turns sent yet.</span>
+              </template>
+            </div>
+            <div class="slds-m-top_x-small slds-text-body_small slds-text-color_weak slds-grid slds-grid_vertical-align-center">
+              <lightning-icon icon-name="utility:console" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+              <span><strong>Developer Tip:</strong>&#32;Open your browser Developer Console (F12 / Cmd+Option+I) to inspect full dispatched and received event payloads.</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

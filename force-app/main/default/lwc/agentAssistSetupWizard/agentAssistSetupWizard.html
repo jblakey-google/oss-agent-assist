@@ -95,15 +95,15 @@
                         variant="inverse"
                         class="slds-m-right_x-small"
                       ></lightning-icon>
-                      New Profile
+                      New LWC Profile
                     </button>
                   </div>
 
                   <p
                     class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
                   >
-                    Select a profile to edit. Profiles appear in the Lightning
-                    Editor dropdown for&#32;<code class="xml-code"
+                    Select an LWC configuration profile to edit. Profiles appear in the Lightning App Builder
+                    dropdown for&#32;<code class="xml-code"
                       >agentAssistContainer</code
                     >&#32;or&#32;<code class="xml-code"
                       >agentAssistCompanionAgent</code
@@ -148,103 +148,6 @@
                   </div>
                 </div>
               </lightning-card>
-
-              <!-- Users Permission Set Assignment Card -->
-              <lightning-card
-                title="Users"
-                icon-name="utility:user"
-                class="slds-m-top_medium"
-              >
-                <div class="slds-p-around_medium">
-                  <p class="slds-text-body_regular slds-m-bottom_small">
-                    Assign the&#32;<strong
-                      >Google Cloud Agent Assist User</strong
-                    >&#32;(<code>Agent_Assist_User</code>) permission set to
-                    contact center agents who will be using the Agent Assist or
-                    Companion Agent LWC components in Salesforce.
-                  </p>
-                  <p class="slds-text-body_regular slds-m-bottom_small">
-                    Assign the&#32;<strong
-                      >Google Cloud Agent Assist Administrator</strong
-                    >&#32;(<code>Agent_Assist_Admin</code>) permission set to
-                    administrators who will configure profiles, manage settings,
-                    and access the Integration Setup Wizard in Salesforce.
-                  </p>
-                  <div class="slds-m-bottom_small">
-                    <lightning-combobox
-                      label="Permission Set to Manage"
-                      value={selectedPermissionSetName}
-                      options={permissionSetOptions}
-                      onchange={handlePermissionSetChange}
-                    >
-                    </lightning-combobox>
-                  </div>
-                  <div
-                    class="slds-grid slds-gutters slds-wrap slds-grid_vertical-align-end"
-                  >
-                    <div class="slds-col slds-size_1-of-1">
-                      <lightning-combobox
-                        label="Select Salesforce User"
-                        value={selectedAgentUserId}
-                        options={agentUserOptions}
-                        onchange={handleAgentUserSelect}
-                        placeholder="Choose a user to manage..."
-                      >
-                      </lightning-combobox>
-                    </div>
-                    <div
-                      class="slds-col slds-size_1-of-1 slds-m-top_small slds-grid slds-grid_vertical-align-center slds-grid_align-spread"
-                    >
-                      <template lwc:if={selectedAgentUserId}>
-                        <span class={selectedUserBadgeClass}
-                          >{selectedUserStatusText}</span
-                        >
-                      </template>
-                      <lightning-button
-                        label={userAssignButtonLabel}
-                        variant={userAssignButtonVariant}
-                        icon-name={userAssignButtonIcon}
-                        onclick={handleAssignUserPermissionSet}
-                        disabled={isAssignUserDisabled}
-                      >
-                      </lightning-button>
-                    </div>
-                  </div>
-
-                  <!-- Assigned Users List -->
-                  <div
-                    class="slds-m-top_medium slds-border_top slds-p-top_medium"
-                  >
-                    <div
-                      class="slds-text-title_bold slds-m-bottom_small slds-text-color_weak slds-grid slds-grid_vertical-align-center"
-                    >
-                      <lightning-icon
-                        icon-name="utility:people"
-                        size="x-small"
-                        class="slds-m-right_x-small"
-                      ></lightning-icon>
-                      <span>Assigned Users ({assignedUsersCount})</span>
-                    </div>
-                    <template lwc:if={hasAssignedAgentUsers}>
-                      <div class="assigned-users-container">
-                        <template for:each={assignedAgentUsers} for:item="u">
-                          <lightning-pill
-                            key={u.value}
-                            label={u.label}
-                            name={u.value}
-                            onremove={handleQuickRemoveUserPermissionSet}
-                          ></lightning-pill>
-                        </template>
-                      </div>
-                    </template>
-                    <template lwc:else>
-                      <p class="slds-text-color_weak slds-text-body_small">
-                        {assignedUsersEmptyMessage}
-                      </p>
-                    </template>
-                  </div>
-                </div>
-              </lightning-card>
             </div>
 
             <!-- Middle Column: Profile Editor Form -->
@@ -281,7 +184,7 @@
                     >&#32;or&#32;<code class="xml-code"
                       >agentAssistCompanionAgent</code
                     >&#32;on any page (Record Page, Utility Bar, App Page) and
-                    select the profile directly from the picklist.
+                    &#32;select the LWC profile directly from the picklist.
                   </p>
                 </div>
               </div>
@@ -516,16 +419,16 @@
                                       class="slds-list_ordered slds-text-body_small slds-m-top_xxx-small slds-m-bottom_xxx-small slds-m-left_medium slds-text-color_weak"
                                     >
                                       <li>
-                                        Click on
-                                        <strong
+                                        Click on&#32;<strong
                                           >Agent Assist LWC Auth ECA</strong
                                         >
                                       </li>
                                       <li>
-                                        Click the <strong>Settings Tab</strong>,
-                                        then <strong>OAuth Settings</strong>,
-                                        then
-                                        <strong>Consumer Key and Secret</strong>
+                                        Click the&#32;<strong>Settings Tab</strong>,
+                                        then&#32;<strong>OAuth Settings</strong>,
+                                        then&#32;<strong
+                                          >Consumer Key and Secret</strong
+                                        >
                                       </li>
                                       <li>
                                         Copy and paste the consumer key and
@@ -535,7 +438,7 @@
                                     <div
                                       class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small"
                                     >
-                                      <strong>Note:</strong> Agent Assist
+                                      <strong>Note:</strong>&#32;Agent Assist
                                       backend modules must be deployed with the
                                       environment variable
                                       &#32;<code class="xml-code">AUTH_OPTION</code>&#32;
@@ -713,12 +616,12 @@
                                   >
                                     <lightning-input
                                       type="toggle"
-                                      label="Disable Integrated Transcript"
-                                      checked={currentProfile.disableIntegratedTranscript}
-                                      data-field="disableIntegratedTranscript"
+                                      label="Integrated Transcript"
+                                      checked={isIntegratedTranscriptActive}
+                                      data-field="integratedTranscriptActive"
                                       onchange={handleFieldChange}
-                                      message-toggle-active="Disabled (Use Standalone LWC)"
-                                      message-toggle-inactive="Enabled"
+                                      message-toggle-active="Active"
+                                      message-toggle-inactive="Inactive (Use Standalone LWC)"
                                     >
                                     </lightning-input>
                                   </div>
@@ -788,17 +691,37 @@
                   <div
                     class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-border_top slds-p-top_medium"
                   >
-                    <lightning-button
-                      label="Delete Profile"
-                      variant="destructive-text"
-                      icon-name="utility:delete"
-                      onclick={handleDeleteProfile}
-                      disabled={isDefaultProfile}
-                    >
-                    </lightning-button>
+                    <template lwc:if={isDefaultProfile}>
+                      <lightning-button
+                        label="Reset LWC Profile"
+                        variant="neutral"
+                        icon-name="utility:refresh"
+                        onclick={handleResetSingleProfile}
+                        title="Reset this default LWC configuration profile back to factory default settings"
+                      >
+                      </lightning-button>
+                    </template>
+                    <template lwc:else>
+                      <lightning-button
+                        label="Delete LWC Profile"
+                        variant="destructive-text"
+                        icon-name="utility:delete"
+                        onclick={handleDeleteProfile}
+                      >
+                      </lightning-button>
+                    </template>
+
                     <div>
                       <lightning-button
-                        label="Save Profile"
+                        label="Save as Copy"
+                        variant="neutral"
+                        icon-name="utility:copy"
+                        onclick={handleSaveAsCopy}
+                        class="slds-m-right_small"
+                        title="Fork currently edited LWC configuration profile details into a new profile"
+                      ></lightning-button>
+                      <lightning-button
+                        label="Save LWC Profile"
                         variant="brand"
                         icon-name="utility:save"
                         onclick={handleSaveProfile}
@@ -985,6 +908,7 @@
                     <div>
                       <c-agent-assist-container
                         config-name={simulatorProfileDevName}
+                        refresh-key={simulatorRefreshKey}
                       ></c-agent-assist-container>
                     </div>
                   </template>
@@ -994,6 +918,7 @@
                     <div>
                       <c-agent-assist-companion-agent
                         config-name={simulatorProfileDevName}
+                        refresh-key={simulatorRefreshKey}
                       ></c-agent-assist-companion-agent>
                     </div>
                   </template>
@@ -1512,7 +1437,154 @@
         </div>
       </lightning-tab>
 
-      <!-- 4. Integration Diagnostics -->
+      <!-- 4. Users & Permission Set Assignment -->
+      <lightning-tab
+        label="Users"
+        value="users"
+        icon-name="utility:user"
+        onactive={handleTabActive}
+      >
+        <div class="slds-p-top_medium">
+          <div class="slds-grid slds-gutters slds-wrap">
+            <!-- Left Column: User Search & Quick Assignment Card -->
+            <div
+              class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+            >
+              <lightning-card
+                title="User Permission Management"
+                icon-name="utility:user"
+              >
+                <div class="slds-p-around_medium">
+                  <p class="slds-text-body_regular slds-m-bottom_small">
+                    Assign and manage permission set access for agents and administrators using Agent Assist components in Salesforce.
+                  </p>
+
+                  <div class="slds-m-bottom_medium">
+                    <lightning-combobox
+                      label="Permission Set to Manage"
+                      value={selectedPermissionSetName}
+                      options={permissionSetOptions}
+                      onchange={handlePermissionSetChange}
+                    >
+                    </lightning-combobox>
+                  </div>
+
+                  <div class="slds-m-bottom_small">
+                    <lightning-input
+                      type="search"
+                      label="Search Salesforce Users"
+                      value={userSearchTerm}
+                      placeholder="Type a user name or username..."
+                      onchange={handleUserSearchChange}
+                    >
+                    </lightning-input>
+                  </div>
+
+                  <!-- Inline Search Results List -->
+                  <div class="slds-m-top_small">
+                    <template lwc:if={hasFilteredUsers}>
+                      <div class="user-search-results-container slds-border_top slds-p-top_small">
+                        <template for:each={filteredUsersList} for:item="u">
+                          <div
+                            key={u.value}
+                            class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-p-vertical_x-small slds-border_bottom"
+                          >
+                            <div class="slds-grid slds-grid_vertical-align-center slds-truncate slds-m-right_small">
+                              <lightning-icon
+                                icon-name="standard:user"
+                                size="small"
+                                class="slds-m-right_x-small"
+                              ></lightning-icon>
+                              <div class="slds-truncate">
+                                <div class="slds-text-title_bold slds-truncate">{u.label}</div>
+                                <span class={u.badgeClass}>{u.statusText}</span>
+                              </div>
+                            </div>
+                            <lightning-button
+                              label={u.buttonLabel}
+                              variant={u.buttonVariant}
+                              icon-name={u.buttonIcon}
+                              data-user-id={u.value}
+                              data-assigned={u.isAssigned}
+                              onclick={handleToggleUserInline}
+                              disabled={isUserPermissionLoading}
+                            >
+                            </lightning-button>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <div class="slds-box slds-box_small slds-theme_shade slds-m-top_small">
+                        <p class="slds-text-color_weak slds-text-body_small">
+                          No users match your search criteria.
+                        </p>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </lightning-card>
+            </div>
+
+            <!-- Right Column: Permission Details & Assigned Users List Card -->
+            <div
+              class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
+            >
+              <lightning-card
+                title="Permission Set Assignment Details"
+                icon-name="utility:people"
+              >
+                <div class="slds-p-around_medium">
+                  <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_xx-small">
+                      {selectedPermissionSetLabel}&#32;(<code>{selectedPermissionSetName}</code>)
+                    </h3>
+                    <p class="slds-text-body_small slds-text-color_weak">
+                      {selectedPermissionSetDescription}
+                    </p>
+                  </div>
+
+                  <!-- Assigned Users List -->
+                  <div class="slds-m-top_small">
+                    <div
+                      class="slds-text-title_bold slds-m-bottom_small slds-text-color_weak slds-grid slds-grid_vertical-align-center"
+                    >
+                      <lightning-icon
+                        icon-name="utility:people"
+                        size="x-small"
+                        class="slds-m-right_x-small"
+                      ></lightning-icon>
+                      <span>Assigned Users ({assignedUsersCount})</span>
+                    </div>
+                    <template lwc:if={hasAssignedAgentUsers}>
+                      <div class="assigned-users-container slds-p-around_small slds-border">
+                        <template for:each={assignedAgentUsers} for:item="u">
+                          <lightning-pill
+                            key={u.value}
+                            label={u.label}
+                            name={u.value}
+                            onremove={handleQuickRemoveUserPermissionSet}
+                            class="slds-m-around_xx-small"
+                          ></lightning-pill>
+                        </template>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <div class="slds-box slds-box_small slds-theme_shade">
+                        <p class="slds-text-color_weak slds-text-body_small">
+                          {assignedUsersEmptyMessage}
+                        </p>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </lightning-card>
+            </div>
+          </div>
+        </div>
+      </lightning-tab>
+
+      <!-- 5. Integration Diagnostics -->
       <lightning-tab
         label={diagnosticsTabLabel}
         value="diagnostics"
@@ -1877,7 +1949,7 @@
               <span class="slds-assistive-text">Close</span>
             </button>
             <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">
-              Select Profile Type
+              Select LWC Profile Type
             </h2>
             <p
               class="slds-m-top_x-small slds-text-body_small slds-text-color_weak"
@@ -1984,8 +2056,6 @@
                   <button
                     type="button"
                     class="slds-button slds-button_brand slds-button_stretch slds-m-top_medium"
-                    data-type="Companion Agent"
-                    onclick={handleSelectTypeFromModal}
                   >
                     Select Companion Agent
                   </button>
@@ -2049,8 +2119,6 @@
                   <button
                     type="button"
                     class="slds-button slds-button_brand slds-button_stretch slds-m-top_medium"
-                    data-type="Container"
-                    onclick={handleSelectTypeFromModal}
                   >
                     Select Container Module
                   </button>

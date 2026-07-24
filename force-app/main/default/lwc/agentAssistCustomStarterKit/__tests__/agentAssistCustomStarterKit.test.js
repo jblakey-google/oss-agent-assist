@@ -15,7 +15,7 @@ describe("c-agent-assist-custom-starter-kit", () => {
     });
     document.body.appendChild(element);
 
-    const badge = element.shadowRoot.querySelector(".slds-badge");
+    const badge = element.shadowRoot.querySelector(".status-pill");
     expect(badge).not.toBeNull();
     expect(badge.textContent).toBe("Disconnected");
 
@@ -36,7 +36,7 @@ describe("c-agent-assist-custom-starter-kit", () => {
     });
     document.body.appendChild(element);
 
-    const badge = element.shadowRoot.querySelector(".slds-badge");
+    const badge = element.shadowRoot.querySelector(".status-pill");
     expect(badge).not.toBeNull();
     expect(badge.textContent).toBe("Connected");
 

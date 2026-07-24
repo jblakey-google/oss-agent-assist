@@ -22,6 +22,8 @@ import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActi
 import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
+import resetDefaultConfigs from "@salesforce/apex/AgentAssistConfigController.resetDefaultConfigs";
+import resetSingleDefaultConfig from "@salesforce/apex/AgentAssistConfigController.resetSingleDefaultConfig";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import registerAuthToken from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
 import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigController.getInstalledPackageStatus";
@@ -368,6 +370,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track simulatorConversationId = null;
   @track simulatorConversationName = null;
   @track simulatorProfileDevName = "Default";
+  @track simulatorRefreshKey = Date.now();
   @track profiles = [...INITIAL_PROFILES];
   @track selectedDevName = "Default";
   @track currentProfile = { ...INITIAL_PROFILES[0] };
@@ -471,9 +474,21 @@ export default class AgentAssistSetupWizard extends LightningElement {
         if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
           this.activeTab = savedTab;
         }
+
+        const savedProfile =
+          localStorage.getItem("agent_assist_setup_selected_profile") ||
+          sessionStorage.getItem("agent_assist_setup_selected_profile");
+        if (
+          savedProfile &&
+          savedProfile !== "undefined" &&
+          savedProfile !== "null"
+        ) {
+          this.selectedDevName = savedProfile;
+          this.simulatorProfileDevName = savedProfile;
+        }
       } catch (e) {
         console.error(
-          "[SetupWizard] renderedCallback - Error reading saved tab:",
+          "[SetupWizard] renderedCallback - Error reading saved storage:",
           e
         );
       }
@@ -500,9 +515,21 @@ export default class AgentAssistSetupWizard extends LightningElement {
       if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
         this.activeTab = savedTab;
       }
+
+      const savedProfile =
+        localStorage.getItem("agent_assist_setup_selected_profile") ||
+        sessionStorage.getItem("agent_assist_setup_selected_profile");
+      if (
+        savedProfile &&
+        savedProfile !== "undefined" &&
+        savedProfile !== "null"
+      ) {
+        this.selectedDevName = savedProfile;
+        this.simulatorProfileDevName = savedProfile;
+      }
     } catch (e) {
       console.error(
-        "[SetupWizard] connectedCallback - Error reading saved tab:",
+        "[SetupWizard] connectedCallback - Error reading saved storage:",
         e
       );
     }
@@ -525,6 +552,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track isSelectedUserAssigned = false;
   @track isUserPermissionLoading = false;
   @track selectedPermissionSetName = "Agent_Assist_User";
+  @track userSearchTerm = "";
 
   get permissionSetOptions() {
     return [
@@ -535,25 +563,70 @@ export default class AgentAssistSetupWizard extends LightningElement {
       {
         label: "Google Cloud Agent Assist Administrator (Agent_Assist_Admin)",
         value: "Agent_Assist_Admin"
+      },
+      {
+        label: "Google Cloud Agent Assist Messaging User (Agent_Assist_Messaging_User)",
+        value: "Agent_Assist_Messaging_User"
       }
     ];
   }
 
   get selectedPermissionSetLabel() {
-    return this.selectedPermissionSetName === "Agent_Assist_Admin"
-      ? "Google Cloud Agent Assist Administrator"
-      : "Google Cloud Agent Assist User";
+    if (this.selectedPermissionSetName === "Agent_Assist_Admin") {
+      return "Google Cloud Agent Assist Administrator";
+    }
+    if (this.selectedPermissionSetName === "Agent_Assist_Messaging_User") {
+      return "Google Cloud Agent Assist Messaging User";
+    }
+    return "Google Cloud Agent Assist User";
+  }
+
+  get selectedPermissionSetDescription() {
+    if (this.selectedPermissionSetName === "Agent_Assist_Admin") {
+      return "Grants full administrative privileges to configure LWC profiles, manage settings, and access the Integration Setup Wizard in Salesforce.";
+    }
+    if (this.selectedPermissionSetName === "Agent_Assist_Messaging_User") {
+      return "Grants messaging users access to Enhanced Chat and messaging channel events for Agent Assist integration.";
+    }
+    return "Grants contact center agents access to Google Cloud Agent Assist and Companion Agent LWC components in Salesforce.";
   }
 
   get assignedUsersEmptyMessage() {
     return `No active users are currently assigned the ${this.selectedPermissionSetLabel} permission set.`;
   }
 
-  get agentUserOptions() {
-    return this.agentUsersList.map((u) => ({
-      label: u.label,
-      value: u.value
+  handleUserSearchChange(event) {
+    this.userSearchTerm = event.target.value;
+  }
+
+  get filteredUsersList() {
+    const term = (this.userSearchTerm || "").toLowerCase().trim();
+    const users = term
+      ? this.agentUsersList.filter((u) => u.label.toLowerCase().includes(term))
+      : [...this.agentUsersList];
+
+    // Sort assigned users to the top, then alphabetically by name
+    users.sort((a, b) => {
+      if (a.isAssigned !== b.isAssigned) {
+        return a.isAssigned ? -1 : 1;
+      }
+      return a.label.localeCompare(b.label);
+    });
+
+    return users.map((u) => ({
+      ...u,
+      badgeClass: u.isAssigned
+        ? "slds-badge slds-theme_success"
+        : "slds-badge slds-badge_inverse",
+      statusText: u.isAssigned ? "Assigned" : "Not Assigned",
+      buttonLabel: u.isAssigned ? "Remove" : "Assign",
+      buttonVariant: u.isAssigned ? "destructive-text" : "brand",
+      buttonIcon: u.isAssigned ? "utility:close" : "utility:add"
     }));
+  }
+
+  get hasFilteredUsers() {
+    return this.filteredUsersList.length > 0;
   }
 
   get selectedUserBadgeClass() {
@@ -574,6 +647,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
   get userAssignButtonVariant() {
     return this.isSelectedUserAssigned ? "destructive" : "brand";
+  }
+
+  get isIntegratedTranscriptActive() {
+    return !this.currentProfile?.disableIntegratedTranscript;
   }
 
   get userAssignButtonIcon() {
@@ -649,6 +726,44 @@ export default class AgentAssistSetupWizard extends LightningElement {
           message: `Permission set ${this.selectedPermissionSetLabel} (${
             shouldAssign ? "assigned to" : "removed from"
           }) user.`,
+          variant: "success"
+        })
+      );
+      await this.loadAgentUsers();
+      if (this.wiredDiagnosticsResult) {
+        refreshApex(this.wiredDiagnosticsResult);
+      }
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error Managing Permission Set",
+          message: error?.body?.message || error?.message || "Operation failed",
+          variant: "error"
+        })
+      );
+    } finally {
+      this.isUserPermissionLoading = false;
+    }
+  }
+
+  async handleToggleUserInline(event) {
+    const userId = event.currentTarget?.dataset?.userId;
+    const isAssigned = event.currentTarget?.dataset?.assigned === "true";
+    if (!userId) return;
+
+    this.isUserPermissionLoading = true;
+    try {
+      await toggleUserPermissionSetAssignment({
+        userId: userId,
+        assign: !isAssigned,
+        permissionSetName: this.selectedPermissionSetName
+      });
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Success",
+          message: `Permission set ${this.selectedPermissionSetLabel} ${
+            !isAssigned ? "assigned to" : "removed from"
+          } user.`,
           variant: "success"
         })
       );
@@ -1155,11 +1270,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   get simulatorProfile() {
-    return (
+    const prof =
       this.profiles.find(
         (p) => p.developerName === this.simulatorProfileDevName
-      ) || this.profiles[0]
-    );
+      ) || this.profiles[0];
+    return prof ? { ...prof, isFound: true } : null;
   }
 
   @track isSimulatorMounted = true;
@@ -1502,6 +1617,24 @@ export default class AgentAssistSetupWizard extends LightningElement {
     } else {
       console.log("[SetupWizard] Initial mount activation for:", selectedTab);
     }
+
+    if (selectedTab === "simulator") {
+      if (this.wiredConfigsResult) {
+        refreshApex(this.wiredConfigsResult)
+          .then(() => {
+            this.handleReloadSimulator(false);
+          })
+          .catch((err) => {
+            console.error(
+              "[SetupWizard] Error refreshing config profiles for simulator:",
+              err
+            );
+            this.handleReloadSimulator(false);
+          });
+      } else {
+        this.handleReloadSimulator(false);
+      }
+    }
   }
 
   handleTabSelect(event) {
@@ -1517,7 +1650,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   handleSelectTypeFromModal(event) {
-    const selectedType = event.currentTarget.dataset.type;
+    if (event) {
+      event.stopPropagation();
+    }
+    const selectedType = event.currentTarget?.dataset?.type;
+    if (!selectedType) return;
     this.isTypeModalOpen = false;
     this.createNewProfile(selectedType);
   }
@@ -1546,23 +1683,36 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.currentProfile = updated;
   }
 
-  handleReloadSimulator() {
+  handleReloadSimulator(showToast = true) {
+    if (this.wiredConfigsResult) {
+      refreshApex(this.wiredConfigsResult);
+    }
+    this.simulatorRefreshKey = Date.now();
+    const simComp = this.template.querySelector(
+      "c-agent-assist-container, c-agent-assist-companion-agent"
+    );
+    if (simComp && typeof simComp.refreshConfig === "function") {
+      simComp.refreshConfig();
+    }
     this.isSimulatorMounted = false;
     // eslint-disable-next-line @lwc/lwc/no-async-operation
     setTimeout(() => {
       this.isSimulatorMounted = true;
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Simulator Reloaded",
-          message: `Re-mounted "${this.simulatorProfileDevName}" component in simulator.`,
-          variant: "success"
-        })
-      );
+      if (showToast === true) {
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: "Simulator Reloaded",
+            message: `Re-mounted "${this.simulatorProfileDevName}" component in simulator.`,
+            variant: "success"
+          })
+        );
+      }
     }, 50);
   }
 
   handleSimulatorProfileChange(event) {
-    this.simulatorProfileDevName = event.detail.value;
+    const devName = event.detail.value;
+    this.selectProfileByDevName(devName);
     this.handleReloadSimulator();
   }
 
@@ -1699,6 +1849,24 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.selectedDevName = this.profiles[0].developerName;
       this.currentProfile = { ...this.profiles[0] };
     }
+    this.simulatorProfileDevName = this.selectedDevName;
+    if (this.selectedDevName) {
+      try {
+        localStorage.setItem(
+          "agent_assist_setup_selected_profile",
+          this.selectedDevName
+        );
+        sessionStorage.setItem(
+          "agent_assist_setup_selected_profile",
+          this.selectedDevName
+        );
+      } catch (e) {
+        console.error(
+          "[SetupWizard] Error storing selectedProfileDevName:",
+          e
+        );
+      }
+    }
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
     this.evaluateRegisterEndpointHealth();
   }
@@ -1715,9 +1883,14 @@ export default class AgentAssistSetupWizard extends LightningElement {
         ? event.target.checked
         : event.target.value;
     const updated = {
-      ...this.currentProfile,
-      [field]: value
+      ...this.currentProfile
     };
+
+    if (field === "integratedTranscriptActive") {
+      updated.disableIntegratedTranscript = !value;
+    } else {
+      updated[field] = value;
+    }
 
     if (field === "channel") {
       const validPlatforms =
@@ -1862,6 +2035,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
       if (this.wiredConfigsResult) {
         await refreshApex(this.wiredConfigsResult);
       }
+      this.handleReloadSimulator(false);
     } catch (error) {
       this.dispatchEvent(
         new ShowToastEvent({
@@ -1901,6 +2075,99 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.dispatchEvent(
         new ShowToastEvent({
           title: "Error Deleting Profile",
+          message: error.body ? error.body.message : error.message,
+          variant: "error"
+        })
+      );
+    }
+  }
+
+  async handleResetSingleProfile() {
+    if (!this.isDefaultProfile) return;
+    try {
+      await resetSingleDefaultConfig({
+        developerName: this.currentProfile.developerName
+      });
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Profile Reset",
+          message: `Reset default profile "${this.currentProfile.name}" (${this.currentProfile.developerName}) to factory default settings.`,
+          variant: "success"
+        })
+      );
+      if (this.wiredConfigsResult) {
+        await refreshApex(this.wiredConfigsResult);
+      }
+      this.selectProfileByDevName(this.currentProfile.developerName);
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error Resetting Profile",
+          message: error.body ? error.body.message : error.message,
+          variant: "error"
+        })
+      );
+    }
+  }
+
+  async handleSaveAsCopy() {
+    try {
+      const randomSuffix = Math.floor(Math.random() * 1000);
+      const baseDevName = (this.currentProfile.developerName || "Custom_Profile")
+        .replace(/^Copy_/, "")
+        .substring(0, 30);
+      const copyDevName = `Copy_${baseDevName}_${randomSuffix}`.replace(/[^a-zA-Z0-9_]/g, "_");
+      const baseName = (this.currentProfile.name || "Configuration Profile").replace(/^Copy of\s*/, "");
+      const copyName = `Copy of ${baseName}`.substring(0, 80);
+
+      const payload = {
+        sobjectType: "Agent_Assist_Config__c",
+        Name: copyName,
+        Developer_Name__c: copyDevName,
+        Profile_Type__c: this.currentProfile.profileType || "Container",
+        Title__c: this.currentProfile.title,
+        Endpoint_URL__c: this.currentProfile.endpointUrl,
+        Conversation_Profile__c: this.currentProfile.conversationProfile,
+        Channel__c: this.currentProfile.channel,
+        Platform__c: this.currentProfile.platform,
+        Consumer_Key__c: this.currentProfile.consumerKey,
+        Consumer_Secret__c: this.currentProfile.consumerSecret,
+        Client_Credentials_User__c: this.currentProfile.clientCredentialsUser,
+        Container_Height__c: this.currentProfile.containerHeight,
+        Debug_Mode__c: this.currentProfile.debugMode,
+        Show_Dark_Mode_Toggle__c: this.currentProfile.showDarkModeToggle,
+        Show_Header__c: this.currentProfile.showHeader,
+        Show_Correctness_Feedback__c: this.currentProfile.showCorrectnessFeedback,
+        Disable_Integrated_Transcript__c:
+          this.currentProfile.disableIntegratedTranscript !== undefined
+            ? this.currentProfile.disableIntegratedTranscript
+            : false,
+        Disabled_Features__c: this.currentProfile.disabledFeatures || "",
+        Model_Name__c: this.currentProfile.modelName,
+        Welcome_Message__c: this.currentProfile.welcomeMessage,
+        Enable_Autonomous_Actions__c: this.currentProfile.enableAutonomousActions,
+        Is_Active__c: true
+      };
+
+      const saved = await saveConfig({ configRecord: payload });
+
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Profile Copied",
+          message: `Created new profile copy "${copyName}" (${copyDevName}).`,
+          variant: "success"
+        })
+      );
+
+      if (this.wiredConfigsResult) {
+        await refreshApex(this.wiredConfigsResult);
+      }
+
+      this.selectProfileByDevName(saved.Developer_Name__c || copyDevName);
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error Copying Profile",
           message: error.body ? error.body.message : error.message,
           variant: "error"
         })

@@ -379,6 +379,62 @@ public without sharing class AgentAssistConfigController {
   }
 
   /**
+   * Resets default configuration records back to factory default settings.
+   */
+  @AuraEnabled
+  public static void resetDefaultConfigs() {
+    seedDefaultConfigs();
+  }
+
+  /**
+   * Resets a specific default configuration profile back to factory default settings.
+   */
+  @AuraEnabled
+  public static Agent_Assist_Config__c resetSingleDefaultConfig(String developerName) {
+    String devName = String.isNotBlank(developerName) ? developerName : 'Default';
+    Agent_Assist_Config__c defaultConfig;
+
+    if (devName == 'Default') {
+      defaultConfig = new Agent_Assist_Config__c(
+        Name = 'Default Profile',
+        Developer_Name__c = 'Default',
+        Profile_Type__c = 'Container',
+        Title__c = 'Google Cloud Agent Assist',
+        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
+        Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
+        Channel__c = 'chat',
+        Platform__c = 'base',
+        Container_Height__c = '530px',
+        Debug_Mode__c = true,
+        Show_Dark_Mode_Toggle__c = true,
+        Show_Header__c = false,
+        Show_Correctness_Feedback__c = false,
+        Disable_Integrated_Transcript__c = false,
+        Disabled_Features__c = '',
+        Is_Active__c = true
+      );
+    } else if (devName == 'Default_Companion') {
+      defaultConfig = new Agent_Assist_Config__c(
+        Name = 'Default Companion Agent',
+        Developer_Name__c = 'Default_Companion',
+        Profile_Type__c = 'Companion Agent',
+        Title__c = 'Google Cloud Companion Agent',
+        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
+        Model_Name__c = 'gemini-1.5-pro',
+        Welcome_Message__c = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?',
+        Enable_Autonomous_Actions__c = true,
+        Is_Active__c = true
+      );
+    }
+
+    if (defaultConfig != null) {
+      upsert defaultConfig Developer_Name__c;
+      return defaultConfig;
+    }
+    return null;
+  }
+
+  /**
    * Saves or updates a configuration profile from the Setup Wizard.
    */
   @AuraEnabled
@@ -430,7 +486,9 @@ public without sharing class AgentAssistConfigController {
         SELECT Id, Name, Username
         FROM User
         WHERE IsActive = TRUE
-          AND (Profile.UserLicense.Name = 'Salesforce' OR Profile.Name = 'System Administrator')
+          AND (Profile.UserLicense.Name = 'Salesforce'
+          OR Profile.UserLicense.Name = 'Salesforce Platform'
+          OR Profile.Name = 'System Administrator')
         ORDER BY Name ASC
         LIMIT 1000
       ]) {
@@ -491,6 +549,7 @@ public without sharing class AgentAssistConfigController {
         WHERE
           IsActive = TRUE
           AND (Profile.UserLicense.Name = 'Salesforce'
+          OR Profile.UserLicense.Name = 'Salesforce Platform'
           OR Profile.Name = 'System Administrator')
         ORDER BY Name ASC
         LIMIT 1000

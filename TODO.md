@@ -1,12 +1,17 @@
 ## Tasks
-
-- [ ] Promote the Users Permission Set assignment card out of the Profiles panel into its own dedicated top-level **"Users"** tab in the Setup Wizard, allowing admins to search users and manage `Agent_Assist_Admin`, `Agent_Assist_User`, and CX platform permission set assignments directly.
-- [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
+- [ ] Please update the benefit in the TODO.md related to managing permissions with recent changes like supporting assignment of all profiles for Agents, Admins, and CX platforms, searching, etc.
+- [ ] Health checks are broken, validating invalid urls and ignoring connection errors: 
+- [ ] Custom Toolkit Connected check is not working: https://screenshot-v2.corp.google.com/3XXnN55ebYtabRt
+- [ ] These logs should be conditioned on debug mode being true https://screenshot-v2.corp.google.com/5eetjp4fr1vr0
 
 ## Doing
 
 ## Done
 
+- [x] Maintain modular, feature-specific Permission Sets (`Agent_Assist_User`, `Agent_Assist_Admin`, `Agent_Assist_Messaging_User`) rather than a single monolithic permission set to prevent deployment errors on orgs without optional paid licenses (e.g. Service Cloud Voice or Enhanced Chat).
+- [x] Can we easily make the Select Salesforce User and other picklists searchable?
+- [x] Disambiguate LWC Configuration Profiles from Google Cloud Conversation Profiles across all Setup Wizard labels and docs.
+- [x] Promote the Users Permission Set assignment card out of the Profiles panel into its own dedicated top-level **"Users"** tab in the Setup Wizard, allowing admins to search users and manage `Agent_Assist_Admin`, `Agent_Assist_User`, and CX platform permission set assignments directly.
 - [x] In the diagnostic panel, add a check for the namedCredentials prefixed like ours are. It should say if any exist and how many there are.
 - [x] Add CX Platform Setup accordion logos. Use the SVGs in the static resource folder.
 - [x] Test standalone transcript using the .
@@ -87,6 +92,7 @@
 - **Detailed Diagnostics Page**: Detailed diagnostics page with troubleshooting steps for common issues. All the tools needed to integrate in one place. Deep links to fix issues in SF config. The app is aware of its deps, like the UI Modules static resources, connectivity, and auth, and can report on their status.
 - **Terminology Alignment ("Enhanced Chat")**: Updated messaging terminology from MIAW to "Enhanced Chat" across documentation and component UI, aligning with current Salesforce product standards to minimize admin and agent confusion.
 - **Brand Consistency & Component Discovery (`GCloud` Prefixing & SVG Icons)**: Prefixed all LWC master labels with `GCloud` (e.g. `GCloud Agent Assist Container`, `GCloud Agent Assist Companion Agent`, etc.) and integrated the official Google Cloud gradient SVG palette icon. This groups all Agent Assist LWCs together alphabetically in the Salesforce Lightning App Builder palette, making components immediately discoverable in orgs with high package density.
+- **Dedicated User & Permission Set Management**: Streamlined permission set management with a dedicated top-level "Users" tab featuring searchable user lists, status badges, and quick toggles for managing `Agent_Assist_Admin`, `Agent_Assist_User`, and CX platform integration permission sets across Salesforce users.
 - **Robust App Builder Design-Time Picklist Validation**: Implemented design-time validation overrides in `AgentAssistConfigPicklist` and `AgentAssistCompanionPicklist` to guarantee built-in fallback availability (`Default` and `Default_Companion`), eliminating intermittent FlexiPage save errors for Salesforce admins.
 
 ### UI, UX & Responsive Layout

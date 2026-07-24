@@ -16,6 +16,8 @@
 
 import { LightningElement, api, track } from "lwc";
 
+/* global dispatchAgentAssistEvent, addAgentAssistEventListener */
+
 /**
  * AgentAssistCustomStarterKit
  *
@@ -36,6 +38,10 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   @api configName = "Default";
   @api debugMode = false;
 
+  get isDebugEnabled() {
+    return this.debugMode === true || this.debugMode === "true";
+  }
+
   @track isConnected = false;
   @track statusMessage = "Disconnected - Agent Assist Container component missing from page.";
   @track userMessageInput = "";
@@ -43,6 +49,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   @track transcriptLogs = [];
 
   _connectionTimer;
+  _eventConnectionReceived = false;
 
   get isNotConnected() {
     return !this.isConnected;
@@ -54,6 +61,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     this.registerAgentAssistEventListeners();
 
     // Periodically re-check connection status in case container loads asynchronously
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
     this._connectionTimer = setInterval(() => {
       this.checkConnectionStatus();
     }, 2000);
@@ -66,23 +74,52 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   }
 
   /**
-   * Checks if the Agent Assist Connector (container or companion component) is present on the page.
+   * Pings the Agent Assist Connector by requesting conversation profile.
+   * If an active Agent Assist Connector is present, it will respond with conversation-profile-received.
+   */
+  pingConnector() {
+    const opts = { namespace: this.recordId };
+    if (typeof dispatchAgentAssistEvent === "function") {
+      dispatchAgentAssistEvent("conversation-profile-requested", { detail: {} }, opts);
+    } else if (typeof window !== "undefined" && typeof window.dispatchAgentAssistEvent === "function") {
+      window.dispatchAgentAssistEvent("conversation-profile-requested", { detail: {} }, opts);
+    } else if (
+      typeof window !== "undefined" &&
+      window._uiModuleEventTarget &&
+      typeof window._uiModuleEventTarget.dispatchEvent === "function"
+    ) {
+      const event = new CustomEvent("conversation-profile-requested", {
+        detail: { namespace: this.recordId },
+        bubbles: true,
+        composed: true
+      });
+      window._uiModuleEventTarget.dispatchEvent(event);
+    }
+  }
+
+  /**
+   * Checks if the Agent Assist Connector (container, companion, or transcript component) is present on the page.
    */
   checkConnectionStatus() {
-    const hasGlobalFunctions =
-      typeof addAgentAssistEventListener === "function" ||
-      typeof window.addAgentAssistEventListener === "function" ||
-      typeof dispatchAgentAssistEvent === "function" ||
-      typeof window.dispatchAgentAssistEvent === "function" ||
-      !!window._uiModuleEventTarget;
-
+    /* eslint-disable @lwc/lwc/no-document-query */
     const hasContainerElement = !!(
       document.querySelector("c-agent-assist-container") ||
       document.querySelector("c-agent-assist-companion-agent") ||
-      document.querySelector(".agent-assist-component")
+      document.querySelector("c-agent-assist-transcript") ||
+      (document.getElementsByTagName &&
+        ((document.getElementsByTagName("c-agent-assist-container") &&
+          document.getElementsByTagName("c-agent-assist-container").length > 0) ||
+         (document.getElementsByTagName("c-agent-assist-companion-agent") &&
+          document.getElementsByTagName("c-agent-assist-companion-agent").length > 0) ||
+         (document.getElementsByTagName("c-agent-assist-transcript") &&
+          document.getElementsByTagName("c-agent-assist-transcript").length > 0)))
     );
+    /* eslint-enable @lwc/lwc/no-document-query */
 
-    if (hasGlobalFunctions && hasContainerElement) {
+    // Ping the Agent Assist Connector via conversation-profile-requested
+    this.pingConnector();
+
+    if (hasContainerElement || this._eventConnectionReceived) {
       if (!this.isConnected) {
         this.isConnected = true;
         this.statusMessage = "Connected to Agent Assist Connector.";
@@ -103,51 +140,55 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     const namespace = this.recordId;
 
     const markConnected = () => {
-      this.isConnected = true;
-      this.statusMessage = "Connected to Agent Assist Connector.";
+      this._eventConnectionReceived = true;
+      if (!this.isConnected) {
+        this.isConnected = true;
+        this.statusMessage = "Connected to Agent Assist Connector.";
+      }
     };
 
-    if (typeof addAgentAssistEventListener === "function") {
-      // Connector Lifecycle Events
-      addAgentAssistEventListener("api-connector-initialized", (e) => {
-        markConnected();
-        this.log("📩 EVENT HEARD: 'api-connector-initialized'", e);
-      }, { namespace });
+    const events = [
+      "api-connector-initialized",
+      "event-based-connector-initialized",
+      "event-based-connection-established",
+      "live-person-connector-initialized",
+      "genesys-cloud-connector-initialized",
+      "conversation-initialized",
+      "suggestion-received",
+      "transcript-updated"
+    ];
 
-      addAgentAssistEventListener("event-based-connector-initialized", (e) => {
-        markConnected();
-        this.log("📩 EVENT HEARD: 'event-based-connector-initialized'", e);
-      }, { namespace });
+    const addListenerFn =
+      typeof addAgentAssistEventListener === "function"
+        ? addAgentAssistEventListener
+        : (typeof window !== "undefined" && typeof window.addAgentAssistEventListener === "function")
+          ? window.addAgentAssistEventListener
+          : null;
 
-      addAgentAssistEventListener("event-based-connection-established", (e) => {
-        markConnected();
-        this.log("📩 EVENT HEARD: 'event-based-connection-established'", e);
-      }, { namespace });
+    if (addListenerFn) {
+      events.forEach((evtName) => {
+        addListenerFn(
+          evtName,
+          (e) => {
+            markConnected();
+            this.log(`📩 EVENT HEARD: '${evtName}'`, e);
+          },
+          { namespace }
+        );
+      });
+    }
 
-      addAgentAssistEventListener("conversation-initialized", (e) => {
-        markConnected();
-        this.log("📩 EVENT HEARD: 'conversation-initialized'", e);
-      }, { namespace });
-
-      // 1. Suggestion Received
-      addAgentAssistEventListener(
-        "suggestion-received",
-        (event) => {
+    if (
+      typeof window !== "undefined" &&
+      window._uiModuleEventTarget &&
+      typeof window._uiModuleEventTarget.addEventListener === "function"
+    ) {
+      events.forEach((evtName) => {
+        window._uiModuleEventTarget.addEventListener(evtName, (e) => {
           markConnected();
-          this.log("📩 RECEIVED EVENT: 'suggestion-received' Payload:", event);
-        },
-        { namespace }
-      );
-
-      // 2. Transcript Updated
-      addAgentAssistEventListener(
-        "transcript-updated",
-        (event) => {
-          markConnected();
-          this.log("📩 RECEIVED EVENT: 'transcript-updated' Payload:", event);
-        },
-        { namespace }
-      );
+          this.log(`📩 EVENT HEARD (EventTarget): '${evtName}'`, e);
+        });
+      });
     }
   }
 
@@ -159,11 +200,17 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     const fullPayload = { detail: detailData };
     const opts = { namespace: this.recordId };
 
-    console.log(
-      `[AgentAssistCustomStarterKit] 🚀 DISPATCHING EVENT: '${eventName}'`,
-      "\nPayload Object:", fullPayload,
-      "\nOptions:", opts
-    );
+    if (this.isDebugEnabled) {
+      console.log(
+        `%c[AgentAssistCustomStarterKit]%c 🚀 DISPATCHING EVENT: '${eventName}'`,
+        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+        "",
+        "\nPayload Object:",
+        fullPayload,
+        "\nOptions:",
+        opts
+      );
+    }
 
     if (typeof dispatchAgentAssistEvent === "function") {
       dispatchAgentAssistEvent(eventName, fullPayload, opts);
@@ -180,9 +227,13 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       });
       window._uiModuleEventTarget.dispatchEvent(event);
     } else {
-      console.warn(
-        `[AgentAssistCustomStarterKit] ⚠️ dispatchAgentAssistEvent function unavailable on page when trying to send '${eventName}'.`
-      );
+      if (this.isDebugEnabled) {
+        console.warn(
+          `%c[AgentAssistCustomStarterKit]%c ⚠️ dispatchAgentAssistEvent function unavailable on page when trying to send '${eventName}'.`,
+          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+          ""
+        );
+      }
     }
   }
 
@@ -266,9 +317,33 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     }
   }
 
+  debugLog(message) {
+    if (this.isDebugEnabled) {
+      console.log(
+        `%c[AgentAssistCustomStarterKit]%c ${message}`,
+        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+        ""
+      );
+    }
+  }
+
   log(...args) {
-    if (this.debugMode) {
-      console.log("[AgentAssistCustomStarterKit]", ...args);
+    if (this.isDebugEnabled) {
+      if (typeof args[0] === "string") {
+        console.log(
+          `%c[AgentAssistCustomStarterKit]%c ${args[0]}`,
+          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+          "",
+          ...args.slice(1)
+        );
+      } else {
+        console.log(
+          `%c[AgentAssistCustomStarterKit]%c`,
+          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+          "",
+          ...args
+        );
+      }
     }
   }
 }
