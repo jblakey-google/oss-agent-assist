@@ -1013,11 +1013,22 @@
                   name="messaging"
                   label="Salesforce chat integration"
                 >
-                  <div class="slds-p-around_small slds-theme_shade">
-                    <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Connect Salesforce Enhanced Chat or Salesforce Chat
-                      sessions directly to Google Cloud Agent Assist.
-                    </p>
+                  <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                      <div class="platform-logo-badge slds-m-right_small">
+                        <img
+                          src={salesforceLogoUrl}
+                          alt="Salesforce logo"
+                          class="platform-logo-img"
+                        />
+                      </div>
+                      <div>
+                        <h3 class="slds-text-heading_small platform-header-title">Salesforce Chat &amp; Messaging Integration</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Connect Salesforce Enhanced Chat or Salesforce Chat sessions directly to Google Cloud Agent Assist.
+                        </p>
+                      </div>
+                    </div>
                     <ul
                       class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
                     >
@@ -1050,7 +1061,7 @@
                         size="xx-small"
                         class="slds-m-right_xx-small"
                       ></lightning-icon>
-                      View Salesforce Chat & Messaging Setup Guide
+                      View Salesforce Chat &amp; Messaging Setup Guide
                     </a>
                   </div>
                 </lightning-accordion-section>
@@ -1059,12 +1070,22 @@
                   name="five9"
                   label="Salesforce voice integration with Five9"
                 >
-                  <div class="slds-p-around_small slds-theme_shade">
-                    <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Integrate Five9 Bring Your Own Telephony (BYOT) and
-                      Service Cloud Voice real-time audio streams with Agent
-                      Assist.
-                    </p>
+                  <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                      <div class="platform-logo-badge slds-m-right_small">
+                        <img
+                          src={five9LogoUrl}
+                          alt="Five9 logo"
+                          class="platform-logo-img"
+                        />
+                      </div>
+                      <div>
+                        <h3 class="slds-text-heading_small platform-header-title">Five9 Service Cloud Voice Integration</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Integrate Five9 Bring Your Own Telephony (BYOT) and Service Cloud Voice real-time audio streams with Agent Assist.
+                        </p>
+                      </div>
+                    </div>
                     <div class="slds-m-bottom_small">
                       <template lwc:if={isFive9PackageInstalled}>
                         <span class="pkg-status-pill pkg-status-pill_pass">
@@ -1136,11 +1157,22 @@
                   name="nice"
                   label="Salesforce voice integration with NICE CXone"
                 >
-                  <div class="slds-p-around_small slds-theme_shade">
-                    <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Integrate NICE CXone Service Cloud Voice (SCV) audio
-                      streams directly with Google Cloud Agent Assist.
-                    </p>
+                  <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                      <div class="platform-logo-badge slds-m-right_small">
+                        <img
+                          src={niceLogoUrl}
+                          alt="NICE CXone logo"
+                          class="platform-logo-img"
+                        />
+                      </div>
+                      <div>
+                        <h3 class="slds-text-heading_small platform-header-title">NICE CXone Service Cloud Voice Integration</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Integrate NICE CXone Service Cloud Voice (SCV) audio streams directly with Google Cloud Agent Assist.
+                        </p>
+                      </div>
+                    </div>
                     <div class="slds-m-bottom_small">
                       <template lwc:if={isNicePackageInstalled}>
                         <span class="pkg-status-pill pkg-status-pill_pass">
@@ -1212,11 +1244,22 @@
                   name="genesys"
                   label="Salesforce voice integration with Genesys Cloud CX"
                 >
-                  <div class="slds-p-around_small slds-theme_shade">
-                    <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Integrate with Genesys Cloud via AudioHook WebSocket
-                      streams and custom Client Application widgets.
-                    </p>
+                  <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                      <div class="platform-logo-badge slds-m-right_small">
+                        <img
+                          src={genesysLogoUrl}
+                          alt="Genesys Cloud CX logo"
+                          class="platform-logo-img"
+                        />
+                      </div>
+                      <div>
+                        <h3 class="slds-text-heading_small platform-header-title">Genesys Cloud CX Voice Integration</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Integrate with Genesys Cloud via AudioHook WebSocket streams and custom Client Application widgets.
+                        </p>
+                      </div>
+                    </div>
                     <div class="slds-m-bottom_small">
                       <template lwc:if={isGenesysPackageInstalled}>
                         <span class="pkg-status-pill pkg-status-pill_pass">
@@ -1283,11 +1326,22 @@
                   name="twilio"
                   label="Salesforce voice integration with Twilio Flex"
                 >
-                  <div class="slds-p-around_small slds-theme_shade">
-                    <p class="slds-text-body_small slds-m-bottom_x-small">
-                      Deploy the Agent Assist Flex Plugin to Twilio Flex UI and
-                      route media streams to the UI Connector backend.
-                    </p>
+                  <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                      <div class="platform-logo-badge slds-m-right_small">
+                        <img
+                          src={twilioLogoUrl}
+                          alt="Twilio Flex logo"
+                          class="platform-logo-img"
+                        />
+                      </div>
+                      <div>
+                        <h3 class="slds-text-heading_small platform-header-title">Twilio Flex Integration</h3>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                          Deploy the Agent Assist Flex Plugin to Twilio Flex UI and route media streams to the UI Connector backend.
+                        </p>
+                      </div>
+                    </div>
                     <div class="slds-m-bottom_small">
                       <template lwc:if={isTwilioPackageInstalled}>
                         <span class="pkg-status-pill pkg-status-pill_pass">

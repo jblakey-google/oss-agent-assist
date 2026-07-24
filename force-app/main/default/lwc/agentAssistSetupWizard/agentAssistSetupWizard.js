@@ -28,6 +28,7 @@ import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigControl
 import getUsersWithPermissionSetStatus from "@salesforce/apex/AgentAssistConfigController.getUsersWithPermissionSetStatus";
 import toggleUserPermissionSetAssignment from "@salesforce/apex/AgentAssistConfigController.toggleUserPermissionSetAssignment";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
+import platformLogos from "@salesforce/resourceUrl/platform_logos";
 
 const DEFAULT_DIAGNOSTIC_SECTIONS = [
   {
@@ -329,6 +330,26 @@ const INITIAL_PROFILES = [
 
 export default class AgentAssistSetupWizard extends LightningElement {
   appIcon = sfAgentAssistIcon;
+
+  get salesforceLogoUrl() {
+    return `${platformLogos}/salesforce_logo.svg`;
+  }
+
+  get five9LogoUrl() {
+    return `${platformLogos}/five9_logo.svg`;
+  }
+
+  get niceLogoUrl() {
+    return `${platformLogos}/cxone_logo.svg`;
+  }
+
+  get genesysLogoUrl() {
+    return `${platformLogos}/genesys_logo.svg`;
+  }
+
+  get twilioLogoUrl() {
+    return `${platformLogos}/twilio_logo.svg`;
+  }
   @track activeTab = "configurationProfiles";
   @track isTypeModalOpen = false;
   @track customerMessage = "";

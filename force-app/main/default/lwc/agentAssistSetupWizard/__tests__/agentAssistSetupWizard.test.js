@@ -393,4 +393,25 @@ describe("c-agent-assist-setup-wizard", () => {
     ]);
     expect(platformCombobox.value).toBe("base");
   });
+
+  it("renders CX Platform Setup accordion section logos with correct static resource SVG URLs", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const logoImgs = Array.from(
+      element.shadowRoot.querySelectorAll(".platform-logo-img")
+    );
+    expect(logoImgs.length).toBe(5);
+
+    const logoSrcs = logoImgs.map((img) => img.getAttribute("src"));
+    expect(logoSrcs).toContain("platform_logos/salesforce_logo.svg");
+    expect(logoSrcs).toContain("platform_logos/five9_logo.svg");
+    expect(logoSrcs).toContain("platform_logos/cxone_logo.svg");
+    expect(logoSrcs).toContain("platform_logos/genesys_logo.svg");
+    expect(logoSrcs).toContain("platform_logos/twilio_logo.svg");
+  });
 });

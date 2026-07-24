@@ -2,7 +2,6 @@
 
 - [ ] Test with various SF licenses, using the project-scratch-def.json.
 - [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
-- [ ] Add CX Platform Setup accordion logos. You can just embed them as svgs or base64-encoded images.
 
 - [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
 
@@ -10,6 +9,7 @@
 
 ## Done
 
+- [x] Add CX Platform Setup accordion logos. Use the SVGs in the static resource folder.
 - [x] Test standalone transcript using the .
 - [x] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
 - [x] Create a toggle that allows disabling the integrated chat transcript and suggests using the standalone LWC instead.
