@@ -1420,6 +1420,19 @@ public without sharing class AgentAssistConfigController {
     return wrapper;
   }
 
+  private static String getAgentAssistNamedCredentialName() {
+    try {
+      List<SObject> ncList = Database.query(
+        'SELECT DeveloperName FROM NamedCredential WHERE DeveloperName LIKE \'Agent\\_Assist%\' ORDER BY DeveloperName ASC LIMIT 1'
+      );
+      if (!ncList.isEmpty()) {
+        return (String) ncList[0].get('DeveloperName');
+      }
+    } catch (Exception ex) {
+    }
+    return 'Agent_Assist_UI_Connector';
+  }
+
   /**
    * Health checks a UI Connector Endpoint URL and returns the HTTP status and connectivity diagnosis.
    */
@@ -1479,8 +1492,9 @@ public without sharing class AgentAssistConfigController {
       } catch (System.CalloutException calloutEx) {
         String msg = calloutEx.getMessage();
         if (msg != null && msg.contains('Unauthorized endpoint')) {
+          String ncName = getAgentAssistNamedCredentialName();
           HttpRequest ncReq = new HttpRequest();
-          ncReq.setEndpoint('callout:Agent_Assist_UI_Connector');
+          ncReq.setEndpoint('callout:' + ncName);
           ncReq.setMethod('GET');
           ncReq.setTimeout(5000);
           res = http.send(ncReq);
@@ -1660,8 +1674,9 @@ public without sharing class AgentAssistConfigController {
       } catch (System.CalloutException calloutEx) {
         String msg = calloutEx.getMessage();
         if (msg != null && msg.contains('Unauthorized endpoint')) {
+          String ncName = getAgentAssistNamedCredentialName();
           HttpRequest ncRegReq = new HttpRequest();
-          ncRegReq.setEndpoint('callout:Agent_Assist_UI_Connector/register');
+          ncRegReq.setEndpoint('callout:' + ncName + '/register');
           ncRegReq.setMethod('POST');
           ncRegReq.setHeader('Content-Type', 'application/json');
           if (String.isNotBlank(accessToken)) {
