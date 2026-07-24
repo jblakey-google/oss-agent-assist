@@ -163,6 +163,22 @@
                     contact center agents who will be using the Agent Assist or
                     Companion Agent LWC components in Salesforce.
                   </p>
+                  <p class="slds-text-body_regular slds-m-bottom_small">
+                    Assign the&#32;<strong
+                      >Google Cloud Agent Assist Administrator</strong
+                    >&#32;(<code>Agent_Assist_Admin</code>) permission set to
+                    administrators who will configure profiles, manage settings,
+                    and access the Integration Setup Wizard in Salesforce.
+                  </p>
+                  <div class="slds-m-bottom_small">
+                    <lightning-combobox
+                      label="Permission Set to Manage"
+                      value={selectedPermissionSetName}
+                      options={permissionSetOptions}
+                      onchange={handlePermissionSetChange}
+                    >
+                    </lightning-combobox>
+                  </div>
                   <div
                     class="slds-grid slds-gutters slds-wrap slds-grid_vertical-align-end"
                   >
@@ -207,7 +223,7 @@
                         size="x-small"
                         class="slds-m-right_x-small"
                       ></lightning-icon>
-                      <span>Assigned Agent Users ({assignedUsersCount})</span>
+                      <span>Assigned Users ({assignedUsersCount})</span>
                     </div>
                     <template lwc:if={hasAssignedAgentUsers}>
                       <div class="assigned-users-container">
@@ -223,8 +239,7 @@
                     </template>
                     <template lwc:else>
                       <p class="slds-text-color_weak slds-text-body_small">
-                        No active users are currently assigned the Agent Assist
-                        User permission set.
+                        {assignedUsersEmptyMessage}
                       </p>
                     </template>
                   </div>

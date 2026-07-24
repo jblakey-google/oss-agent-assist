@@ -451,17 +451,26 @@ public without sharing class AgentAssistConfigController {
   }
 
   /**
-   * Retrieves active users along with their Agent_Assist_User permission set assignment status.
+   * Retrieves active users along with their permission set assignment status.
    * Only includes users with Salesforce User License or System Administrator Profile.
    */
-  @AuraEnabled
   public static List<Map<String, Object>> getUsersWithPermissionSetStatus() {
+    return getUsersWithPermissionSetStatus('Agent_Assist_User');
+  }
+
+  @AuraEnabled
+  public static List<Map<String, Object>> getUsersWithPermissionSetStatus(
+    String permissionSetName
+  ) {
+    if (String.isBlank(permissionSetName)) {
+      permissionSetName = 'Agent_Assist_User';
+    }
     List<Map<String, Object>> userList = new List<Map<String, Object>>();
     try {
       List<PermissionSet> permSets = [
         SELECT Id
         FROM PermissionSet
-        WHERE Name = 'Agent_Assist_User'
+        WHERE Name = :permissionSetName
         LIMIT 1
       ];
 
@@ -479,8 +488,10 @@ public without sharing class AgentAssistConfigController {
       for (User u : [
         SELECT Id, Name, Username
         FROM User
-        WHERE IsActive = TRUE
-          AND (Profile.UserLicense.Name = 'Salesforce' OR Profile.Name = 'System Administrator')
+        WHERE
+          IsActive = TRUE
+          AND (Profile.UserLicense.Name = 'Salesforce'
+          OR Profile.Name = 'System Administrator')
         ORDER BY Name ASC
         LIMIT 1000
       ]) {
@@ -494,29 +505,47 @@ public without sharing class AgentAssistConfigController {
         );
       }
     } catch (Exception ex) {
-      throw new AuraHandledException('Error fetching user status: ' + ex.getMessage());
+      throw new AuraHandledException(
+        'Error fetching user status: ' + ex.getMessage()
+      );
     }
     return userList;
   }
 
   /**
-   * Assigns or unassigns the Agent_Assist_User permission set for a given User ID.
+   * Assigns or unassigns a permission set for a given User ID.
    */
+  public static Map<String, Object> toggleUserPermissionSetAssignment(
+    Id userId,
+    Boolean assign
+  ) {
+    return toggleUserPermissionSetAssignment(userId, assign, 'Agent_Assist_User');
+  }
+
   @AuraEnabled
-  public static Map<String, Object> toggleUserPermissionSetAssignment(Id userId, Boolean assign) {
+  public static Map<String, Object> toggleUserPermissionSetAssignment(
+    Id userId,
+    Boolean assign,
+    String permissionSetName
+  ) {
     if (userId == null) {
       throw new AuraHandledException('User ID is required.');
+    }
+    if (String.isBlank(permissionSetName)) {
+      permissionSetName = 'Agent_Assist_User';
     }
 
     List<PermissionSet> permSets = [
       SELECT Id
       FROM PermissionSet
-      WHERE Name = 'Agent_Assist_User'
+      WHERE Name = :permissionSetName
       LIMIT 1
     ];
 
     if (permSets.isEmpty()) {
-      throw new AuraHandledException('Permission Set "Agent_Assist_User" is not deployed in this org.');
+      throw new AuraHandledException(
+        'Permission Set "' + permissionSetName + '" is not deployed in this org.'
+      );
     }
 
     Id permSetId = permSets[0].Id;
@@ -528,14 +557,21 @@ public without sharing class AgentAssistConfigController {
 
     try {
       if (assign && existing.isEmpty()) {
-        insert new PermissionSetAssignment(PermissionSetId = permSetId, AssigneeId = userId);
+        insert new PermissionSetAssignment(
+          PermissionSetId = permSetId,
+          AssigneeId = userId
+        );
       } else if (!assign && !existing.isEmpty()) {
         delete existing;
       }
     } catch (DmlException ex) {
-      throw new AuraHandledException('Unable to toggle permission set assignment: ' + ex.getDmlMessage(0));
+      throw new AuraHandledException(
+        'Unable to toggle permission set assignment: ' + ex.getDmlMessage(0)
+      );
     } catch (Exception ex) {
-      throw new AuraHandledException('Unable to toggle permission set assignment: ' + ex.getMessage());
+      throw new AuraHandledException(
+        'Unable to toggle permission set assignment: ' + ex.getMessage()
+      );
     }
 
     return new Map<String, Object>{

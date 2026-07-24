@@ -366,17 +366,36 @@ private class AgentAssistConfigControllerTest {
     List<Map<String, Object>> userList = AgentAssistConfigController.getUsersWithPermissionSetStatus();
     Assert.isNotNull(userList, 'User list with permission set status should not be null');
 
+    List<Map<String, Object>> adminUserList = AgentAssistConfigController.getUsersWithPermissionSetStatus('Agent_Assist_Admin');
+    Assert.isNotNull(adminUserList, 'User list with admin permission set status should not be null');
+
     Map<String, Object> assignRes = AgentAssistConfigController.toggleUserPermissionSetAssignment(
       UserInfo.getUserId(),
-      true
+      true,
+      'Agent_Assist_User'
     );
     Assert.isTrue((Boolean) assignRes.get('success'), 'Assign permission set should succeed');
 
     Map<String, Object> unassignRes = AgentAssistConfigController.toggleUserPermissionSetAssignment(
       UserInfo.getUserId(),
-      false
+      false,
+      'Agent_Assist_User'
     );
     Assert.isTrue((Boolean) unassignRes.get('success'), 'Unassign permission set should succeed');
+
+    Map<String, Object> assignAdminRes = AgentAssistConfigController.toggleUserPermissionSetAssignment(
+      UserInfo.getUserId(),
+      true,
+      'Agent_Assist_Admin'
+    );
+    Assert.isTrue((Boolean) assignAdminRes.get('success'), 'Assign admin permission set should succeed');
+
+    Map<String, Object> unassignAdminRes = AgentAssistConfigController.toggleUserPermissionSetAssignment(
+      UserInfo.getUserId(),
+      false,
+      'Agent_Assist_Admin'
+    );
+    Assert.isTrue((Boolean) unassignAdminRes.get('success'), 'Unassign admin permission set should succeed');
     Test.stopTest();
   }
 }

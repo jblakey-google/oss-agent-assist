@@ -472,4 +472,19 @@ describe("c-agent-assist-setup-wizard", () => {
       })
     );
   });
+
+  it("renders explainer text for both Agent and Admin permission sets in Users card", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const textContent = element.shadowRoot.textContent;
+    expect(textContent).toContain("Google Cloud Agent Assist User");
+    expect(textContent).toContain("Agent_Assist_User");
+    expect(textContent).toContain("Google Cloud Agent Assist Administrator");
+    expect(textContent).toContain("Agent_Assist_Admin");
+  });
 });

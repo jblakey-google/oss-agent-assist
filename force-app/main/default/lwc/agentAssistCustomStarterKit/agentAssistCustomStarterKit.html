@@ -1,9 +1,25 @@
 <template>
   <lightning-card
-    title="Google Cloud Agent Assist Custom Starter Kit"
+    title="Google Cloud Agent Assist Custom Integration Starter Kit"
     icon-name="utility:custom_apps"
   >
+    <div slot="actions">
+      <template lwc:if={isConnected}>
+        <span class="slds-badge slds-theme_success" title={statusMessage}>Connected</span>
+      </template>
+      <template lwc:else>
+        <span class="slds-badge slds-theme_error" title={statusMessage}>Disconnected</span>
+      </template>
+    </div>
     <div class="slds-p-around_medium">
+      <!-- Disconnected Warning Banner -->
+      <template lwc:if={isNotConnected}>
+        <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_medium slds-radius_medium" role="alert" style="background: #fffbe6; border: 1px solid #ffe58f; color: #8c6b00;">
+          <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" class="slds-m-right_x-small"></lightning-icon>
+          <span class="slds-text-body_small slds-text-title_bold">{statusMessage}</span>
+        </div>
+      </template>
+
       <!-- Integration Guidance -->
       <div
         class="slds-p-around_small slds-m-bottom_medium slds-radius_medium"
@@ -18,16 +34,10 @@
             ></lightning-icon>
           </div>
           <div class="slds-media__body">
-            <div class="slds-text-title_bold slds-m-bottom_xx-small" style="color: #1e3a8a;">
-              Custom Integration Starter Kit
-            </div>
             <p class="slds-text-body_small">
               This component demonstrates how you could develop a custom chat integration by dispatching Agent Assist events in your own LWC.
             </p>
             <ul class="slds-list_bullet slds-m-top_xx-small slds-text-body_small">
-              <li>
-                <strong>Event Flow:</strong> Subscribe to incoming message events from your third-party chat provider and dispatch corresponding <code>analyze-content-requested</code> events to the Agent Assist Connector whenever chat turns occur.
-              </li>
               <li>
                 <strong>Connector Setup:</strong> Place an <code>agentAssistContainer</code> or <code>agentAssistCompanionAgent</code> component on the same page to instantiate the <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist Connector</a>.
               </li>
@@ -35,21 +45,15 @@
                 <strong>Source Code Reference:</strong> Inspect <code>agentAssistCustomStarterKit.js</code> to see how custom chat turns dispatch <code>analyze-content-requested</code> events to the Connector.
               </li>
               <li>
-                <strong>Documentation:</strong> Read the official <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist UI Modules Overview</a> and <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Events Documentation</a>.
+                <strong>Event Flow:</strong> Subscribe to incoming message events from your third-party chat provider and dispatch corresponding <code>analyze-content-requested</code> events to the Agent Assist Connector whenever chat turns occur.
+              </li>
+              <li>
+                <strong>Console Event Logging:</strong> Open your browser's Developer Console (F12 / Cmd+Option+I) to inspect the complete, verbose event payload objects dispatched and received in real-time.
+              </li>
+              <li>
+                <strong>Documentation:</strong> Read the official <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Agent Assist UI Modules Overview</a> and <a href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline;">Events Documentation</a> for more details.
               </li>
             </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status Bar -->
-      <div class="slds-m-bottom_medium slds-p-around_small slds-theme_shade slds-border_around slds-radius_medium">
-        <div class="slds-grid slds-grid_vertical-align-center">
-          <div class="slds-m-right_small">
-            <span class="slds-badge slds-theme_success">Connected</span>
-          </div>
-          <div class="slds-text-body_small slds-text-color_weak">
-            {statusMessage}
           </div>
         </div>
       </div>
@@ -132,6 +136,10 @@
           <template lwc:else>
             <span class="slds-text-color_weak slds-text-body_small">No chat turns sent yet.</span>
           </template>
+        </div>
+        <div class="slds-m-top_x-small slds-text-body_small slds-text-color_weak slds-grid slds-grid_vertical-align-center">
+          <lightning-icon icon-name="utility:console" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+          <span><strong>Developer Tip:</strong> Open your browser Developer Console (F12 / Cmd+Option+I) to inspect full dispatched and received event payloads.</span>
         </div>
       </div>
     </div>

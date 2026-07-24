@@ -82,12 +82,20 @@ public with sharing class AgentAssistCompanionPicklist extends VisualEditor.Dyna
           )
         );
       }
+      if (!addedDevNames.contains('Default')) {
+        myValues.addRow(
+          new VisualEditor.DataRow('Default Profile (Default)', 'Default')
+        );
+      }
     } catch (Exception ex) {
       myValues.addRow(
         new VisualEditor.DataRow(
           'Default Companion Agent (Default_Companion)',
           'Default_Companion'
         )
+      );
+      myValues.addRow(
+        new VisualEditor.DataRow('Default Profile (Default)', 'Default')
       );
     }
 

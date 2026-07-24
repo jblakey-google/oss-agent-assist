@@ -524,6 +524,30 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track selectedAgentUserId = "";
   @track isSelectedUserAssigned = false;
   @track isUserPermissionLoading = false;
+  @track selectedPermissionSetName = "Agent_Assist_User";
+
+  get permissionSetOptions() {
+    return [
+      {
+        label: "Google Cloud Agent Assist User (Agent_Assist_User)",
+        value: "Agent_Assist_User"
+      },
+      {
+        label: "Google Cloud Agent Assist Administrator (Agent_Assist_Admin)",
+        value: "Agent_Assist_Admin"
+      }
+    ];
+  }
+
+  get selectedPermissionSetLabel() {
+    return this.selectedPermissionSetName === "Agent_Assist_Admin"
+      ? "Google Cloud Agent Assist Administrator"
+      : "Google Cloud Agent Assist User";
+  }
+
+  get assignedUsersEmptyMessage() {
+    return `No active users are currently assigned the ${this.selectedPermissionSetLabel} permission set.`;
+  }
 
   get agentUserOptions() {
     return this.agentUsersList.map((u) => ({
@@ -572,14 +596,24 @@ export default class AgentAssistSetupWizard extends LightningElement {
     return this.assignedAgentUsers.length;
   }
 
+  async handlePermissionSetChange(event) {
+    this.selectedPermissionSetName = event.detail.value;
+    await this.loadAgentUsers();
+  }
+
   async loadAgentUsers() {
     try {
-      const data = await getUsersWithPermissionSetStatus();
+      const data = await getUsersWithPermissionSetStatus({
+        permissionSetName: this.selectedPermissionSetName
+      });
       if (data && data.length > 0) {
         this.agentUsersList = data;
         if (!this.selectedAgentUserId) {
           this.selectedAgentUserId = data[0].value;
         }
+        this.updateSelectedUserStatus();
+      } else {
+        this.agentUsersList = [];
         this.updateSelectedUserStatus();
       }
     } catch {
@@ -606,12 +640,13 @@ export default class AgentAssistSetupWizard extends LightningElement {
     try {
       await toggleUserPermissionSetAssignment({
         userId: this.selectedAgentUserId,
-        assign: shouldAssign
+        assign: shouldAssign,
+        permissionSetName: this.selectedPermissionSetName
       });
       this.dispatchEvent(
         new ShowToastEvent({
           title: "Success",
-          message: `Permission set Google Cloud Agent Assist User (${
+          message: `Permission set ${this.selectedPermissionSetLabel} (${
             shouldAssign ? "assigned to" : "removed from"
           }) user.`,
           variant: "success"
@@ -644,12 +679,13 @@ export default class AgentAssistSetupWizard extends LightningElement {
     try {
       await toggleUserPermissionSetAssignment({
         userId: userId,
-        assign: false
+        assign: false,
+        permissionSetName: this.selectedPermissionSetName
       });
       this.dispatchEvent(
         new ShowToastEvent({
           title: "Success",
-          message: "Permission set Google Cloud Agent Assist User removed.",
+          message: `Permission set ${this.selectedPermissionSetLabel} removed.`,
           variant: "success"
         })
       );

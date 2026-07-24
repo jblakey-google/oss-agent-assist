@@ -36,14 +36,64 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   @api configName = "Default";
   @api debugMode = false;
 
-  @track statusMessage = "Connected to Agent Assist Connector.";
+  @track isConnected = false;
+  @track statusMessage = "Disconnected - Agent Assist Container component missing from page.";
   @track userMessageInput = "";
   @track agentMessageInput = "";
   @track transcriptLogs = [];
 
+  _connectionTimer;
+
+  get isNotConnected() {
+    return !this.isConnected;
+  }
+
   connectedCallback() {
-    this.log("AgentAssistCustomStarterKit connected to Agent Assist Connector.");
+    this.log("AgentAssistCustomStarterKit initialized.");
+    this.checkConnectionStatus();
     this.registerAgentAssistEventListeners();
+
+    // Periodically re-check connection status in case container loads asynchronously
+    this._connectionTimer = setInterval(() => {
+      this.checkConnectionStatus();
+    }, 2000);
+  }
+
+  disconnectedCallback() {
+    if (this._connectionTimer) {
+      clearInterval(this._connectionTimer);
+    }
+  }
+
+  /**
+   * Checks if the Agent Assist Connector (container or companion component) is present on the page.
+   */
+  checkConnectionStatus() {
+    const hasGlobalFunctions =
+      typeof addAgentAssistEventListener === "function" ||
+      typeof window.addAgentAssistEventListener === "function" ||
+      typeof dispatchAgentAssistEvent === "function" ||
+      typeof window.dispatchAgentAssistEvent === "function" ||
+      !!window._uiModuleEventTarget;
+
+    const hasContainerElement = !!(
+      document.querySelector("c-agent-assist-container") ||
+      document.querySelector("c-agent-assist-companion-agent") ||
+      document.querySelector(".agent-assist-component")
+    );
+
+    if (hasGlobalFunctions && hasContainerElement) {
+      if (!this.isConnected) {
+        this.isConnected = true;
+        this.statusMessage = "Connected to Agent Assist Connector.";
+      }
+    } else {
+      if (this.isConnected) {
+        this.isConnected = false;
+        this.statusMessage =
+          "Disconnected - Agent Assist Container component missing from page.";
+      }
+    }
   }
 
   /**
@@ -52,12 +102,39 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   registerAgentAssistEventListeners() {
     const namespace = this.recordId;
 
+    const markConnected = () => {
+      this.isConnected = true;
+      this.statusMessage = "Connected to Agent Assist Connector.";
+    };
+
     if (typeof addAgentAssistEventListener === "function") {
+      // Connector Lifecycle Events
+      addAgentAssistEventListener("api-connector-initialized", (e) => {
+        markConnected();
+        this.log("📩 EVENT HEARD: 'api-connector-initialized'", e);
+      }, { namespace });
+
+      addAgentAssistEventListener("event-based-connector-initialized", (e) => {
+        markConnected();
+        this.log("📩 EVENT HEARD: 'event-based-connector-initialized'", e);
+      }, { namespace });
+
+      addAgentAssistEventListener("event-based-connection-established", (e) => {
+        markConnected();
+        this.log("📩 EVENT HEARD: 'event-based-connection-established'", e);
+      }, { namespace });
+
+      addAgentAssistEventListener("conversation-initialized", (e) => {
+        markConnected();
+        this.log("📩 EVENT HEARD: 'conversation-initialized'", e);
+      }, { namespace });
+
       // 1. Suggestion Received
       addAgentAssistEventListener(
         "suggestion-received",
         (event) => {
-          this.log("Received 'suggestion-received' event:", event);
+          markConnected();
+          this.log("📩 RECEIVED EVENT: 'suggestion-received' Payload:", event);
         },
         { namespace }
       );
@@ -66,7 +143,8 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       addAgentAssistEventListener(
         "transcript-updated",
         (event) => {
-          this.log("Received 'transcript-updated' event:", event);
+          markConnected();
+          this.log("📩 RECEIVED EVENT: 'transcript-updated' Payload:", event);
         },
         { namespace }
       );
@@ -74,14 +152,18 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   }
 
   /**
-   * Dispatches an event to the active Agent Assist Connector event bus.
+   * Dispatches an event to the active Agent Assist Connector event bus with full verbose payload logging.
    */
   dispatchCustomEvent(eventName, payload = {}) {
     const detailData = payload.detail ? payload.detail : payload;
     const fullPayload = { detail: detailData };
     const opts = { namespace: this.recordId };
 
-    this.log(`Dispatching Agent Assist Event '${eventName}':`, fullPayload);
+    console.log(
+      `[AgentAssistCustomStarterKit] 🚀 DISPATCHING EVENT: '${eventName}'`,
+      "\nPayload Object:", fullPayload,
+      "\nOptions:", opts
+    );
 
     if (typeof dispatchAgentAssistEvent === "function") {
       dispatchAgentAssistEvent(eventName, fullPayload, opts);
@@ -98,7 +180,9 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       });
       window._uiModuleEventTarget.dispatchEvent(event);
     } else {
-      console.warn("dispatchAgentAssistEvent function unavailable on page.");
+      console.warn(
+        `[AgentAssistCustomStarterKit] ⚠️ dispatchAgentAssistEvent function unavailable on page when trying to send '${eventName}'.`
+      );
     }
   }
 
@@ -115,7 +199,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     ];
 
     const convId = `SF-${this.recordId || Date.now()}`;
-    this.dispatchCustomEvent("analyze-content-requested", {
+    const payload = {
       conversationId: convId,
       participantRole: "END_USER",
       request: {
@@ -124,7 +208,9 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
           languageCode: "en-US"
         }
       }
-    });
+    };
+
+    this.dispatchCustomEvent("analyze-content-requested", payload);
 
     this.userMessageInput = "";
   }
@@ -142,7 +228,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     ];
 
     const convId = `SF-${this.recordId || Date.now()}`;
-    this.dispatchCustomEvent("analyze-content-requested", {
+    const payload = {
       conversationId: convId,
       participantRole: "HUMAN_AGENT",
       request: {
@@ -151,7 +237,9 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
           languageCode: "en-US"
         }
       }
-    });
+    };
+
+    this.dispatchCustomEvent("analyze-content-requested", payload);
 
     this.agentMessageInput = "";
   }

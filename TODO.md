@@ -8,7 +8,6 @@
 ## Done
 
 - [x] In the diagnostic panel, add a check for the namedCredentials prefixed like ours are. It should say if any exist and how many there are.
-
 - [x] Add CX Platform Setup accordion logos. Use the SVGs in the static resource folder.
 - [x] Test standalone transcript using the .
 - [x] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces
@@ -87,6 +86,8 @@
 - **CX Platform Specific Setup Panel**: This points to the documentation, 3rd party links, setup instructions, and package installation status via Apex for each platform (Five9, Twilio Flex, NICE CXone, Genesys Cloud, and Base Connector).
 - **Detailed Diagnostics Page**: Detailed diagnostics page with troubleshooting steps for common issues. All the tools needed to integrate in one place. Deep links to fix issues in SF config. The app is aware of its deps, like the UI Modules static resources, connectivity, and auth, and can report on their status.
 - **Terminology Alignment ("Enhanced Chat")**: Updated messaging terminology from MIAW to "Enhanced Chat" across documentation and component UI, aligning with current Salesforce product standards to minimize admin and agent confusion.
+- **Brand Consistency & Component Discovery (`GCloud` Prefixing & SVG Icons)**: Prefixed all LWC master labels with `GCloud` (e.g. `GCloud Agent Assist Container`, `GCloud Agent Assist Companion Agent`, etc.) and integrated the official Google Cloud gradient SVG palette icon. This groups all Agent Assist LWCs together alphabetically in the Salesforce Lightning App Builder palette, making components immediately discoverable in orgs with high package density.
+- **Robust App Builder Design-Time Picklist Validation**: Implemented design-time validation overrides in `AgentAssistConfigPicklist` and `AgentAssistCompanionPicklist` to guarantee built-in fallback availability (`Default` and `Default_Companion`), eliminating intermittent FlexiPage save errors for Salesforce admins.
 
 ### UI, UX & Responsive Layout
 
@@ -98,6 +99,7 @@
 
 - **Simulator Auth Flexibility**: Simulator works with AUTH_OPTION "Skip", so customer can test their conversation profile with the Base API Connector in Salesforce, before they get auth set up (or implementing their own as may very well be the case). Improves user experience and reduces friction.
 - **Console Transcript Simulator Script**: Created a developer-friendly 10-turn conversation simulation script (`simulateAgentAssistTranscript.js`) executable directly from the browser Developer Console on any record page. This enables immediate testing of live transcript rendering, UI module events, and suggestion triggers without requiring active telephony hardware or live messaging sessions.
+- **Verbose Event Payload Logging & Custom Integration Starter Kit (`agentAssistCustomStarterKit`)**: Upgraded `agentAssistCustomStarterKit` with real-time connector presence detection (`Connected`/`Disconnected` state indicators) and verbose Developer Console event logging (`🚀 DISPATCHING EVENT`, `📩 RECEIVED EVENT`). Prints complete JSON payloads for `analyze-content-requested` and incoming suggestions, giving integrating engineers immediate visibility into event contracts and payload shapes without writing boilerplate code.
 
 ### Multi-Platform & Architecture Flexibility
 

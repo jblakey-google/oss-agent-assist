@@ -53,9 +53,17 @@ public with sharing class AgentAssistConfigPicklist extends VisualEditor.Dynamic
           new VisualEditor.DataRow('Default Profile (Default)', 'Default')
         );
       }
+      if (!addedDevNames.contains('Default_Companion')) {
+        myValues.addRow(
+          new VisualEditor.DataRow('Default Companion Agent (Default_Companion)', 'Default_Companion')
+        );
+      }
     } catch (Exception ex) {
       myValues.addRow(
         new VisualEditor.DataRow('Default Profile (Default)', 'Default')
+      );
+      myValues.addRow(
+        new VisualEditor.DataRow('Default Companion Agent (Default_Companion)', 'Default_Companion')
       );
     }
 

@@ -18,7 +18,7 @@
 
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Agent Assist Companion Agent</masterLabel>
+    <masterLabel>GCloud Agent Assist Companion Agent</masterLabel>
     <description
   >Interactive AI Companion Agent for Record Pages, Utility Bar, and App Pages</description>
     <targets>
