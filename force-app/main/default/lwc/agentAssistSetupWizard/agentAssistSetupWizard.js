@@ -460,6 +460,25 @@ export default class AgentAssistSetupWizard extends LightningElement {
   hasInitializedTab = false;
   isTabsetInitialized = false;
 
+  get debugMode() {
+    return true;
+  }
+
+  debugLog(message, ...extra) {
+    if (this.debugMode) {
+      if (typeof message === "string" && message.startsWith("%c")) {
+        console.log(message, ...extra);
+      } else {
+        console.log(
+          `%c[AgentAssistSetupWizard]%c ${message}`,
+          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+          "",
+          ...extra
+        );
+      }
+    }
+  }
+
   renderedCallback() {
     if (!this.hasInitializedTab) {
       this.hasInitializedTab = true;
@@ -467,8 +486,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
         const savedTab =
           localStorage.getItem("agent_assist_setup_active_tab") ||
           sessionStorage.getItem("agent_assist_setup_active_tab");
-        console.log(
-          "[SetupWizard] renderedCallback - Restoring active tab from storage:",
+        this.debugLog(
+          "renderedCallback - Restoring active tab from storage:",
           savedTab
         );
         if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
@@ -495,8 +514,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
       // eslint-disable-next-line @lwc/lwc/no-async-operation
       setTimeout(() => {
         this.isTabsetInitialized = true;
-        console.log(
-          "[SetupWizard] Tabset marked initialized for user interactions. Current activeTab:",
+        this.debugLog(
+          "Tabset marked initialized for user interactions. Current activeTab:",
           this.activeTab
         );
       }, 500);
@@ -508,8 +527,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
       const savedTab =
         localStorage.getItem("agent_assist_setup_active_tab") ||
         sessionStorage.getItem("agent_assist_setup_active_tab");
-      console.log(
-        "[SetupWizard] connectedCallback - Read active tab from storage:",
+      this.debugLog(
+        "connectedCallback - Read active tab from storage:",
         savedTab
       );
       if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
@@ -868,21 +887,23 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   processDiagnosticsData(data, isManualRun = false, queryError = null) {
-    console.log(
-      "%c[AgentAssist Diagnostics] ========================================================",
-      "color: #0176d3; font-weight: bold; font-size: 14px;"
-    );
-    console.log(
-      `%c[AgentAssist Diagnostics] 🚀 ${isManualRun ? "Manual Refresh" : "Live Evaluation"} - Running Diagnostic Instrument Suite...`,
-      "color: #0176d3; font-weight: bold; font-size: 13px;"
-    );
-    console.log(
-      "%c[AgentAssist Diagnostics] ⏱️ Timestamp: " +
-        new Date().toLocaleString(),
-      "color: #54698d; font-size: 11px;"
-    );
+    if (this.debugMode) {
+      console.log(
+        "%c[AgentAssist Diagnostics] ========================================================",
+        "color: #0176d3; font-weight: bold; font-size: 14px;"
+      );
+      console.log(
+        `%c[AgentAssist Diagnostics] 🚀 ${isManualRun ? "Manual Refresh" : "Live Evaluation"} - Running Diagnostic Instrument Suite...`,
+        "color: #0176d3; font-weight: bold; font-size: 13px;"
+      );
+      console.log(
+        "%c[AgentAssist Diagnostics] ⏱️ Timestamp: " +
+          new Date().toLocaleString(),
+        "color: #54698d; font-size: 11px;"
+      );
+    }
 
-    if (queryError) {
+    if (queryError && this.debugMode) {
       console.error(
         "%c[AgentAssist Diagnostics] 💥 Apex Diagnostic Controller Error: " +
           (queryError.body ? queryError.body.message : queryError.message),
@@ -903,10 +924,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
       const setupUrlLabel =
         sec.setupUrlLabel || defaultSec?.setupUrlLabel || "";
 
-      console.group(
-        `%c🔍 [Instrument Section] ${sec.title}`,
-        "color: #0176d3; font-weight: bold;"
-      );
+      if (this.debugMode) {
+        console.group(
+          `%c🔍 [Instrument Section] ${sec.title}`,
+          "color: #0176d3; font-weight: bold;"
+        );
+      }
 
       const isPackageSection = sec.id === "installed_packages";
       const hasAtLeastOnePackage =
@@ -931,10 +954,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
           statusPillClass = "status-pill status-pill_fail";
           ledClass = "status-led status-led_fail";
           statusLabel = "Fail";
-          console.error(
-            `%c❌ [FAIL] ${item.label}\n   └─ Reason: ${item.errorMessage || item.subLabel || "Check failed in org metadata."}`,
-            "color: #ea001e; font-weight: bold;"
-          );
+          if (this.debugMode) {
+            console.error(
+              `%c❌ [FAIL] ${item.label}\n   └─ Reason: ${item.errorMessage || item.subLabel || "Check failed in org metadata."}`,
+              "color: #ea001e; font-weight: bold;"
+            );
+          }
         } else if (isWarn) {
           if (
             !isPackageSection ||
@@ -945,26 +970,32 @@ export default class AgentAssistSetupWizard extends LightningElement {
           statusPillClass = "status-pill status-pill_warn";
           ledClass = "status-led status-led_warn";
           statusLabel = "Attention Needed";
-          console.warn(
-            `%c⚠️ [WARN] ${item.label}\n   └─ Note: ${item.errorMessage || item.subLabel}`,
-            "color: #fe9339; font-weight: bold;"
-          );
+          if (this.debugMode) {
+            console.warn(
+              `%c⚠️ [WARN] ${item.label}\n   └─ Note: ${item.errorMessage || item.subLabel}`,
+              "color: #fe9339; font-weight: bold;"
+            );
+          }
         } else if (isPending) {
           statusPillClass = "status-pill status-pill_pending";
           ledClass = "status-led status-led_pending";
           statusLabel = "Checking...";
-          console.log(`%c⏳ [CHECKING] ${item.label}...`, "color: #eab308;");
+          if (this.debugMode) {
+            console.log(`%c⏳ [CHECKING] ${item.label}...`, "color: #eab308;");
+          }
         } else {
           totalPass++;
           statusPillClass = "status-pill status-pill_pass";
           ledClass = "status-led status-led_pass";
           statusLabel = "OK";
-          console.log(
-            `%c✅ [OK] ${item.label} ─ ${item.subLabel}`,
-            "color: #2e844a; font-weight: bold;"
-          );
-          if (item.assignees && item.assignees.length > 0) {
-            console.log("   └─ Active Assignees:", item.assignees.join(", "));
+          if (this.debugMode) {
+            console.log(
+              `%c✅ [OK] ${item.label} ─ ${item.subLabel}`,
+              "color: #2e844a; font-weight: bold;"
+            );
+            if (item.assignees && item.assignees.length > 0) {
+              console.log("   └─ Active Assignees:", item.assignees.join(", "));
+            }
           }
         }
 
@@ -995,7 +1026,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
         };
       });
 
-      console.groupEnd();
+      if (this.debugMode) {
+        console.groupEnd();
+      }
 
       const secHasFail = items.some((i) => i.isFail);
       const secHasWarn = items.some((i) => i.isWarn);
@@ -1044,14 +1077,16 @@ export default class AgentAssistSetupWizard extends LightningElement {
       };
     });
 
-    console.log(
-      `%c[AgentAssist Diagnostics] 🏁 Diagnostic Suite Summary: ${totalPass} Checks OK | ${totalFail} Failed | ${totalWarn} Warnings`,
-      `color: ${totalFail > 0 ? "#ea001e" : "#2e844a"}; font-weight: bold; font-size: 13px;`
-    );
-    console.log(
-      "%c[AgentAssist Diagnostics] ========================================================",
-      "color: #0176d3; font-weight: bold; font-size: 14px;"
-    );
+    if (this.debugMode) {
+      console.log(
+        `%c[AgentAssist Diagnostics] 🏁 Diagnostic Suite Summary: ${totalPass} Checks OK | ${totalFail} Failed | ${totalWarn} Warnings`,
+        `color: ${totalFail > 0 ? "#ea001e" : "#2e844a"}; font-weight: bold; font-size: 13px;`
+      );
+      console.log(
+        "%c[AgentAssist Diagnostics] ========================================================",
+        "color: #0176d3; font-weight: bold; font-size: 14px;"
+      );
+    }
 
     if (totalFail > 0) {
       this.diagnosticsState = "error";
@@ -1590,8 +1625,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
   handleTabActive(event) {
     const selectedTab = event.target?.value;
-    console.log(
-      "[SetupWizard] handleTabActive triggered for tab:",
+    this.debugLog(
+      "handleTabActive triggered for tab:",
       selectedTab,
       "isTabsetInitialized:",
       this.isTabsetInitialized
@@ -1607,15 +1642,15 @@ export default class AgentAssistSetupWizard extends LightningElement {
       try {
         localStorage.setItem("agent_assist_setup_active_tab", selectedTab);
         sessionStorage.setItem("agent_assist_setup_active_tab", selectedTab);
-        console.log(
-          "[SetupWizard] Persisted activeTab to storage:",
+        this.debugLog(
+          "Persisted activeTab to storage:",
           selectedTab
         );
       } catch (e) {
         console.error("[SetupWizard] Error storing activeTab:", e);
       }
     } else {
-      console.log("[SetupWizard] Initial mount activation for:", selectedTab);
+      this.debugLog("Initial mount activation for:", selectedTab);
     }
 
     if (selectedTab === "simulator") {

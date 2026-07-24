@@ -2,12 +2,12 @@
 - [ ] Please update the benefit in the TODO.md related to managing permissions with recent changes like supporting assignment of all profiles for Agents, Admins, and CX platforms, searching, etc.
 - [ ] Health checks are broken, validating invalid urls and ignoring connection errors: 
 - [ ] Custom Toolkit Connected check is not working: https://screenshot-v2.corp.google.com/3XXnN55ebYtabRt
-- [ ] These logs should be conditioned on debug mode being true: https://screenshot-v2.corp.google.com/5eetjp4fr1vr0
 
 ## Doing
 
 ## Done
 
+- [x] Condition Setup Wizard and Container component logs (tab active, lifecycle, diagnostic suite execution) on `debugMode` being true.
 - [x] Maintain modular, feature-specific Permission Sets (`Agent_Assist_User`, `Agent_Assist_Admin`, `Agent_Assist_Messaging_User`) rather than a single monolithic permission set to prevent deployment errors on orgs without optional paid licenses (e.g. Service Cloud Voice or Enhanced Chat).
 - [x] Can we easily make the Select Salesforce User and other picklists searchable?
 - [x] Disambiguate LWC Configuration Profiles from Google Cloud Conversation Profiles across all Setup Wizard labels and docs.

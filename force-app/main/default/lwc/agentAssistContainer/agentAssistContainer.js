@@ -245,7 +245,9 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   connectedCallback() {
-    this.debugLog("connectedCallback called");
+    if (this.debugMode) {
+      this.debugLog("connectedCallback called");
+    }
     if (this.wiredConfigResult) {
       refreshApex(this.wiredConfigResult);
     }
@@ -261,7 +263,9 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   async renderedCallback() {
-    this.debugLog("renderedCallback called");
+    if (this.debugMode) {
+      this.debugLog("renderedCallback called");
+    }
     if (this.containerHeight !== this._appliedHeight) {
       this.applyHeightOverride();
     }
@@ -416,7 +420,7 @@ export default class AgentAssistContainer extends LightningElement {
   debugLog(message) {
     if (this.debugMode) {
       console.log(
-        `%c[AgentAssist]%c ${message}`,
+        `%c[AgentAssistContainer]%c ${message}`,
         "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
         ""
       );
