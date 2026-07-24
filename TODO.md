@@ -2,8 +2,8 @@
 
 - [ ] Test with various SF licenses, using the project-scratch-def.json.
 - [ ] To the CX Platform Setup tab, add deep links to the page where the LWC can go for each platform. (e.g. Messaging Session, Contact/Case, Voice Call)
-
 - [ ] Individual platform integrations should change the shape of the Agents permission set, so only 1 permission set is needed for any, or all of them. But since they may require an additional license, this must happen in the CX Platform panel, after they have enabled said feature/license.
+- [ ] In the diagnostic panel, add a check for the namedCredentials prefixed like ours are. It should say if any exist and how many there are.
 
 ## Doing
 
