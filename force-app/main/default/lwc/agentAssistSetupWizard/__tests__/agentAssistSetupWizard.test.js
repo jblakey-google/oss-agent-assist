@@ -334,6 +334,28 @@ describe("c-agent-assist-setup-wizard", () => {
     expect(endpointPill.textContent).toContain("404 Not Found");
   });
 
+  it("renders sanitized connection failed message when checkEndpointHealth returns Unauthorized endpoint error", async () => {
+    checkEndpointHealth.mockResolvedValueOnce({
+      statusCode: 0,
+      status: "fail",
+      statusLabel: "Connection Failed",
+      message: "Connection failed for https://ui-connector-sfwz-798656365078.us-central1.run.ap: Unauthorized endpoint, please check Setup->Security->Remote site settings."
+    });
+
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+
+    document.body.appendChild(element);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const endpointMsg = element.shadowRoot.querySelector(".endpoint-msg-fail");
+    expect(endpointMsg).not.toBeNull();
+    expect(endpointMsg.textContent).toContain("Unable to reach endpoint");
+    expect(endpointMsg.textContent).not.toContain("Remote site settings");
+  });
+
   it("renders container schema settings box with feature flags toggle group without negative margin blowout", async () => {
     const element = createElement("c-agent-assist-setup-wizard", {
       is: AgentAssistSetupWizard

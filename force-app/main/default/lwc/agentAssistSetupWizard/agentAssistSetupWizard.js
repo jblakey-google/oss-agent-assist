@@ -1369,25 +1369,63 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
   }
 
-  async evaluateEndpointHealth(url) {
+  isValidEndpointUrl(url) {
     if (!url || !url.trim()) {
-      this.endpointHealthState = "warning";
-      this.endpointStatusCode = 0;
-      this.endpointStatusLabel = "No URL";
-      this.endpointStatusMessage = "Please enter a UI Connector Endpoint URL.";
-      return;
+      return {
+        valid: false,
+        reason: "empty",
+        message: "Please enter a UI Connector Endpoint URL."
+      };
     }
-
     const trimmed = url.trim();
-    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-      this.endpointHealthState = "warning";
-      this.endpointStatusCode = 400;
-      this.endpointStatusLabel = "400 Bad Request";
-      this.endpointStatusMessage =
-        "HTTP 400 Bad Request — URL must start with https:// or http://.";
+    if (trimmed.startsWith("callout:")) {
+      return { valid: true, url: trimmed };
+    }
+    let parsed;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      return {
+        valid: false,
+        reason: "format",
+        message: "HTTP 400 Bad Request — Invalid URL format."
+      };
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return {
+        valid: false,
+        reason: "protocol",
+        message: "HTTP 400 Bad Request — URL must start with https:// or http://."
+      };
+    }
+    const hostname = parsed.hostname;
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+    const hasDot = hostname.includes(".");
+    if (!isLocalhost && !hasDot) {
+      return {
+        valid: false,
+        reason: "host",
+        message:
+          "HTTP 400 Bad Request — Hostname must be a valid domain (e.g. example.com) or IP address."
+      };
+    }
+    return { valid: true, url: trimmed };
+  }
+
+  async evaluateEndpointHealth(url) {
+    const targetUrl =
+      url !== undefined ? url : this.currentProfile?.endpointUrl;
+    const check = this.isValidEndpointUrl(targetUrl);
+    if (!check.valid) {
+      this.endpointHealthState = check.reason === "empty" ? "warning" : "fail";
+      this.endpointStatusCode = check.reason === "empty" ? 0 : 400;
+      this.endpointStatusLabel =
+        check.reason === "empty" ? "No URL" : "400 Bad Request";
+      this.endpointStatusMessage = check.message;
       return;
     }
 
+    const trimmed = check.url;
     this.endpointHealthState = "pending";
     this.endpointStatusCode = 0;
     this.endpointStatusLabel = "Checking...";
@@ -1395,9 +1433,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
     let httpCode = null;
     let httpStatusText = "";
+    let apexErrorMessage = "";
 
     // 1. Direct browser fetch check (Primary check for LWC runtime environment)
-    if (typeof fetch !== "undefined") {
+    if (typeof fetch !== "undefined" && !trimmed.startsWith("callout:")) {
       try {
         const controller =
           typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -1418,7 +1457,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
           httpStatusText = resp.statusText;
         }
       } catch {
-        // Direct browser fetch rejected (DNS error, connection refused, 404, or CORS)
+        // Direct browser fetch rejected (DNS error, connection refused, CORS, or CSP)
       }
     }
 
@@ -1426,30 +1465,56 @@ export default class AgentAssistSetupWizard extends LightningElement {
     if (httpCode === null) {
       try {
         const apexResult = await checkEndpointHealth({ endpointUrl: trimmed });
-        if (
-          apexResult &&
-          apexResult.statusCode !== undefined &&
-          apexResult.statusCode > 0
-        ) {
-          httpCode = apexResult.statusCode;
-          httpStatusText = apexResult.statusText || "";
+        if (apexResult) {
+          if (
+            apexResult.statusCode !== undefined &&
+            apexResult.statusCode > 0
+          ) {
+            httpCode = apexResult.statusCode;
+            httpStatusText =
+              apexResult.statusText || apexResult.statusLabel || "";
+          }
+          if (apexResult.message) {
+            apexErrorMessage = apexResult.message;
+          }
+          if (apexResult.status === "warning" || apexResult.status === "fail") {
+            let msg = apexResult.message || "Endpoint unreachable.";
+            if (
+              msg.includes("Unauthorized endpoint") ||
+              msg.includes("Remote site") ||
+              msg.includes("Remote Site")
+            ) {
+              msg = `Connection failed for ${trimmed}: Unable to reach endpoint (DNS error, connection refused, or invalid URL).`;
+            }
+            this.endpointHealthState = apexResult.status;
+            this.endpointStatusCode = apexResult.statusCode || 0;
+            this.endpointStatusLabel =
+              apexResult.statusLabel || "Connection Error";
+            this.endpointStatusMessage = msg;
+            return;
+          }
         }
-      } catch {
-        // Apex wire or unmocked error
+      } catch (err) {
+        apexErrorMessage = err?.body?.message || err?.message || String(err);
       }
     }
 
-    // 3. Fallback for unresolvable/unreachable URLs or test strings
+    // 3. Fallback when both browser fetch and Apex callout fail to obtain HTTP status
     if (httpCode === null) {
       if (
-        trimmed.includes("500") ||
-        trimmed.toLowerCase().includes("error") ||
-        trimmed.toLowerCase().includes("fail")
+        apexErrorMessage.includes("Unauthorized endpoint") ||
+        apexErrorMessage.includes("Remote site") ||
+        apexErrorMessage.includes("Remote Site")
       ) {
-        httpCode = 500;
-      } else {
-        httpCode = 404;
+        apexErrorMessage = `Connection failed for ${trimmed}: Unable to reach endpoint (DNS error, connection refused, or invalid URL).`;
       }
+      this.endpointHealthState = "fail";
+      this.endpointStatusCode = 0;
+      this.endpointStatusLabel = "Connection Failed";
+      this.endpointStatusMessage = apexErrorMessage
+        ? apexErrorMessage
+        : `Connection failed for ${trimmed}: Unable to reach endpoint (DNS error, connection refused, or invalid URL).`;
+      return;
     }
 
     this.endpointStatusCode = httpCode;
@@ -1478,6 +1543,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
       this.endpointStatusMessage = `HTTP ${httpCode} ${httpStatusText || "Alert"}`;
     }
   }
+
+
 
   get registerStatusPillClass() {
     if (this.registerHealthState === "pass") {
@@ -1519,6 +1586,25 @@ export default class AgentAssistSetupWizard extends LightningElement {
     return "slds-text-body_small slds-text-color_weak slds-m-top_xxx-small";
   }
 
+  get showRemoteSiteNotice() {
+    // Only display the Remote Site Setting warning banner if the UI Connector endpoint health check passed (200 OK)
+    const isEndpointHealthPass =
+      this.endpointHealthState === "pass" || this.endpointStatusCode === 200;
+
+    const hasUnauthorizedCalloutError =
+      (this.registerStatusMessage &&
+        (this.registerStatusMessage.includes("Unauthorized endpoint") ||
+          this.registerStatusMessage.includes("Remote Site Setting"))) ||
+      (this.endpointStatusMessage &&
+        this.endpointStatusMessage.includes("Unauthorized endpoint"));
+
+    return isEndpointHealthPass && hasUnauthorizedCalloutError;
+  }
+
+  get remoteSiteSettingSetupUrl() {
+    return "/lightning/setup/SecurityRemoteProxy/home";
+  }
+
   handleRecheckRegisterEndpoint() {
     this.evaluateRegisterEndpointHealth();
   }
@@ -1529,39 +1615,42 @@ export default class AgentAssistSetupWizard extends LightningElement {
     const consumerSecret = this.currentProfile?.consumerSecret;
     const clientCredentialsUser = this.currentProfile?.clientCredentialsUser;
 
-    if (!url || !url.trim()) {
-      this.registerHealthState = "warning";
-      this.registerStatusCode = 0;
-      this.registerStatusLabel = "No URL";
-      this.registerStatusMessage = "Please enter a UI Connector Endpoint URL.";
+    const check = this.isValidEndpointUrl(url);
+    if (!check.valid) {
+      this.registerHealthState = check.reason === "empty" ? "warning" : "fail";
+      this.registerStatusCode = check.reason === "empty" ? 0 : 400;
+      this.registerStatusLabel =
+        check.reason === "empty" ? "No URL" : "400 Bad Request";
+      this.registerStatusMessage = check.message;
       return;
     }
 
-    const trimmedUrl = url.trim().replace(/\/$/, "");
-    if (
-      !trimmedUrl.startsWith("http://") &&
-      !trimmedUrl.startsWith("https://")
-    ) {
-      this.registerHealthState = "warning";
-      this.registerStatusCode = 400;
-      this.registerStatusLabel = "400 Bad Request";
-      this.registerStatusMessage =
-        "HTTP 400 Bad Request — URL must start with https:// or http://.";
-      return;
-    }
+    const trimmedUrl = check.url.replace(/\/$/, "");
 
     if (
       this.endpointStatusCode === null ||
       this.endpointStatusCode === undefined
     ) {
-      await this.evaluateEndpointHealth();
+      await this.evaluateEndpointHealth(url);
+    }
+
+    if (
+      this.endpointStatusCode &&
+      (this.endpointStatusCode < 200 || this.endpointStatusCode >= 300)
+    ) {
+      this.registerHealthState = this.endpointHealthState || "fail";
+      this.registerStatusCode = this.endpointStatusCode;
+      this.registerStatusLabel =
+        this.endpointStatusLabel || `${this.endpointStatusCode} Unreachable`;
+      this.registerStatusMessage = `HTTP ${this.endpointStatusCode} — /register route unreachable because Endpoint URL returned ${this.endpointStatusLabel}.`;
+      return;
     }
 
     this.registerHealthState = "pending";
     this.registerStatusCode = 0;
     this.registerStatusLabel = "Checking...";
     this.registerStatusMessage =
-      "Checking /register route auth connectivity via Apex callout...";
+      "Checking /register route auth connectivity...";
 
     try {
       let result = await registerAuthToken({
@@ -1577,14 +1666,14 @@ export default class AgentAssistSetupWizard extends LightningElement {
         this.registerStatusCode = 200;
         this.registerStatusLabel = "200 OK";
         this.registerStatusMessage =
-          "HTTP 200 OK — /register route authenticated and reachable via Apex callout.";
+          "HTTP 200 OK — /register route authenticated and reachable.";
       } else if (result && result.error) {
         const errorMsg = String(result.error);
         if (errorMsg.includes("Unauthorized endpoint")) {
           this.registerHealthState = "warning";
           this.registerStatusCode = 401;
           this.registerStatusLabel = "Setup Warning";
-          this.registerStatusMessage = `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
+          this.registerStatusMessage = `Apex callout blocked. Verify Remote Site Setting for ${trimmedUrl} in Setup > Remote Site Settings for server-side callouts.`;
         } else if (errorMsg.includes("401") || errorMsg.includes("403")) {
           this.registerHealthState = "fail";
           this.registerStatusCode = 401;
@@ -1613,7 +1702,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
         this.registerHealthState = "warning";
         this.registerStatusCode = 401;
         this.registerStatusLabel = "Setup Warning";
-        this.registerStatusMessage = `Apex callout blocked. Add ${trimmedUrl} to Setup > Security > Remote Site Settings for server-side callouts.`;
+        this.registerStatusMessage = `Apex callout blocked. Verify Remote Site Setting for ${trimmedUrl} in Setup > Remote Site Settings for server-side callouts.`;
       } else {
         this.registerHealthState = "fail";
         this.registerStatusCode = 500;

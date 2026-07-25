@@ -1515,18 +1515,9 @@ public without sharing class AgentAssistConfigController {
     return wrapper;
   }
 
-  private static String getAgentAssistNamedCredentialName() {
-    try {
-      List<SObject> ncList = Database.query(
-        'SELECT DeveloperName FROM NamedCredential WHERE DeveloperName LIKE \'Agent\\_Assist%\' ORDER BY DeveloperName ASC LIMIT 1'
-      );
-      if (!ncList.isEmpty()) {
-        return (String) ncList[0].get('DeveloperName');
-      }
-    } catch (Exception ex) {
-    }
-    return 'Agent_Assist_UI_Connector';
-  }
+
+
+
 
   /**
    * Health checks a UI Connector Endpoint URL and returns the HTTP status and connectivity diagnosis.
@@ -1581,22 +1572,7 @@ public without sharing class AgentAssistConfigController {
       req.setMethod('GET');
       req.setTimeout(5000);
       Http http = new Http();
-      HttpResponse res;
-      try {
-        res = http.send(req);
-      } catch (System.CalloutException calloutEx) {
-        String msg = calloutEx.getMessage();
-        if (msg != null && msg.contains('Unauthorized endpoint')) {
-          String ncName = getAgentAssistNamedCredentialName();
-          HttpRequest ncReq = new HttpRequest();
-          ncReq.setEndpoint('callout:' + ncName);
-          ncReq.setMethod('GET');
-          ncReq.setTimeout(5000);
-          res = http.send(ncReq);
-        } else {
-          throw calloutEx;
-        }
-      }
+      HttpResponse res = http.send(req);
 
       Integer code = res.getStatusCode();
       String statusTxt = res.getStatus();
@@ -1605,19 +1581,19 @@ public without sharing class AgentAssistConfigController {
       if (code >= 200 && code < 300) {
         result.put('status', 'pass');
         result.put('statusLabel', code + ' OK');
-        result.put('message', 'HTTP ' + code + ' OK');
+        result.put('message', 'HTTP ' + code + ' OK — Endpoint is reachable and responding.');
       } else if (code == 404) {
         result.put('status', 'warning');
         result.put('statusLabel', '404 Not Found');
-        result.put('message', 'HTTP 404 Not Found');
+        result.put('message', 'HTTP 404 Not Found — Endpoint could not be reached.');
       } else if (code >= 500) {
         result.put('status', 'fail');
         result.put('statusLabel', code + ' Server Error');
-        result.put('message', 'HTTP ' + code + ' Server Error');
+        result.put('message', 'HTTP ' + code + ' Server Error — Remote server returned an error.');
       } else if (code == 401 || code == 403) {
         result.put('status', 'warning');
         result.put('statusLabel', code + ' Forbidden');
-        result.put('message', 'HTTP ' + code + ' Forbidden');
+        result.put('message', 'HTTP ' + code + ' Forbidden — Access to endpoint is unauthorized.');
       } else {
         result.put('status', 'warning');
         result.put(
@@ -1627,10 +1603,17 @@ public without sharing class AgentAssistConfigController {
         result.put('message', 'HTTP ' + code);
       }
     } catch (Exception ex) {
-      result.put('statusCode', 404);
-      result.put('status', 'warning');
-      result.put('statusLabel', '404 Not Found');
-      result.put('message', 'HTTP 404 Not Found');
+      String msg = ex.getMessage();
+      if (
+        String.isNotBlank(msg) &&
+        (msg.contains('Unauthorized endpoint') || msg.contains('Remote site'))
+      ) {
+        msg = 'Unable to reach endpoint (DNS error, connection refused, or invalid URL).';
+      }
+      result.put('statusCode', 0);
+      result.put('status', 'fail');
+      result.put('statusLabel', 'Connection Failed');
+      result.put('message', 'Connection failed for ' + trimmed + ': ' + msg);
     }
     return result;
   }
@@ -1754,10 +1737,9 @@ public without sharing class AgentAssistConfigController {
         }
       }
 
-      // Step 2: Call UI Connector /register endpoint
-      String registerUrl = finalEndpoint + '/register';
+      // Step 2: Call UI Connector /register endpoint directly
       HttpRequest regReq = new HttpRequest();
-      regReq.setEndpoint(registerUrl);
+      regReq.setEndpoint(finalEndpoint + '/register');
       regReq.setMethod('POST');
       regReq.setHeader('Content-Type', 'application/json');
       if (String.isNotBlank(accessToken)) {
@@ -1766,27 +1748,7 @@ public without sharing class AgentAssistConfigController {
       regReq.setBody('{}');
       regReq.setTimeout(10000);
 
-      HttpResponse regRes;
-      try {
-        regRes = http.send(regReq);
-      } catch (System.CalloutException calloutEx) {
-        String msg = calloutEx.getMessage();
-        if (msg != null && msg.contains('Unauthorized endpoint')) {
-          String ncName = getAgentAssistNamedCredentialName();
-          HttpRequest ncRegReq = new HttpRequest();
-          ncRegReq.setEndpoint('callout:' + ncName + '/register');
-          ncRegReq.setMethod('POST');
-          ncRegReq.setHeader('Content-Type', 'application/json');
-          if (String.isNotBlank(accessToken)) {
-            ncRegReq.setHeader('Authorization', 'Bearer ' + accessToken);
-          }
-          ncRegReq.setBody('{}');
-          ncRegReq.setTimeout(10000);
-          regRes = http.send(ncRegReq);
-        } else {
-          throw calloutEx;
-        }
-      }
+      HttpResponse regRes = http.send(regReq);
       if (regRes.getStatusCode() != 200) {
         response.put(
           'error',

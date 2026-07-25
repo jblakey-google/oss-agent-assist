@@ -315,6 +315,21 @@
                           {endpointStatusMessage}
                         </div>
                       </template>
+                      <template lwc:if={showRemoteSiteNotice}>
+                        <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-top_small slds-grid slds-grid_vertical-align-center slds-wrap" role="alert" style="border-radius: 4px; padding: 0.5rem 0.75rem;">
+                          <lightning-icon icon-name="utility:warning" variant="warning" size="small" class="slds-m-right_small slds-col slds-no-flex"></lightning-icon>
+                          <div class="slds-col slds-has-flexi-truncate">
+                            <h2 class="slds-text-heading_small"><strong>Remote Site Setting Authorization Required</strong></h2>
+                            <p class="slds-text-body_small">Salesforce requires outbound Apex callout domains to be allowlisted in Setup &gt; Remote Site Settings.</p>
+                          </div>
+                          <div class="slds-col slds-no-flex slds-m-left_auto slds-m-top_xx-small slds-medium-m-top_none">
+                            <a href={remoteSiteSettingSetupUrl} target="_blank" rel="noopener noreferrer" class="slds-button slds-button_neutral slds-grid slds-grid_align-center slds-grid_vertical-align-center">
+                              <lightning-icon icon-name="utility:new_window" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                              <span>Open Remote Site Settings in Setup</span>
+                            </a>
+                          </div>
+                        </div>
+                      </template>
                     </div>
 
                     <!-- Container Schema Fields -->
@@ -354,7 +369,7 @@
                                   rel="noopener noreferrer"
                                   class="slds-text-link"
                                 >
-                                  View Google Cloud Conversation Profile
+                                  Agent Assist Conversation Profile
                                   Documentation
                                 </a>
                               </div>

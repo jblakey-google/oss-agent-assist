@@ -31,8 +31,11 @@
     <hasActivationRequired>false</hasActivationRequired>
     <externalCredentialPrincipalAccesses>
         <enabled>true</enabled>
-        <externalCredentialPrincipal
-    >Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+        <externalCredentialPrincipal>Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>Agent_Assist_NC_Default_Ext-Agent_Assist_NC_DefaultPrincipal</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
     <label>Google Cloud Agent Assist User</label>
     <description

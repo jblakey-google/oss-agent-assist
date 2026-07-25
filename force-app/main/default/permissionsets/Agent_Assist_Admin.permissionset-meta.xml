@@ -40,8 +40,11 @@
   >Grants full administrative access to Google Cloud Agent Assist Setup App, Tab, Configurations, and Apex Controller.</description>
     <externalCredentialPrincipalAccesses>
         <enabled>true</enabled>
-        <externalCredentialPrincipal
-    >Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+        <externalCredentialPrincipal>Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>Agent_Assist_NC_Default_Ext-Agent_Assist_NC_DefaultPrincipal</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
     <fieldPermissions>
         <editable>true</editable>
