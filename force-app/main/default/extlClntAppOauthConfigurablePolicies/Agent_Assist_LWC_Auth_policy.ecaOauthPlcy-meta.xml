@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ExtlClntAppOauthConfigurablePolicies
+  xmlns="http://soap.sforce.com/2006/04/metadata"
+>
+    <externalClientApplication>Agent_Assist_LWC_Auth</externalClientApplication>
+    <label>Agent Assist LWC Auth Policy</label>
+    <isClientCredentialsFlowEnabled>true</isClientCredentialsFlowEnabled>
+    <clientCredentialsFlowUser>test-ayh1dgxf9hsh@example.com</clientCredentialsFlowUser>
+</ExtlClntAppOauthConfigurablePolicies>

@@ -1,0 +1,359 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template>
+  <lightning-card title={resolvedTitle} icon-name="standard:bot">
+    <!-- Header Actions / Mode Indicator -->
+    <div
+      slot="actions"
+      class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
+    >
+      <span class="slds-badge slds-theme_info slds-m-right_xx-small"
+        >{resolvedModelName}</span
+      >
+      <template lwc:if={isUtilityBar}>
+        <lightning-badge
+          label="Utility Bar Mode"
+          class="slds-badge_lightest"
+        ></lightning-badge>
+      </template>
+      <template lwc:else>
+        <lightning-badge
+          label={contextBadgeLabel}
+          icon-name="utility:record"
+          class="slds-badge_inverse"
+        ></lightning-badge>
+      </template>
+      <lightning-button-icon
+        icon-name="utility:clear"
+        alternative-text="Clear Chat"
+        onclick={handleClearChat}
+        size="small"
+        title="Clear Chat History"
+      ></lightning-button-icon>
+      <lightning-button-icon
+        icon-name="utility:refresh"
+        alternative-text="Refresh"
+        onclick={handleRefresh}
+        size="small"
+      ></lightning-button-icon>
+    </div>
+
+    <div class="slds-p-horizontal_medium slds-p-vertical_small">
+      <!-- Loading Spinner -->
+      <template lwc:if={isLoading}>
+        <div class="slds-is-relative slds-p-around_large">
+          <lightning-spinner
+            alternative-text="Loading companion agent..."
+            size="small"
+          ></lightning-spinner>
+        </div>
+      </template>
+
+      <template lwc:else>
+        <!-- Missing/Deleted Profile Error View -->
+        <template lwc:if={isProfileMissing}>
+          <div
+            class="missing-profile-box slds-p-around_medium slds-m-bottom_small"
+          >
+            <div class="slds-media slds-media_center">
+              <div class="slds-media__figure">
+                <lightning-icon
+                  icon-name="utility:warning"
+                  variant="warning"
+                  size="medium"
+                ></lightning-icon>
+              </div>
+              <div class="slds-media__body">
+                <div class="slds-text-heading_small slds-text-color_error">
+                  <strong>LWC Configuration Profile Deleted or Missing</strong>
+                </div>
+                <p class="slds-text-body_regular slds-m-top_xx-small">
+                  The assigned profile&#32;<code class="missing-code">{configName}</code>&#32;was deleted
+                  from the Setup Wizard or does not exist.
+                </p>
+                <p
+                  class="slds-text-body_small slds-text-color_weak slds-m-top_x-small"
+                >
+                  Please select an active Companion Agent profile in
+                  &#32;<strong>Lightning App Builder</strong>&#32;or create
+                  &#32;<strong>{configName}</strong>&#32;in the
+                  &#32;<strong>Google Cloud Agent Assist Setup Wizard</strong>&#32;tab.
+                </p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Normal Active Companion Agent View -->
+        <template lwc:else>
+          <!-- Configuration State Banner -->
+          <div
+            class="state-banner slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+          >
+            <div class="slds-grid slds-grid_vertical-align-center">
+              <lightning-icon
+                icon-name="utility:bot"
+                size="x-small"
+                class="slds-m-right_x-small"
+              ></lightning-icon>
+              <div class="slds-text-body_small">
+                <span class="slds-text-title_bold">Profile:</span>
+                {activeProfileName}
+                <span
+                  class="slds-badge slds-badge_lightest slds-m-left_xx-small"
+                  >{profileTypeLabel}</span
+                >
+                <span class="slds-text-color_weak slds-m-left_xx-small"
+                  >({resolutionSource})</span
+                >
+              </div>
+            </div>
+            <button
+              class="slds-button slds-text-link slds-text-body_small"
+              onclick={toggleConfigDetails}
+            >
+              {toggleDetailsLabel}
+            </button>
+          </div>
+
+          <!-- Expanded State Details Accordion -->
+          <template lwc:if={showConfigDetails}>
+            <div
+              class="slds-box slds-p-around_small slds-m-bottom_small slds-theme_default slds-border_top"
+            >
+              <div class="slds-text-title_caps slds-m-bottom_xx-small">
+                Companion Agent Schema & Architecture Details
+              </div>
+              <dl class="slds-list_horizontal slds-wrap slds-text-body_small">
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Profile Type"
+                >
+                  Profile Type:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {profileTypeLabel}
+                </dd>
+
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="XML Config Name"
+                >
+                  XML configName:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">{configName}</dd>
+
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Model Name"
+                >
+                  AI Model Name:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {resolvedModelName}
+                </dd>
+
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Endpoint URL"
+                >
+                  Backend Endpoint:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {resolvedEndpoint}
+                </dd>
+
+                <dt
+                  class="slds-item_label slds-text-color_weak slds-truncate"
+                  title="Autonomous Actions"
+                >
+                  Autonomous Actions:
+                </dt>
+                <dd class="slds-item_detail slds-truncate">
+                  {autonomousStatusText}
+                </dd>
+              </dl>
+            </div>
+          </template>
+
+          <!-- Quick Action Prompt Chips -->
+          <div
+            class="quick-chips-container slds-m-bottom_small slds-grid slds-wrap"
+          >
+            <button
+              type="button"
+              class="slds-button slds-button_neutral quick-chip slds-m-right_xx-small slds-m-bottom_xx-small"
+              data-prompt="Summarize this record and current activity"
+              onclick={handleQuickPrompt}
+            >
+              ⚡ Summarize Record
+            </button>
+            <button
+              type="button"
+              class="slds-button slds-button_neutral quick-chip slds-m-right_xx-small slds-m-bottom_xx-small"
+              data-prompt="Draft a polite email response to the customer"
+              onclick={handleQuickPrompt}
+            >
+              ✉️ Draft Response
+            </button>
+            <button
+              type="button"
+              class="slds-button slds-button_neutral quick-chip slds-m-right_xx-small slds-m-bottom_xx-small"
+              data-prompt="Suggest next troubleshooting steps"
+              onclick={handleQuickPrompt}
+            >
+              📋 Next Steps
+            </button>
+            <button
+              type="button"
+              class="slds-button slds-button_neutral quick-chip slds-m-bottom_xx-small"
+              data-prompt="Run root cause analysis on this issue"
+              onclick={handleQuickPrompt}
+            >
+              🔍 Root Cause
+            </button>
+          </div>
+
+          <!-- Conversational Chat Stream -->
+          <div
+            class="chat-stream-container slds-p-around_small slds-m-bottom_small slds-scrollable_y"
+          >
+            <template for:each={messages} for:item="msg">
+              <div key={msg.id} class={msg.rowClass}>
+                <div class="chat-bubble-wrapper">
+                  <div
+                    class="chat-msg-header slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small"
+                  >
+                    <template lwc:if={msg.isCompanion}>
+                      <lightning-icon
+                        icon-name="standard:bot"
+                        size="xx-small"
+                        class="slds-m-right_xx-small"
+                      ></lightning-icon>
+                    </template>
+                    <template lwc:else>
+                      <lightning-icon
+                        icon-name="utility:user"
+                        size="xx-small"
+                        class="slds-m-right_xx-small"
+                      ></lightning-icon>
+                    </template>
+                    <span class="chat-sender-name slds-text-title_bold"
+                      >{msg.senderLabel}</span
+                    >
+                    <template lwc:if={msg.badgeLabel}>
+                      <span
+                        class="slds-badge slds-badge_lightest slds-m-left_xx-small model-pill"
+                        >{msg.badgeLabel}</span
+                      >
+                    </template>
+                    <span
+                      class="chat-timestamp slds-text-color_weak slds-m-left_x-small"
+                      >{msg.timestamp}</span
+                    >
+                  </div>
+
+                  <div class="chat-bubble-content slds-text-body_regular">
+                    <p class="chat-text-paragraph">{msg.text}</p>
+                  </div>
+
+                  <!-- Autonomous Action Card if attached -->
+                  <template lwc:if={msg.hasAction}>
+                    <div
+                      class="action-card slds-box slds-box_x-small slds-m-top_x-small slds-theme_shade"
+                    >
+                      <div
+                        class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                      >
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                          <lightning-icon
+                            icon-name="utility:touch_action"
+                            size="x-small"
+                            class="slds-m-right_x-small"
+                          ></lightning-icon>
+                          <span
+                            class="slds-text-body_small slds-text-title_bold"
+                            >{msg.action.label}</span
+                          >
+                        </div>
+                        <template lwc:if={msg.action.isExecuted}>
+                          <span class="slds-badge slds-theme_success"
+                            >Action Executed</span
+                          >
+                        </template>
+                        <template lwc:else>
+                          <lightning-button
+                            label="Execute Action"
+                            variant="brand"
+                            size="x-small"
+                            data-id={msg.action.id}
+                            onclick={handleExecuteAction}
+                          ></lightning-button>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- Thinking Indicator -->
+            <template lwc:if={isThinking}>
+              <div class="chat-msg-row companion-row slds-m-bottom_small">
+                <div class="chat-bubble-wrapper">
+                  <div
+                    class="thinking-indicator slds-grid slds-grid_vertical-align-center slds-p-around_x-small"
+                  >
+                    <div class="pulse-dot slds-m-right_x-small"></div>
+                    <span class="slds-text-body_small slds-text-color_weak"
+                      >Companion Agent is synthesizing response...</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Prompt Input Bar -->
+          <div
+            class="prompt-input-wrapper slds-grid slds-grid_vertical-align-end"
+          >
+            <div class="slds-col slds-grow slds-m-right_x-small">
+              <lightning-input
+                type="text"
+                placeholder="Ask your Companion Agent or request record actions..."
+                value={userPrompt}
+                onchange={handlePromptChange}
+                onkeydown={handlePromptKeyDown}
+                variant="label-hidden"
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-no-flex">
+              <lightning-button
+                label="Send"
+                variant="brand"
+                icon-name="utility:send"
+                onclick={handleSendPrompt}
+                disabled={isThinking}
+              ></lightning-button>
+            </div>
+          </div>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

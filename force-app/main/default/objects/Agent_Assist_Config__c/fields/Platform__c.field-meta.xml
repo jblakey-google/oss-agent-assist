@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Platform__c</fullName>
+    <description
+  >The platform integration type (e.g., base, messaging, twilioflex, servicecloudvoice-nice, servicecloudvoice-byot-five9).</description>
+    <externalId>false</externalId>
+    <inlineHelpText
+  >The platform integration type (Base Platform works OOTB without CX config).</inlineHelpText>
+    <label>Platform Integration</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>base</fullName>
+                <default>true</default>
+                <label>Base Platform (Direct API Connector)</label>
+            </value>
+            <value>
+                <fullName>messaging</fullName>
+                <default>false</default>
+                <label>Salesforce Enhanced Chat</label>
+            </value>
+            <value>
+                <fullName>twilioflex</fullName>
+                <default>false</default>
+                <label>Twilio Flex</label>
+            </value>
+            <value>
+                <fullName>servicecloudvoice-nice</fullName>
+                <default>false</default>
+                <label>Service Cloud Voice (NICE)</label>
+            </value>
+            <value>
+                <fullName>servicecloudvoice-byot-five9</fullName>
+                <default>false</default>
+                <label>Service Cloud Voice (BYOT Five9)</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

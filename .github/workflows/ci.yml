@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "force-app/**"
+      - "config/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-secrets:
+    name: Check Environment Secrets
+    runs-on: ubuntu-latest
+    outputs:
+      has-devhub: ${{ steps.check.outputs.has-devhub }}
+    steps:
+      - name: Check DevHub Secret Availability
+        id: check
+        run: |
+          if [ -n "${{ secrets.DEVHUB_SFDX_URL }}" ]; then
+            echo "has-devhub=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-devhub=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  lwc-unit-tests:
+    name: LWC Unit Tests & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      #      - name: Run Prettier Code Formatting Check
+      #        run: npm run prettier:verify
+
+      - name: Run LWC Jest Unit Tests with Coverage
+        run: npm run test:unit:coverage
+
+      - name: Upload LWC Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lwc-coverage-report
+          path: coverage
+
+  apex-tests:
+    name: Salesforce Scratch Org Deployability & Apex Tests
+    needs: check-secrets
+    if: needs.check-secrets.outputs.has-devhub == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies & Salesforce CLI
+        run: |
+          npm ci
+          npm install -g @salesforce/cli
+
+      - name: Authenticate DevHub
+        run: |
+          echo "${{ secrets.DEVHUB_SFDX_URL }}" | sf org login sfdx-url --sfdx-url-stdin --set-default-dev-hub --alias devhub
+          sf alias set devhub=ces-solution-incubation@google.com.pbo
+          sf config set target-dev-hub=ces-solution-incubation@google.com.pbo --global
+
+      - name: Create Temporary Scratch Org
+        run: |
+          sf org create scratch --definition-file config/project-scratch-def.json --alias ci-org --target-dev-hub ces-solution-incubation@google.com.pbo --set-default --duration-days 1 --wait 10
+
+      - name: Execute Predeployment Configuration
+        run: npm run predeploy
+
+      - name: Deploy Source to Scratch Org
+        run: sf project deploy start --source-dir force-app --target-org ci-org --wait 10
+
+      - name: Assign Agent Assist Admin Permission Set
+        run: sf org assign permset --name Agent_Assist_Admin --target-org ci-org
+
+      - name: Run Apex Test Suite
+        run: |
+          sf apex run test --test-level RunLocalTests --code-coverage --result-format junit --output-dir ./test-results --wait 10 --target-org ci-org
+
+      - name: Upload Apex Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apex-test-results
+          path: test-results
+
+      - name: Delete Scratch Org
+        if: always()
+        run: sf org delete scratch --target-org ci-org --no-prompt || true

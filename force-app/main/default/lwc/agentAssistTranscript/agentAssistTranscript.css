@@ -1,0 +1,148 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Standalone Agent Assist Transcript Component ============================= */
+.agent-assist-component {
+  border-radius: 4px;
+  border: 1px solid #c9c9c9;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  overflow-y: hidden;
+  background: #ffffff;
+  container-type: inline-size;
+}
+
+.agent-assist-component.dark-mode {
+  background: #212124;
+  border-color: #5f6368;
+}
+
+/* Transcript Container ===================================================== */
+.transcript-container {
+  border: none;
+  background: #fff;
+  flex: 1;
+  width: 100%;
+  min-height: 160px;
+  max-height: var(--aa-container-height, 530px);
+  min-width: 240px;
+}
+
+.transcript-container h3 {
+  background-color: #f1f3f4;
+  border-bottom: 1px solid rgb(189, 193, 198);
+  color: #5f6368;
+  padding: 22px 16px 18px;
+  font:
+    300 18px/24px Google Sans,
+    Helvetica Neue,
+    sans-serif;
+}
+
+.transcript-container.dark-mode {
+  background: #212124;
+}
+
+.transcript-container.dark-mode h3 {
+  background: #3c4043;
+  border-color: #212124;
+  color: rgb(218, 220, 224);
+}
+
+.transcript-container.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: rgb(95, 99, 104);
+}
+
+.agent-assist-transcript {
+  width: 100%;
+  min-height: 160px;
+  max-height: var(--aa-container-height, 530px);
+}
+
+.agent-assist-transcript > * {
+  min-height: 160px;
+  max-height: var(--aa-container-height, 530px);
+}
+
+.agent-assist-transcript .conversation-container {
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+/* Fixes the participant role icon */
+.container .icon-container .role-icon {
+  box-sizing: content-box;
+}
+
+/* Load Error =============================================================== */
+.load-error {
+  border-radius: 4px;
+  border: 1px solid hsl(5, 81%, 75%);
+  background: hsl(5, 81%, 95%);
+  margin: 8px;
+  width: 100%;
+}
+
+.load-error h3,
+.load-error p {
+  color: hsl(5, 81%, 56%);
+  padding: 7px 11px 4px 11px;
+  font:
+    500 16px/22px Google Sans,
+    Helvetica Neue,
+    sans-serif;
+}
+
+.load-error p {
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0 11px 7px 11px;
+}
+
+/* Missing Profile Box */
+.missing-profile-box {
+  background-color: #fef1f1;
+  border: 1px solid #ea001e;
+  border-radius: 6px;
+}
+
+.missing-code {
+  background-color: #fce4e4;
+  color: #ba0517;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.slds-hide {
+  display: none !important;
+}
+
+/* Responsive Breakpoints =================================================== */
+@container (max-width: 600px) {
+  .agent-assist-transcript,
+  .agent-assist-transcript > * {
+    box-sizing: border-box;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .agent-assist-transcript,
+  .agent-assist-transcript > * {
+    box-sizing: border-box;
+  }
+}

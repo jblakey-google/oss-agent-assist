@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Show_Dark_Mode_Toggle__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Enable the dark mode toggle in the UI Module.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Show dark mode toggle button.</inlineHelpText>
+    <label>Show Dark Mode Toggle</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

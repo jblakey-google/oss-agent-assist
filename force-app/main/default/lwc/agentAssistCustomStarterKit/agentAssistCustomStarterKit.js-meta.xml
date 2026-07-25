@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>GCloud Agent Assist Custom Starter Kit</masterLabel>
+    <description>Boilerplate sample LWC demonstrating how to extend Google Cloud Agent Assist for custom chat integrations.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage">
+            <property
+        name="configName"
+        type="String"
+        label="LWC Configuration Profile Name"
+        datasource="apex://AgentAssistConfigPicklist"
+        description="Select an LWC configuration profile managed in the Setup Wizard."
+        default="Default"
+      />
+            <property
+        name="debugMode"
+        type="Boolean"
+        label="Debug Mode"
+        description="Enable verbose console logging for event debugging."
+        default="false"
+      />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
