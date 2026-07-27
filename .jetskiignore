@@ -1,0 +1,44 @@
+# Dependency and Cache Folders (These bog down the agent)
+node_modules/
+.sf/
+.sfdx/
+.localdevserver/
+.pmdCache
+.eslintcache
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Local Env
+.env
+
+# Lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build Outputs & Temp Files
+dist/
+build/
+out/
+tmp/
+.tmp/
+.prettiercache
+
+# Large Static Resources & Bundles
+force-app/main/default/staticresources/ui_modules/
+*.min.js
+*.map
+*.zip

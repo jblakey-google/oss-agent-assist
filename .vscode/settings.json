@@ -4,5 +4,15 @@
     "**/bower_components": true,
     "**/.sf": true,
     "**/.sfdx": true
+  },
+  "files.exclude": {
+    "**/.sf": true,
+    "**/.sfdx": true,
+    "**/.localdevserver": true,
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/.pmdCache": true,
+    "**/.eslintcache": true,
+    "**/*.log": true
   }
 }
