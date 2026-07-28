@@ -1,9 +1,9 @@
 ## Tasks
 
-- [JULES] Validate the Conversation Profile by getting it from the UI Connector. Move this check under the register/ health check.
-- [JULES] Remove Diagnostic Check: Agent Assist Named Credentials 
-- [JULES] Upgrade to Named Credentials, where all they would need to do is toggle the Enabled for Callouts toggle ON.
-- [JULES] Custom Toolkit Connected check is not working: https://screenshot-v2.corp.google.com/3XXnN55ebYtabRt
+- [ ] Validate the Conversation Profile by getting it from the UI Connector. Move this check under the register/ health check.
+- [-] Remove Diagnostic Check: Agent Assist Named Credentials 
+- [ ] Upgrade to Named Credentials, where all they would need to do is toggle the Enabled for Callouts toggle ON.
+- [ ] Custom Toolkit Connected check is not working: https://screenshot-v2.corp.google.com/3XXnN55ebYtabRt
 
 - [ ] UI Detail Pass:
   - [ ] Link styling, external link icon use should be consistent.

@@ -17,6 +17,7 @@
 import { LightningElement, api, wire, track } from "lwc";
 import { loadScript } from "lightning/platformResourceLoader";
 import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getResolvedConfig";
+import { logComponentBadge } from "c/agentAssistLogger";
 
 // Static Resources
 import ui_modules from "@salesforce/resourceUrl/ui_modules";
@@ -192,11 +193,7 @@ export default class AgentAssistTranscript extends LightningElement {
   @api
   debugLog(message) {
     if (this.debugMode) {
-      console.log(
-        `%c[AgentAssistTranscript]%c ${message}`,
-        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-        ""
-      );
+      logComponentBadge("AgentAssistTranscript", message);
     }
   }
 }

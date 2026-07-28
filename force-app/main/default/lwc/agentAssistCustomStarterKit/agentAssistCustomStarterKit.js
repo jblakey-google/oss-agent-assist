@@ -15,6 +15,7 @@
  */
 
 import { LightningElement, api, track } from "lwc";
+import { logComponentBadge } from "c/agentAssistLogger";
 
 /* global dispatchAgentAssistEvent, addAgentAssistEventListener */
 
@@ -56,7 +57,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   }
 
   connectedCallback() {
-    this.log("AgentAssistCustomStarterKit initialized.");
+    this.debugLog("AgentAssistCustomStarterKit initialized.");
     this.checkConnectionStatus();
     this.registerAgentAssistEventListeners();
 
@@ -78,23 +79,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
    * If an active Agent Assist Connector is present, it will respond with conversation-profile-received.
    */
   pingConnector() {
-    const opts = { namespace: this.recordId };
-    if (typeof dispatchAgentAssistEvent === "function") {
-      dispatchAgentAssistEvent("conversation-profile-requested", { detail: {} }, opts);
-    } else if (typeof window !== "undefined" && typeof window.dispatchAgentAssistEvent === "function") {
-      window.dispatchAgentAssistEvent("conversation-profile-requested", { detail: {} }, opts);
-    } else if (
-      typeof window !== "undefined" &&
-      window._uiModuleEventTarget &&
-      typeof window._uiModuleEventTarget.dispatchEvent === "function"
-    ) {
-      const event = new CustomEvent("conversation-profile-requested", {
-        detail: { namespace: this.recordId },
-        bubbles: true,
-        composed: true
-      });
-      window._uiModuleEventTarget.dispatchEvent(event);
-    }
+    this.dispatchCustomEvent("conversation-profile-requested", {});
   }
 
   /**
@@ -102,17 +87,15 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
    */
   checkConnectionStatus() {
     /* eslint-disable @lwc/lwc/no-document-query */
-    const hasContainerElement = !!(
-      document.querySelector("c-agent-assist-container") ||
-      document.querySelector("c-agent-assist-companion-agent") ||
-      document.querySelector("c-agent-assist-transcript") ||
-      (document.getElementsByTagName &&
-        ((document.getElementsByTagName("c-agent-assist-container") &&
-          document.getElementsByTagName("c-agent-assist-container").length > 0) ||
-         (document.getElementsByTagName("c-agent-assist-companion-agent") &&
-          document.getElementsByTagName("c-agent-assist-companion-agent").length > 0) ||
-         (document.getElementsByTagName("c-agent-assist-transcript") &&
-          document.getElementsByTagName("c-agent-assist-transcript").length > 0)))
+    const tags = [
+      "c-agent-assist-container",
+      "c-agent-assist-companion-agent",
+      "c-agent-assist-transcript"
+    ];
+    const hasContainerElement = tags.some(
+      (tag) =>
+        document.querySelector(tag) ||
+        (document.getElementsByTagName && document.getElementsByTagName(tag)?.length > 0)
     );
     /* eslint-enable @lwc/lwc/no-document-query */
 
@@ -165,16 +148,14 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
           ? window.addAgentAssistEventListener
           : null;
 
+    const handleEvent = (evtName, e) => {
+      markConnected();
+      this.debugLog(`📩 EVENT HEARD: '${evtName}'`, e);
+    };
+
     if (addListenerFn) {
       events.forEach((evtName) => {
-        addListenerFn(
-          evtName,
-          (e) => {
-            markConnected();
-            this.log(`📩 EVENT HEARD: '${evtName}'`, e);
-          },
-          { namespace }
-        );
+        addListenerFn(evtName, (e) => handleEvent(evtName, e), { namespace });
       });
     }
 
@@ -184,10 +165,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       typeof window._uiModuleEventTarget.addEventListener === "function"
     ) {
       events.forEach((evtName) => {
-        window._uiModuleEventTarget.addEventListener(evtName, (e) => {
-          markConnected();
-          this.log(`📩 EVENT HEARD (EventTarget): '${evtName}'`, e);
-        });
+        window._uiModuleEventTarget.addEventListener(evtName, (e) => handleEvent(evtName, e));
       });
     }
   }
@@ -200,23 +178,20 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     const fullPayload = { detail: detailData };
     const opts = { namespace: this.recordId };
 
-    if (this.isDebugEnabled) {
-      console.log(
-        `%c[AgentAssistCustomStarterKit]%c 🚀 DISPATCHING EVENT: '${eventName}'`,
-        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-        "",
-        "\nPayload Object:",
-        fullPayload,
-        "\nOptions:",
-        opts
-      );
-    }
+    this.debugLog(
+      `🚀 DISPATCHING EVENT: '${eventName}'`,
+      "\nPayload Object:",
+      fullPayload,
+      "\nOptions:",
+      opts
+    );
 
     if (typeof dispatchAgentAssistEvent === "function") {
       dispatchAgentAssistEvent(eventName, fullPayload, opts);
-    } else if (typeof window.dispatchAgentAssistEvent === "function") {
+    } else if (typeof window !== "undefined" && typeof window.dispatchAgentAssistEvent === "function") {
       window.dispatchAgentAssistEvent(eventName, fullPayload, opts);
     } else if (
+      typeof window !== "undefined" &&
       window._uiModuleEventTarget &&
       typeof window._uiModuleEventTarget.dispatchEvent === "function"
     ) {
@@ -227,42 +202,39 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       });
       window._uiModuleEventTarget.dispatchEvent(event);
     } else {
-      if (this.isDebugEnabled) {
-        console.warn(
-          `%c[AgentAssistCustomStarterKit]%c ⚠️ dispatchAgentAssistEvent function unavailable on page when trying to send '${eventName}'.`,
-          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-          ""
-        );
-      }
+      this.debugLog(
+        `⚠️ dispatchAgentAssistEvent function unavailable on page when trying to send '${eventName}'.`
+      );
     }
+  }
+
+  _sendTurn(text, participantRole, sender, isUser) {
+    if (!text || !text.trim()) return;
+    const cleanText = text.trim();
+
+    this.transcriptLogs = [
+      ...this.transcriptLogs,
+      { id: Date.now(), sender, text: cleanText, isUser }
+    ];
+
+    const convId = `SF-${this.recordId || Date.now()}`;
+    this.dispatchCustomEvent("analyze-content-requested", {
+      conversationId: convId,
+      participantRole,
+      request: {
+        textInput: {
+          text: cleanText,
+          languageCode: "en-US"
+        }
+      }
+    });
   }
 
   /**
    * Sends an END_USER message turn to Agent Assist for real-time analysis.
    */
   handleSendUserMessage() {
-    if (!this.userMessageInput.trim()) return;
-    const text = this.userMessageInput.trim();
-
-    this.transcriptLogs = [
-      ...this.transcriptLogs,
-      { id: Date.now(), sender: "End User", text, isUser: true }
-    ];
-
-    const convId = `SF-${this.recordId || Date.now()}`;
-    const payload = {
-      conversationId: convId,
-      participantRole: "END_USER",
-      request: {
-        textInput: {
-          text: text,
-          languageCode: "en-US"
-        }
-      }
-    };
-
-    this.dispatchCustomEvent("analyze-content-requested", payload);
-
+    this._sendTurn(this.userMessageInput, "END_USER", "End User", true);
     this.userMessageInput = "";
   }
 
@@ -270,28 +242,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
    * Sends a HUMAN_AGENT response message turn to Agent Assist.
    */
   handleSendAgentMessage() {
-    if (!this.agentMessageInput.trim()) return;
-    const text = this.agentMessageInput.trim();
-
-    this.transcriptLogs = [
-      ...this.transcriptLogs,
-      { id: Date.now(), sender: "Human Agent", text, isUser: false }
-    ];
-
-    const convId = `SF-${this.recordId || Date.now()}`;
-    const payload = {
-      conversationId: convId,
-      participantRole: "HUMAN_AGENT",
-      request: {
-        textInput: {
-          text: text,
-          languageCode: "en-US"
-        }
-      }
-    };
-
-    this.dispatchCustomEvent("analyze-content-requested", payload);
-
+    this._sendTurn(this.agentMessageInput, "HUMAN_AGENT", "Human Agent", false);
     this.agentMessageInput = "";
   }
 
@@ -317,33 +268,9 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     }
   }
 
-  debugLog(message) {
+  debugLog(...args) {
     if (this.isDebugEnabled) {
-      console.log(
-        `%c[AgentAssistCustomStarterKit]%c ${message}`,
-        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-        ""
-      );
-    }
-  }
-
-  log(...args) {
-    if (this.isDebugEnabled) {
-      if (typeof args[0] === "string") {
-        console.log(
-          `%c[AgentAssistCustomStarterKit]%c ${args[0]}`,
-          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-          "",
-          ...args.slice(1)
-        );
-      } else {
-        console.log(
-          `%c[AgentAssistCustomStarterKit]%c`,
-          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-          "",
-          ...args
-        );
-      }
+      logComponentBadge("AgentAssistCustomStarterKit", ...args);
     }
   }
 }

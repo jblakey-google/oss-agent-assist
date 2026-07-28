@@ -22,7 +22,6 @@ import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActi
 import getOrgDiagnostics from "@salesforce/apex/AgentAssistConfigController.getOrgDiagnostics";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import deleteConfig from "@salesforce/apex/AgentAssistConfigController.deleteConfig";
-import resetDefaultConfigs from "@salesforce/apex/AgentAssistConfigController.resetDefaultConfigs";
 import resetSingleDefaultConfig from "@salesforce/apex/AgentAssistConfigController.resetSingleDefaultConfig";
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import registerAuthToken from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
@@ -31,317 +30,61 @@ import getUsersWithPermissionSetStatus from "@salesforce/apex/AgentAssistConfigC
 import toggleUserPermissionSetAssignment from "@salesforce/apex/AgentAssistConfigController.toggleUserPermissionSetAssignment";
 import sfAgentAssistIcon from "@salesforce/resourceUrl/sf_agent_assist_icon";
 import platformLogos from "@salesforce/resourceUrl/platform_logos";
-
-const DEFAULT_DIAGNOSTIC_SECTIONS = [
-  {
-    id: "ui_connector",
-    title: "UI Connector & Network Endpoints",
-    subtitle: "Verify HTTPS, WebSocket, and API allowlists in Trusted URLs.",
-    iconName: "utility:connected_apps",
-    statusBadge: "Checking...",
-    badgeVariant: "warning",
-    items: [
-      {
-        id: "check-ui-https",
-        label: "Cloud Run HTTPS Endpoint (cloud_run_https)",
-        subLabel: "Allowlisted in Trusted URLs (https://*.run.app)",
-        status: "pending",
-        errorMessage: "",
-        assignees: []
-      },
-      {
-        id: "check-ui-wss",
-        label: "Cloud Run WebSocket Streaming (cloud_run_wss)",
-        subLabel: "Allowlisted in Trusted URLs (wss://*.run.app)",
-        status: "pending",
-        errorMessage: "",
-        assignees: []
-      },
-      {
-        id: "check-ui-gapi",
-        label: "Google Cloud APIs Allowlist (googleapi)",
-        subLabel: "Allowlisted in Trusted URLs (https://*.googleapis.com)",
-        status: "pending",
-        errorMessage: "",
-        assignees: []
-      },
-      {
-        id: "check-ui-gstatic",
-        label: "Google Static UI Module CDN (gstatic)",
-        subLabel: "Allowlisted in Trusted URLs (https://www.gstatic.com)",
-        status: "pending",
-        errorMessage: "",
-        assignees: []
-      },
-      {
-        id: "check-ui-twilio",
-        label: "Twilio Flex Integration Allowlist (twilio_flex)",
-        subLabel: "Allowlisted in Trusted URLs (https://flex.twilio.com)",
-        status: "pending",
-        errorMessage: "",
-        assignees: []
-      }
-    ]
-  },
-  {
-    id: "auth_tokens",
-    title: "Authentication & Security Tokens",
-    subtitle:
-      "Enumerate administrator and agent permission sets and user assignees.",
-    iconName: "utility:key",
-    statusBadge: "Checking...",
-    badgeVariant: "warning",
-    setupUrl: "/lightning/setup/PermSets/home",
-    setupUrlLabel: "Permission Sets",
-    items: [
-      {
-        id: "check-perm-admin",
-        label: "Agent Assist Administrator (Agent_Assist_Admin)",
-        subLabel: "Administrative permission set deployed in org metadata.",
-        status: "pending",
-        errorMessage: "",
-        totalCount: 0,
-        assignees: []
-      },
-      {
-        id: "check-perm-user",
-        label: "Google Cloud Agent Assist User (Agent_Assist_User)",
-        subLabel: "Agent user permission set deployed.",
-        status: "pending",
-        errorMessage: "",
-        totalCount: 0,
-        assignees: []
-      },
-      {
-        id: "check-named-credentials",
-        label: "Agent Assist Named Credentials (Agent_Assist_*)",
-        subLabel: "Named Credentials for secure callout authentication.",
-        status: "pending",
-        errorMessage: "",
-        totalCount: 0,
-        assignees: []
-      }
-    ]
-  },
-  {
-    id: "static_resources",
-    title: "Static Resources & UI Module Bundles",
-    subtitle:
-      "Verify static resource packages for container, transcript, and asset bundles.",
-    iconName: "utility:file",
-    statusBadge: "Checking...",
-    badgeVariant: "warning",
-    setupUrl: "/lightning/setup/StaticResources/home",
-    setupUrlLabel: "Static Resources",
-    items: [
-      {
-        id: "check-sr-modules",
-        label: "UI Modules Bundle (ui_modules.zip)",
-        subLabel:
-          "Verified JavaScript bundle (container.js, transcript.js, common.js, companion_agent.js).",
-        status: "pending",
-        errorMessage: "",
-        setupUrl: "/lightning/setup/StaticResources/home",
-        assignees: []
-      }
-    ]
-  },
-  {
-    id: "omnichannel",
-    title: "Omni-Channel Presence & Routing",
-    subtitle:
-      "Presence statuses and queue routing configurations for agent dispatch.",
-    iconName: "utility:user",
-    statusBadge: "Checking...",
-    badgeVariant: "warning",
-    setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
-    setupUrlLabel: "Omni-Channel",
-    items: [
-      {
-        id: "check-presence-messaging",
-        label: "Online Messaging Status (Online_Messaging)",
-        subLabel: "Deployed Omni-Channel presence status active in org.",
-        status: "pending",
-        errorMessage: "",
-        setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
-        assignees: []
-      },
-      {
-        id: "check-presence-busy",
-        label: "Busy Presence Status (Busy)",
-        subLabel: "Deployed Omni-Channel presence status active in org.",
-        status: "pending",
-        errorMessage: "",
-        setupUrl: "/lightning/setup/ServicePresenceStatusSettings/home",
-        assignees: []
-      },
-      {
-        id: "check-qrc-messaging",
-        label: "Messaging Routing Config (Messaging_Routing_Configuration)",
-        subLabel: "Deployed Omni-Channel routing configuration active.",
-        status: "pending",
-        errorMessage: "",
-        setupUrl: "/lightning/setup/QueueRoutingConfigSettings/home",
-        assignees: []
-      },
-      {
-        id: "check-queues-messaging",
-        label: "Messaging Queue (Messaging_Queue)",
-        subLabel: "Deployed Omni-Channel messaging queue active in org.",
-        status: "pending",
-        errorMessage: "",
-        setupUrl: "/lightning/setup/Queues/home",
-        assignees: []
-      }
-    ]
-  },
-  {
-    id: "schema",
-    title: "Custom Metadata Objects & Schemas",
-    subtitle:
-      "Agent_Assist_Config__c database storage and active profile records.",
-    iconName: "utility:database",
-    statusBadge: "Checking...",
-    badgeVariant: "warning",
-    items: [
-      {
-        id: "check-db-schema",
-        label: "Agent_Assist_Config__c Custom Object",
-        subLabel: "Active database schema supporting configuration profiles.",
-        status: "pending",
-        errorMessage: "",
-        assignees: []
-      }
-    ]
-  },
-  {
-    id: "installed_packages",
-    title: "Installed Contact Center (CX) Packages",
-    subtitle:
-      "Checks for required third-party telephony/CTI packages in Salesforce.",
-    iconName: "utility:package",
-    statusBadge: "Checking...",
-    badgeVariant: "warning",
-    setupUrl: "/lightning/setup/ImportedPackage/home",
-    setupUrlLabel: "Packages",
-    items: [
-      {
-        id: "check-pkg-five9",
-        label: "Salesforce voice integration with Five9 (Five9 Fusion)",
-        subLabel: "Package Five9 Fusion (04tTN000000C1rZYAS)",
-        status: "pending",
-        errorMessage: "",
-        setupUrl:
-          "https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GuYVdUAN"
-      },
-      {
-        id: "check-pkg-twilio",
-        label:
-          "Salesforce voice integration with Twilio Flex (Twilio Flex CTI)",
-        subLabel: "Package Twilio Flex CTI (04t8Z0000012JNXQA2)",
-        status: "pending",
-        errorMessage: "",
-        setupUrl:
-          "https://appexchange.salesforce.com/appxListingDetail?listingId=175e1542-c700-459c-8f9b-6fcb1bce7a14"
-      },
-      {
-        id: "check-pkg-nice",
-        label: "Salesforce voice integration with NICE CXone (NICE CXone)",
-        subLabel: "Package NICE CXone (04tUi000000L76XIAS)",
-        status: "pending",
-        errorMessage: "",
-        setupUrl:
-          "https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GZ7AuUAL"
-      },
-      {
-        id: "check-pkg-genesys",
-        label:
-          "Salesforce voice integration with Genesys Cloud CX (Genesys Cloud CX)",
-        subLabel: "Package Genesys Cloud CX (04tQp000000ngyzIAA)",
-        status: "pending",
-        errorMessage: "",
-        setupUrl:
-          "https://appexchange.salesforce.com/appxListingDetail?listingId=7f59a36f-86c0-4cac-b8af-2c1722ede4d1"
-      }
-    ]
-  }
-];
-
-const CHAT_PLATFORM_OPTIONS = [
-  { label: "Base Platform (Direct API Connector)", value: "base" },
-  { label: "Salesforce chat integration", value: "messaging" }
-];
-
-const VOICE_PLATFORM_OPTIONS = [
-  {
-    label: "Salesforce voice integration with Twilio Flex",
-    value: "twilioflex"
-  },
-  {
-    label: "Salesforce voice integration with NICE CXone",
-    value: "servicecloudvoice-nice"
-  },
-  {
-    label: "Salesforce voice integration with Five9",
-    value: "servicecloudvoice-byot-five9"
-  }
-];
-
-const INITIAL_PROFILES = [
-  {
-    id: "mock-1",
-    name: "Default Profile",
-    developerName: "Default",
-    profileType: "Container",
-    title: "Google Cloud Agent Assist",
-    endpointUrl: "https://ui-connector-{id}.{region}.run.app",
-    conversationProfile:
-      "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
-    channel: "chat",
-    platform: "base",
-    consumerKey: "",
-    consumerSecret: "",
-    clientCredentialsUser: "",
-    containerHeight: "530px",
-    debugMode: true,
-    showDarkModeToggle: true,
-    showHeader: false,
-    showCorrectnessFeedback: false,
-    disableIntegratedTranscript: false,
-    modelName: "gemini-1.5-pro",
-    welcomeMessage: "Hello! I am your AI Companion Agent.",
-    enableAutonomousActions: true,
-    isActive: true
-  },
-  {
-    id: "mock-2",
-    name: "Default Companion Agent",
-    developerName: "Default_Companion",
-    profileType: "Companion Agent",
-    title: "Google Cloud Companion Agent",
-    endpointUrl: "https://ui-connector-{id}.{region}.run.app",
-    conversationProfile:
-      "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
-    channel: "chat",
-    platform: "base",
-    consumerKey: "",
-    consumerSecret: "",
-    clientCredentialsUser: "",
-    containerHeight: "530px",
-    debugMode: true,
-    showDarkModeToggle: true,
-    showHeader: false,
-    showCorrectnessFeedback: false,
-    disableIntegratedTranscript: false,
-    modelName: "gemini-1.5-pro",
-    welcomeMessage:
-      "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
-    enableAutonomousActions: true,
-    isActive: true
-  }
-];
+import {
+  DEFAULT_DIAGNOSTIC_SECTIONS,
+  CHAT_PLATFORM_OPTIONS,
+  VOICE_PLATFORM_OPTIONS,
+  CHANNEL_OPTIONS,
+  INITIAL_PROFILES,
+  PERMISSION_SET_OPTIONS,
+  PERMISSION_SET_CONFIG,
+  STATUS_PILL_CLASSES,
+  STATUS_LED_CLASSES,
+  STATUS_ICONS,
+  STATUS_LABELS
+} from "./constants";
+import {
+  isValidEndpointUrl,
+  checkBrowserFetchHealth,
+  formatEndpointStatusResult,
+  formatRegisterTokenResult,
+  performEndpointHealthCheck,
+  performRegisterEndpointHealthCheck,
+  validateRegisterPrerequisites
+} from "./healthCheckService";
+import { evaluateDiagnosticsSuite } from "./diagnosticsService";
+import { logComponentBadge, logDiagnostic } from "c/agentAssistLogger";
+import {
+  createNewProfileTemplate,
+  switchProfileType,
+  buildConfigRecordPayload,
+  saveProfileService,
+  saveAsCopyProfileService,
+  deleteProfileService,
+  resetProfileService,
+  updateProfileInList,
+  removeProfileFromList
+} from "./profileService";
+import {
+  filterAndSortUsers,
+  processAgentUsersData,
+  calculateUserAssignmentStatus,
+  toggleUserPermissionService,
+  formatSelectedUserUI
+} from "./userPermissionService";
+import {
+  formatSimulatorProfileOptions,
+  getActiveSimulatorProfile,
+  extractConversationIdFromEvent,
+  resolveConversationId,
+  buildSimulatedMessagePayload,
+  dispatchSimulatedMessage
+} from "./simulatorService";
 
 export default class AgentAssistSetupWizard extends LightningElement {
+  // ===========================================================================
+  // 1. CLASS PROPERTIES & STATIC RESOURCES
+  // ===========================================================================
   appIcon = sfAgentAssistIcon;
 
   get salesforceLogoUrl() {
@@ -394,9 +137,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track packageAlertsDisabled =
     localStorage.getItem("agent_assist_package_alerts_disabled") === "true";
 
+  // ===========================================================================
+  // 2. PACKAGE INSTALLATION & ALERT SETTINGS
+  // ===========================================================================
   async togglePackageAlerts() {
     this.packageAlertsDisabled = !this.packageAlertsDisabled;
-    localStorage.setItem(
+    this.saveToStorage(
       "agent_assist_package_alerts_disabled",
       this.packageAlertsDisabled ? "true" : "false"
     );
@@ -447,70 +193,95 @@ export default class AgentAssistSetupWizard extends LightningElement {
     return !!this.packageStatus?.["04tQp000000ngyzIAA"];
   }
 
+  // ===========================================================================
+  // 3. EVENT LISTENERS & CONVERSATION HANDLERS
+  // ===========================================================================
   handleConversationEvent = (event) => {
-    if (event?.detail?.conversationName) {
-      this.simulatorConversationName = event.detail.conversationName;
-      const parts = event.detail.conversationName.split("/");
-      this.simulatorConversationId = parts[parts.length - 1];
-    } else if (event?.detail?.conversationId) {
-      this.simulatorConversationId = event.detail.conversationId;
+    const extracted = extractConversationIdFromEvent(event);
+    if (extracted.conversationName !== null) {
+      this.simulatorConversationName = extracted.conversationName;
+    }
+    if (extracted.conversationId !== null) {
+      this.simulatorConversationId = extracted.conversationId;
     }
   };
 
   hasInitializedTab = false;
   isTabsetInitialized = false;
 
+  // ===========================================================================
+  // 4. STORAGE PERSISTENCE, DEBUG LOGGING & TOAST HELPERS
+  // ===========================================================================
   get debugMode() {
     return true;
   }
 
   debugLog(message, ...extra) {
     if (this.debugMode) {
-      if (typeof message === "string" && message.startsWith("%c")) {
-        console.log(message, ...extra);
-      } else {
-        console.log(
-          `%c[AgentAssistSetupWizard]%c ${message}`,
-          "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
-          "",
-          ...extra
-        );
-      }
+      logComponentBadge("AgentAssistSetupWizard", message, ...extra);
     }
   }
 
+  showToast(title, message, variant = "info") {
+    this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
+  }
+
+  showErrorToast(title, error) {
+    const message = error?.body?.message || error?.message || String(error);
+    this.showToast(title, message, "error");
+  }
+
+  debugGroup(label, ...extra) {
+    if (this.debugMode) console.group(label, ...extra);
+  }
+
+  debugGroupEnd() {
+    if (this.debugMode) console.groupEnd();
+  }
+
+  getFromStorage(key) {
+    try {
+      const val = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (val && val !== "undefined" && val !== "null") {
+        return val;
+      }
+    } catch (e) {
+      console.error(`[SetupWizard] Error reading ${key} from storage:`, e);
+    }
+    return null;
+  }
+
+  saveToStorage(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      sessionStorage.setItem(key, value);
+    } catch (e) {
+      console.error(`[SetupWizard] Error storing ${key} in storage:`, e);
+    }
+  }
+
+  restorePersistedState(source) {
+    const savedTab = this.getFromStorage("agent_assist_setup_active_tab");
+    this.debugLog(`${source} - Restoring active tab from storage:`, savedTab);
+    if (savedTab) {
+      this.activeTab = savedTab;
+    }
+    const savedProfile = this.getFromStorage(
+      "agent_assist_setup_selected_profile"
+    );
+    if (savedProfile) {
+      this.selectedDevName = savedProfile;
+      this.simulatorProfileDevName = savedProfile;
+    }
+  }
+
+  // ===========================================================================
+  // 5. COMPONENT LIFECYCLE METHODS
+  // ===========================================================================
   renderedCallback() {
     if (!this.hasInitializedTab) {
       this.hasInitializedTab = true;
-      try {
-        const savedTab =
-          localStorage.getItem("agent_assist_setup_active_tab") ||
-          sessionStorage.getItem("agent_assist_setup_active_tab");
-        this.debugLog(
-          "renderedCallback - Restoring active tab from storage:",
-          savedTab
-        );
-        if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
-          this.activeTab = savedTab;
-        }
-
-        const savedProfile =
-          localStorage.getItem("agent_assist_setup_selected_profile") ||
-          sessionStorage.getItem("agent_assist_setup_selected_profile");
-        if (
-          savedProfile &&
-          savedProfile !== "undefined" &&
-          savedProfile !== "null"
-        ) {
-          this.selectedDevName = savedProfile;
-          this.simulatorProfileDevName = savedProfile;
-        }
-      } catch (e) {
-        console.error(
-          "[SetupWizard] renderedCallback - Error reading saved storage:",
-          e
-        );
-      }
+      this.restorePersistedState("renderedCallback");
       // eslint-disable-next-line @lwc/lwc/no-async-operation
       setTimeout(() => {
         this.isTabsetInitialized = true;
@@ -523,35 +294,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   connectedCallback() {
-    try {
-      const savedTab =
-        localStorage.getItem("agent_assist_setup_active_tab") ||
-        sessionStorage.getItem("agent_assist_setup_active_tab");
-      this.debugLog(
-        "connectedCallback - Read active tab from storage:",
-        savedTab
-      );
-      if (savedTab && savedTab !== "undefined" && savedTab !== "null") {
-        this.activeTab = savedTab;
-      }
-
-      const savedProfile =
-        localStorage.getItem("agent_assist_setup_selected_profile") ||
-        sessionStorage.getItem("agent_assist_setup_selected_profile");
-      if (
-        savedProfile &&
-        savedProfile !== "undefined" &&
-        savedProfile !== "null"
-      ) {
-        this.selectedDevName = savedProfile;
-        this.simulatorProfileDevName = savedProfile;
-      }
-    } catch (e) {
-      console.error(
-        "[SetupWizard] connectedCallback - Error reading saved storage:",
-        e
-      );
-    }
+    this.restorePersistedState("connectedCallback");
     window.addEventListener(
       "active-conversation-selected",
       this.handleConversationEvent
@@ -566,6 +309,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.loadAgentUsers();
   }
 
+  // ===========================================================================
+  // 6. TAB: USERS & PERMISSION SET ASSIGNMENT
+  // ===========================================================================
   @track agentUsersList = [];
   @track selectedAgentUserId = "";
   @track isSelectedUserAssigned = false;
@@ -574,40 +320,21 @@ export default class AgentAssistSetupWizard extends LightningElement {
   @track userSearchTerm = "";
 
   get permissionSetOptions() {
-    return [
-      {
-        label: "Google Cloud Agent Assist User (Agent_Assist_User)",
-        value: "Agent_Assist_User"
-      },
-      {
-        label: "Google Cloud Agent Assist Administrator (Agent_Assist_Admin)",
-        value: "Agent_Assist_Admin"
-      },
-      {
-        label: "Google Cloud Agent Assist Messaging User (Agent_Assist_Messaging_User)",
-        value: "Agent_Assist_Messaging_User"
-      }
-    ];
+    return PERMISSION_SET_OPTIONS;
   }
 
   get selectedPermissionSetLabel() {
-    if (this.selectedPermissionSetName === "Agent_Assist_Admin") {
-      return "Google Cloud Agent Assist Administrator";
-    }
-    if (this.selectedPermissionSetName === "Agent_Assist_Messaging_User") {
-      return "Google Cloud Agent Assist Messaging User";
-    }
-    return "Google Cloud Agent Assist User";
+    return (
+      PERMISSION_SET_CONFIG[this.selectedPermissionSetName]?.label ||
+      "Google Cloud Agent Assist User"
+    );
   }
 
   get selectedPermissionSetDescription() {
-    if (this.selectedPermissionSetName === "Agent_Assist_Admin") {
-      return "Grants full administrative privileges to configure LWC profiles, manage settings, and access the Integration Setup Wizard in Salesforce.";
-    }
-    if (this.selectedPermissionSetName === "Agent_Assist_Messaging_User") {
-      return "Grants messaging users access to Enhanced Chat and messaging channel events for Agent Assist integration.";
-    }
-    return "Grants contact center agents access to Google Cloud Agent Assist and Companion Agent LWC components in Salesforce.";
+    return (
+      PERMISSION_SET_CONFIG[this.selectedPermissionSetName]?.description ||
+      ""
+    );
   }
 
   get assignedUsersEmptyMessage() {
@@ -619,53 +346,31 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   get filteredUsersList() {
-    const term = (this.userSearchTerm || "").toLowerCase().trim();
-    const users = term
-      ? this.agentUsersList.filter((u) => u.label.toLowerCase().includes(term))
-      : [...this.agentUsersList];
-
-    // Sort assigned users to the top, then alphabetically by name
-    users.sort((a, b) => {
-      if (a.isAssigned !== b.isAssigned) {
-        return a.isAssigned ? -1 : 1;
-      }
-      return a.label.localeCompare(b.label);
-    });
-
-    return users.map((u) => ({
-      ...u,
-      badgeClass: u.isAssigned
-        ? "slds-badge slds-theme_success"
-        : "slds-badge slds-badge_inverse",
-      statusText: u.isAssigned ? "Assigned" : "Not Assigned",
-      buttonLabel: u.isAssigned ? "Remove" : "Assign",
-      buttonVariant: u.isAssigned ? "destructive-text" : "brand",
-      buttonIcon: u.isAssigned ? "utility:close" : "utility:add"
-    }));
+    return filterAndSortUsers(this.agentUsersList, this.userSearchTerm);
   }
 
   get hasFilteredUsers() {
     return this.filteredUsersList.length > 0;
   }
 
+  get _selectedUserUI() {
+    return formatSelectedUserUI(this.isSelectedUserAssigned);
+  }
+
   get selectedUserBadgeClass() {
-    return this.isSelectedUserAssigned
-      ? "slds-badge slds-theme_success"
-      : "slds-badge slds-badge_inverse";
+    return this._selectedUserUI.badgeClass;
   }
 
   get selectedUserStatusText() {
-    return this.isSelectedUserAssigned ? "Assigned" : "Not Assigned";
+    return this._selectedUserUI.statusText;
   }
 
   get userAssignButtonLabel() {
-    return this.isSelectedUserAssigned
-      ? "Remove Permission Set"
-      : "Assign Permission Set";
+    return this._selectedUserUI.buttonLabel;
   }
 
   get userAssignButtonVariant() {
-    return this.isSelectedUserAssigned ? "destructive" : "brand";
+    return this._selectedUserUI.buttonVariant;
   }
 
   get isIntegratedTranscriptActive() {
@@ -673,7 +378,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   get userAssignButtonIcon() {
-    return this.isSelectedUserAssigned ? "utility:close" : "utility:add";
+    return this._selectedUserUI.buttonIcon;
   }
 
   get isAssignUserDisabled() {
@@ -702,16 +407,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
       const data = await getUsersWithPermissionSetStatus({
         permissionSetName: this.selectedPermissionSetName
       });
-      if (data && data.length > 0) {
-        this.agentUsersList = data;
-        if (!this.selectedAgentUserId) {
-          this.selectedAgentUserId = data[0].value;
-        }
-        this.updateSelectedUserStatus();
-      } else {
-        this.agentUsersList = [];
-        this.updateSelectedUserStatus();
-      }
+      const res = processAgentUsersData(data, this.selectedAgentUserId);
+      this.agentUsersList = res.usersList;
+      this.selectedAgentUserId = res.selectedUserId;
+      this.updateSelectedUserStatus();
     } catch {
       // Ignore fetch error
     }
@@ -723,84 +422,65 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   updateSelectedUserStatus() {
-    const found = this.agentUsersList.find(
-      (u) => u.value === this.selectedAgentUserId
+    this.isSelectedUserAssigned = calculateUserAssignmentStatus(
+      this.agentUsersList,
+      this.selectedAgentUserId
     );
-    this.isSelectedUserAssigned = found ? found.isAssigned : false;
   }
 
-  async handleAssignUserPermissionSet() {
-    if (!this.selectedAgentUserId) return;
+  async modifyUserPermissionSetAssignment(
+    userId,
+    assign,
+    successMessage,
+    errorTitle = "Error Managing Permission Set"
+  ) {
     this.isUserPermissionLoading = true;
-    const shouldAssign = !this.isSelectedUserAssigned;
     try {
-      await toggleUserPermissionSetAssignment({
-        userId: this.selectedAgentUserId,
-        assign: shouldAssign,
-        permissionSetName: this.selectedPermissionSetName
-      });
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Success",
-          message: `Permission set ${this.selectedPermissionSetLabel} (${
-            shouldAssign ? "assigned to" : "removed from"
-          }) user.`,
-          variant: "success"
-        })
+      await toggleUserPermissionService(
+        {
+          userId,
+          assign,
+          permissionSetName: this.selectedPermissionSetName
+        },
+        toggleUserPermissionSetAssignment
       );
+      this.showToast("Success", successMessage, "success");
       await this.loadAgentUsers();
       if (this.wiredDiagnosticsResult) {
         refreshApex(this.wiredDiagnosticsResult);
       }
     } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Managing Permission Set",
-          message: error?.body?.message || error?.message || "Operation failed",
-          variant: "error"
-        })
-      );
+      this.showErrorToast(errorTitle, error);
     } finally {
       this.isUserPermissionLoading = false;
     }
+  }
+
+  async handleAssignUserPermissionSet() {
+    if (!this.selectedAgentUserId) return;
+    const shouldAssign = !this.isSelectedUserAssigned;
+    const message = `Permission set ${this.selectedPermissionSetLabel} (${
+      shouldAssign ? "assigned to" : "removed from"
+    }) user.`;
+    await this.modifyUserPermissionSetAssignment(
+      this.selectedAgentUserId,
+      shouldAssign,
+      message
+    );
   }
 
   async handleToggleUserInline(event) {
     const userId = event.currentTarget?.dataset?.userId;
     const isAssigned = event.currentTarget?.dataset?.assigned === "true";
     if (!userId) return;
-
-    this.isUserPermissionLoading = true;
-    try {
-      await toggleUserPermissionSetAssignment({
-        userId: userId,
-        assign: !isAssigned,
-        permissionSetName: this.selectedPermissionSetName
-      });
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Success",
-          message: `Permission set ${this.selectedPermissionSetLabel} ${
-            !isAssigned ? "assigned to" : "removed from"
-          } user.`,
-          variant: "success"
-        })
-      );
-      await this.loadAgentUsers();
-      if (this.wiredDiagnosticsResult) {
-        refreshApex(this.wiredDiagnosticsResult);
-      }
-    } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Managing Permission Set",
-          message: error?.body?.message || error?.message || "Operation failed",
-          variant: "error"
-        })
-      );
-    } finally {
-      this.isUserPermissionLoading = false;
-    }
+    const message = `Permission set ${this.selectedPermissionSetLabel} ${
+      !isAssigned ? "assigned to" : "removed from"
+    } user.`;
+    await this.modifyUserPermissionSetAssignment(
+      userId,
+      !isAssigned,
+      message
+    );
   }
 
   async handleQuickRemoveUserPermissionSet(event) {
@@ -809,37 +489,18 @@ export default class AgentAssistSetupWizard extends LightningElement {
       event.target?.name ||
       event.currentTarget?.dataset?.userId;
     if (!userId) return;
-    this.isUserPermissionLoading = true;
-    try {
-      await toggleUserPermissionSetAssignment({
-        userId: userId,
-        assign: false,
-        permissionSetName: this.selectedPermissionSetName
-      });
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Success",
-          message: `Permission set ${this.selectedPermissionSetLabel} removed.`,
-          variant: "success"
-        })
-      );
-      await this.loadAgentUsers();
-      if (this.wiredDiagnosticsResult) {
-        refreshApex(this.wiredDiagnosticsResult);
-      }
-    } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Removing Permission Set",
-          message: error?.body?.message || error?.message || "Operation failed",
-          variant: "error"
-        })
-      );
-    } finally {
-      this.isUserPermissionLoading = false;
-    }
+    const message = `Permission set ${this.selectedPermissionSetLabel} removed.`;
+    await this.modifyUserPermissionSetAssignment(
+      userId,
+      false,
+      message,
+      "Error Removing Permission Set"
+    );
   }
 
+  // ===========================================================================
+  // 8. DISCONNECTED CALLBACK & DIAGNOSTICS INIT
+  // ===========================================================================
   disconnectedCallback() {
     window.removeEventListener(
       "active-conversation-selected",
@@ -874,6 +535,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }));
   }
 
+  // ===========================================================================
+  // 9. TAB: INTEGRATION DIAGNOSTICS & MONITORING
+  // ===========================================================================
   @wire(getOrgDiagnostics)
   wiredDiagnostics(result) {
     this.wiredDiagnosticsResult = result;
@@ -887,214 +551,17 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   processDiagnosticsData(data, isManualRun = false, queryError = null) {
-    if (this.debugMode) {
-      console.log(
-        "%c[AgentAssist Diagnostics] ========================================================",
-        "color: #0176d3; font-weight: bold; font-size: 14px;"
-      );
-      console.log(
-        `%c[AgentAssist Diagnostics] 🚀 ${isManualRun ? "Manual Refresh" : "Live Evaluation"} - Running Diagnostic Instrument Suite...`,
-        "color: #0176d3; font-weight: bold; font-size: 13px;"
-      );
-      console.log(
-        "%c[AgentAssist Diagnostics] ⏱️ Timestamp: " +
-          new Date().toLocaleString(),
-        "color: #54698d; font-size: 11px;"
-      );
-    }
-
-    if (queryError && this.debugMode) {
-      console.error(
-        "%c[AgentAssist Diagnostics] 💥 Apex Diagnostic Controller Error: " +
-          (queryError.body ? queryError.body.message : queryError.message),
-        "color: #ea001e; font-weight: bold;"
-      );
-    }
-
-    const rawSections = data?.sections || DEFAULT_DIAGNOSTIC_SECTIONS;
-    let totalPass = 0;
-    let totalFail = 0;
-    let totalWarn = 0;
-
-    this.diagnosticSections = rawSections.map((sec) => {
-      const defaultSec = DEFAULT_DIAGNOSTIC_SECTIONS.find(
-        (d) => d.id === sec.id
-      );
-      const setupUrl = sec.setupUrl || defaultSec?.setupUrl || "";
-      const setupUrlLabel =
-        sec.setupUrlLabel || defaultSec?.setupUrlLabel || "";
-
-      if (this.debugMode) {
-        console.group(
-          `%c🔍 [Instrument Section] ${sec.title}`,
-          "color: #0176d3; font-weight: bold;"
-        );
-      }
-
-      const isPackageSection = sec.id === "installed_packages";
-      const hasAtLeastOnePackage =
-        isPackageSection &&
-        (sec.items || []).some((i) => i.status === "pass" || i.status === "ok");
-
-      const items = (sec.items || []).map((item) => {
-        let status = item.status;
-        if (queryError) status = "fail";
-
-        let statusPillClass = "status-pill status-pill_pass";
-        let ledClass = "status-led status-led_pass";
-        let statusLabel = "OK";
-        const isFail = status === "fail";
-        let isWarn = status === "warning";
-        const isPending = status === "pending";
-
-        const isPass = status === "pass" || (!isFail && !isWarn && !isPending);
-
-        if (isFail) {
-          totalFail++;
-          statusPillClass = "status-pill status-pill_fail";
-          ledClass = "status-led status-led_fail";
-          statusLabel = "Fail";
-          if (this.debugMode) {
-            console.error(
-              `%c❌ [FAIL] ${item.label}\n   └─ Reason: ${item.errorMessage || item.subLabel || "Check failed in org metadata."}`,
-              "color: #ea001e; font-weight: bold;"
-            );
-          }
-        } else if (isWarn) {
-          if (
-            !isPackageSection ||
-            (!hasAtLeastOnePackage && !this.packageAlertsDisabled)
-          ) {
-            totalWarn++;
-          }
-          statusPillClass = "status-pill status-pill_warn";
-          ledClass = "status-led status-led_warn";
-          statusLabel = "Attention Needed";
-          if (this.debugMode) {
-            console.warn(
-              `%c⚠️ [WARN] ${item.label}\n   └─ Note: ${item.errorMessage || item.subLabel}`,
-              "color: #fe9339; font-weight: bold;"
-            );
-          }
-        } else if (isPending) {
-          statusPillClass = "status-pill status-pill_pending";
-          ledClass = "status-led status-led_pending";
-          statusLabel = "Checking...";
-          if (this.debugMode) {
-            console.log(`%c⏳ [CHECKING] ${item.label}...`, "color: #eab308;");
-          }
-        } else {
-          totalPass++;
-          statusPillClass = "status-pill status-pill_pass";
-          ledClass = "status-led status-led_pass";
-          statusLabel = "OK";
-          if (this.debugMode) {
-            console.log(
-              `%c✅ [OK] ${item.label} ─ ${item.subLabel}`,
-              "color: #2e844a; font-weight: bold;"
-            );
-            if (item.assignees && item.assignees.length > 0) {
-              console.log("   └─ Active Assignees:", item.assignees.join(", "));
-            }
-          }
-        }
-
-        const totalCount =
-          item.totalCount || (item.assignees ? item.assignees.length : 0);
-        const hasAssignees = item.assignees && item.assignees.length > 0;
-        const hasMore =
-          totalCount > (item.assignees ? item.assignees.length : 0);
-        const moreCount =
-          totalCount - (item.assignees ? item.assignees.length : 0);
-        const countBadgeText = totalCount > 0 ? `${totalCount} Total` : "";
-        const itemSetupUrl = item.setupUrl || setupUrl || "";
-
-        return {
-          ...item,
-          statusPillClass,
-          ledClass,
-          statusLabel,
-          isFail,
-          isWarn,
-          isPass,
-          isPending,
-          hasAssignees,
-          hasMore,
-          moreCount,
-          countBadgeText,
-          setupUrl: itemSetupUrl
-        };
-      });
-
-      if (this.debugMode) {
-        console.groupEnd();
-      }
-
-      const secHasFail = items.some((i) => i.isFail);
-      const secHasWarn = items.some((i) => i.isWarn);
-      const secHasPending = items.some((i) => i.isPending);
-      const secPassCount = items.filter((i) => i.isPass).length;
-      const secTotalCount = items.length;
-
-      let secPillClass = "status-pill status-pill_pass";
-      let secStatusText = "OK";
-      let secLedClass = "status-led status-led_pass";
-
-      if (secHasFail) {
-        secPillClass = "status-pill status-pill_fail";
-        secStatusText = "Action Required";
-        secLedClass = "status-led status-led_fail";
-      } else if (
-        secHasWarn &&
-        !hasAtLeastOnePackage &&
-        !this.packageAlertsDisabled
-      ) {
-        secPillClass = "status-pill status-pill_warn";
-        secStatusText = "Attention Needed";
-        secLedClass = "status-led status-led_warn";
-      } else if (secHasPending) {
-        secPillClass = "status-pill status-pill_pending";
-        secStatusText = "Checking...";
-        secLedClass = "status-led status-led_pending";
-      }
-
-      const summaryMetricText = isPackageSection
-        ? `${secPassCount} of ${secTotalCount} Installed`
-        : secHasPending
-          ? "Evaluating..."
-          : `${secPassCount} of ${secTotalCount} OK`;
-
-      return {
-        ...sec,
-        setupUrl,
-        setupUrlLabel,
-        secPillClass,
-        secStatusText,
-        secLedClass,
-        summaryMetricText,
-        isPackageSection,
-        items
-      };
+    const result = evaluateDiagnosticsSuite(data, {
+      isManualRun,
+      queryError,
+      debugMode: this.debugMode,
+      packageAlertsDisabled: this.packageAlertsDisabled,
+      defaultSections: DEFAULT_DIAGNOSTIC_SECTIONS,
+      debugGroup: (label, ...extra) => this.debugGroup(label, ...extra),
+      debugGroupEnd: () => this.debugGroupEnd()
     });
-
-    if (this.debugMode) {
-      console.log(
-        `%c[AgentAssist Diagnostics] 🏁 Diagnostic Suite Summary: ${totalPass} Checks OK | ${totalFail} Failed | ${totalWarn} Warnings`,
-        `color: ${totalFail > 0 ? "#ea001e" : "#2e844a"}; font-weight: bold; font-size: 13px;`
-      );
-      console.log(
-        "%c[AgentAssist Diagnostics] ========================================================",
-        "color: #0176d3; font-weight: bold; font-size: 14px;"
-      );
-    }
-
-    if (totalFail > 0) {
-      this.diagnosticsState = "error";
-    } else if (totalWarn > 0) {
-      this.diagnosticsState = "warning";
-    } else {
-      this.diagnosticsState = "healthy";
-    }
+    this.diagnosticSections = result.sections;
+    this.diagnosticsState = result.state;
   }
 
   get diagnosticsTabLabel() {
@@ -1102,43 +569,23 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   get diagnosticsTabIcon() {
-    if (this.diagnosticsState === "pending") return "utility:sync";
-    if (this.diagnosticsState === "error") return "utility:error";
-    if (this.diagnosticsState === "warning") return "utility:warning";
-    return "utility:success";
+    return STATUS_ICONS[this.diagnosticsState] || STATUS_ICONS.pass;
   }
 
   get masterStatusLedClass() {
-    if (this.diagnosticsState === "pending")
-      return "status-led status-led_pending";
-    if (this.diagnosticsState === "error") return "status-led status-led_fail";
-    if (this.diagnosticsState === "warning")
-      return "status-led status-led_warn";
-    return "status-led status-led_pass";
+    return STATUS_LED_CLASSES[this.diagnosticsState] || STATUS_LED_CLASSES.pass;
   }
 
   get masterStatusPillClass() {
-    if (this.diagnosticsState === "pending")
-      return "status-pill status-pill_pending";
-    if (this.diagnosticsState === "error")
-      return "status-pill status-pill_fail";
-    if (this.diagnosticsState === "warning")
-      return "status-pill status-pill_warn";
-    return "status-pill status-pill_pass";
+    return STATUS_PILL_CLASSES[this.diagnosticsState] || STATUS_PILL_CLASSES.pass;
   }
 
   get masterStatusLabel() {
-    if (this.diagnosticsState === "pending") return "Checking...";
-    if (this.diagnosticsState === "error") return "Action Required";
-    if (this.diagnosticsState === "warning") return "Attention Needed";
-    return "OK";
+    return STATUS_LABELS[this.diagnosticsState] || STATUS_LABELS.pass;
   }
 
   get detailsStatusLabel() {
-    if (this.diagnosticsState === "pending") return "Checking...";
-    if (this.diagnosticsState === "error") return "Action Required";
-    if (this.diagnosticsState === "warning") return "Attention Needed";
-    return "OK";
+    return STATUS_LABELS[this.diagnosticsState] || STATUS_LABELS.pass;
   }
 
   get topInstrumentCards() {
@@ -1149,6 +596,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
     return this.diagnosticSections;
   }
 
+  // ===========================================================================
+  // 10. TAB: CX PLATFORM SETUP & WIRED PICKLISTS
+  // ===========================================================================
   @wire(getActiveUsers)
   wiredActiveUsers({ data, error }) {
     if (data) {
@@ -1161,10 +611,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
   }
 
-  channelOptions = [
-    { label: "Chat (Digital Messaging)", value: "chat" },
-    { label: "Voice (Telephony)", value: "voice" }
-  ];
+  channelOptions = CHANNEL_OPTIONS;
 
   get platformOptions() {
     if (this.currentProfile?.channel === "voice") {
@@ -1253,6 +700,9 @@ export default class AgentAssistSetupWizard extends LightningElement {
     });
   }
 
+  // ===========================================================================
+  // 11. TAB: CONFIGURATION PROFILES & SIMULATOR OPTIONS
+  // ===========================================================================
   get isCompanionProfile() {
     return this.currentProfile?.profileType === "Companion Agent";
   }
@@ -1292,24 +742,11 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   get simulatorProfileOptions() {
-    return this.profiles.map((prof) => {
-      const typeStr =
-        prof.profileType === "Companion Agent"
-          ? "Companion Agent"
-          : "Container";
-      return {
-        label: `${prof.name} [${typeStr}] (${prof.developerName})`,
-        value: prof.developerName
-      };
-    });
+    return formatSimulatorProfileOptions(this.profiles);
   }
 
   get simulatorProfile() {
-    const prof =
-      this.profiles.find(
-        (p) => p.developerName === this.simulatorProfileDevName
-      ) || this.profiles[0];
-    return prof ? { ...prof, isFound: true } : null;
+    return getActiveSimulatorProfile(this.profiles, this.simulatorProfileDevName);
   }
 
   @track isSimulatorMounted = true;
@@ -1325,30 +762,15 @@ export default class AgentAssistSetupWizard extends LightningElement {
     return this.isSimulatorMounted && !this.isSimulatorCompanion;
   }
 
+  // ===========================================================================
+  // 12. ENDPOINT URL & REGISTER ROUTE HEALTH CHECKS
+  // ===========================================================================
   get endpointStatusPillClass() {
-    if (this.endpointHealthState === "pass") {
-      return "status-pill status-pill_pass";
-    }
-    if (this.endpointHealthState === "warning") {
-      return "status-pill status-pill_warn";
-    }
-    if (this.endpointHealthState === "fail") {
-      return "status-pill status-pill_fail";
-    }
-    return "status-pill status-pill_pending";
+    return STATUS_PILL_CLASSES[this.endpointHealthState] || STATUS_PILL_CLASSES.pending;
   }
 
   get endpointStatusLedClass() {
-    if (this.endpointHealthState === "pass") {
-      return "status-led status-led_pass";
-    }
-    if (this.endpointHealthState === "warning") {
-      return "status-led status-led_warn";
-    }
-    if (this.endpointHealthState === "fail") {
-      return "status-led status-led_fail";
-    }
-    return "status-led status-led_pending";
+    return STATUS_LED_CLASSES[this.endpointHealthState] || STATUS_LED_CLASSES.pending;
   }
 
   get endpointStatusTooltip() {
@@ -1370,46 +792,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   }
 
   isValidEndpointUrl(url) {
-    if (!url || !url.trim()) {
-      return {
-        valid: false,
-        reason: "empty",
-        message: "Please enter a UI Connector Endpoint URL."
-      };
-    }
-    const trimmed = url.trim();
-    if (trimmed.startsWith("callout:")) {
-      return { valid: true, url: trimmed };
-    }
-    let parsed;
-    try {
-      parsed = new URL(trimmed);
-    } catch {
-      return {
-        valid: false,
-        reason: "format",
-        message: "HTTP 400 Bad Request — Invalid URL format."
-      };
-    }
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return {
-        valid: false,
-        reason: "protocol",
-        message: "HTTP 400 Bad Request — URL must start with https:// or http://."
-      };
-    }
-    const hostname = parsed.hostname;
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
-    const hasDot = hostname.includes(".");
-    if (!isLocalhost && !hasDot) {
-      return {
-        valid: false,
-        reason: "host",
-        message:
-          "HTTP 400 Bad Request — Hostname must be a valid domain (e.g. example.com) or IP address."
-      };
-    }
-    return { valid: true, url: trimmed };
+    return isValidEndpointUrl(url);
   }
 
   async evaluateEndpointHealth(url) {
@@ -1425,151 +808,27 @@ export default class AgentAssistSetupWizard extends LightningElement {
       return;
     }
 
-    const trimmed = check.url;
     this.endpointHealthState = "pending";
     this.endpointStatusCode = 0;
     this.endpointStatusLabel = "Checking...";
     this.endpointStatusMessage = "Checking connectivity...";
 
-    let httpCode = null;
-    let httpStatusText = "";
-    let apexErrorMessage = "";
-
-    // 1. Direct browser fetch check (Primary check for LWC runtime environment)
-    if (typeof fetch !== "undefined" && !trimmed.startsWith("callout:")) {
-      try {
-        const controller =
-          typeof AbortController !== "undefined" ? new AbortController() : null;
-        /* eslint-disable @lwc/lwc/no-async-operation */
-        const timeoutId = controller
-          ? setTimeout(() => controller.abort(), 4000)
-          : null;
-        /* eslint-enable @lwc/lwc/no-async-operation */
-        const resp = await fetch(trimmed, {
-          method: "GET",
-          mode: "cors",
-          signal: controller ? controller.signal : undefined
-        });
-        if (timeoutId) clearTimeout(timeoutId);
-
-        if (resp && resp.status > 0) {
-          httpCode = resp.status;
-          httpStatusText = resp.statusText;
-        }
-      } catch {
-        // Direct browser fetch rejected (DNS error, connection refused, CORS, or CSP)
-      }
-    }
-
-    // 2. Server-side Apex checkEndpointHealth fallback
-    if (httpCode === null) {
-      try {
-        const apexResult = await checkEndpointHealth({ endpointUrl: trimmed });
-        if (apexResult) {
-          if (
-            apexResult.statusCode !== undefined &&
-            apexResult.statusCode > 0
-          ) {
-            httpCode = apexResult.statusCode;
-            httpStatusText =
-              apexResult.statusText || apexResult.statusLabel || "";
-          }
-          if (apexResult.message) {
-            apexErrorMessage = apexResult.message;
-          }
-          if (apexResult.status === "warning" || apexResult.status === "fail") {
-            let msg = apexResult.message || "Endpoint unreachable.";
-            if (
-              msg.includes("Unauthorized endpoint") ||
-              msg.includes("Remote site") ||
-              msg.includes("Remote Site")
-            ) {
-              msg = `Connection failed for ${trimmed}: Unable to reach endpoint (DNS error, connection refused, or invalid URL).`;
-            }
-            this.endpointHealthState = apexResult.status;
-            this.endpointStatusCode = apexResult.statusCode || 0;
-            this.endpointStatusLabel =
-              apexResult.statusLabel || "Connection Error";
-            this.endpointStatusMessage = msg;
-            return;
-          }
-        }
-      } catch (err) {
-        apexErrorMessage = err?.body?.message || err?.message || String(err);
-      }
-    }
-
-    // 3. Fallback when both browser fetch and Apex callout fail to obtain HTTP status
-    if (httpCode === null) {
-      if (
-        apexErrorMessage.includes("Unauthorized endpoint") ||
-        apexErrorMessage.includes("Remote site") ||
-        apexErrorMessage.includes("Remote Site")
-      ) {
-        apexErrorMessage = `Connection failed for ${trimmed}: Unable to reach endpoint (DNS error, connection refused, or invalid URL).`;
-      }
-      this.endpointHealthState = "fail";
-      this.endpointStatusCode = 0;
-      this.endpointStatusLabel = "Connection Failed";
-      this.endpointStatusMessage = apexErrorMessage
-        ? apexErrorMessage
-        : `Connection failed for ${trimmed}: Unable to reach endpoint (DNS error, connection refused, or invalid URL).`;
-      return;
-    }
-
-    this.endpointStatusCode = httpCode;
-
-    // Report clean, simple HTTP status codes
-    if (httpCode >= 200 && httpCode < 300) {
-      this.endpointHealthState = "pass";
-      this.endpointStatusLabel = `${httpCode} OK`;
-      this.endpointStatusMessage = `HTTP ${httpCode} OK — Endpoint is reachable and responding.`;
-    } else if (httpCode === 404) {
-      this.endpointHealthState = "warning";
-      this.endpointStatusLabel = "404 Not Found";
-      this.endpointStatusMessage =
-        "HTTP 404 Not Found — Endpoint could not be reached.";
-    } else if (httpCode >= 500) {
-      this.endpointHealthState = "fail";
-      this.endpointStatusLabel = `${httpCode} Server Error`;
-      this.endpointStatusMessage = `HTTP ${httpCode} Server Error — Remote server returned an error.`;
-    } else if (httpCode === 401 || httpCode === 403) {
-      this.endpointHealthState = "warning";
-      this.endpointStatusLabel = `${httpCode} Forbidden`;
-      this.endpointStatusMessage = `HTTP ${httpCode} Forbidden — Access to endpoint is unauthorized.`;
-    } else {
-      this.endpointHealthState = "warning";
-      this.endpointStatusLabel = `${httpCode} ${httpStatusText || "Alert"}`;
-      this.endpointStatusMessage = `HTTP ${httpCode} ${httpStatusText || "Alert"}`;
-    }
+    const res = await performEndpointHealthCheck(
+      targetUrl,
+      checkEndpointHealth
+    );
+    this.endpointHealthState = res.state;
+    this.endpointStatusCode = res.statusCode;
+    this.endpointStatusLabel = res.label || res.statusLabel;
+    this.endpointStatusMessage = res.message || res.statusMessage;
   }
 
-
-
   get registerStatusPillClass() {
-    if (this.registerHealthState === "pass") {
-      return "status-pill status-pill_pass";
-    }
-    if (this.registerHealthState === "warning") {
-      return "status-pill status-pill_warn";
-    }
-    if (this.registerHealthState === "fail") {
-      return "status-pill status-pill_fail";
-    }
-    return "status-pill status-pill_pending";
+    return STATUS_PILL_CLASSES[this.registerHealthState] || STATUS_PILL_CLASSES.pending;
   }
 
   get registerStatusLedClass() {
-    if (this.registerHealthState === "pass") {
-      return "status-led status-led_pass";
-    }
-    if (this.registerHealthState === "warning") {
-      return "status-led status-led_warn";
-    }
-    if (this.registerHealthState === "fail") {
-      return "status-led status-led_fail";
-    }
-    return "status-led status-led_pending";
+    return STATUS_LED_CLASSES[this.registerHealthState] || STATUS_LED_CLASSES.pending;
   }
 
   get registerStatusTooltip() {
@@ -1611,22 +870,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
   async evaluateRegisterEndpointHealth() {
     const url = this.currentProfile?.endpointUrl;
-    const consumerKey = this.currentProfile?.consumerKey;
-    const consumerSecret = this.currentProfile?.consumerSecret;
-    const clientCredentialsUser = this.currentProfile?.clientCredentialsUser;
-
-    const check = this.isValidEndpointUrl(url);
-    if (!check.valid) {
-      this.registerHealthState = check.reason === "empty" ? "warning" : "fail";
-      this.registerStatusCode = check.reason === "empty" ? 0 : 400;
-      this.registerStatusLabel =
-        check.reason === "empty" ? "No URL" : "400 Bad Request";
-      this.registerStatusMessage = check.message;
-      return;
-    }
-
-    const trimmedUrl = check.url.replace(/\/$/, "");
-
     if (
       this.endpointStatusCode === null ||
       this.endpointStatusCode === undefined
@@ -1634,15 +877,18 @@ export default class AgentAssistSetupWizard extends LightningElement {
       await this.evaluateEndpointHealth(url);
     }
 
-    if (
-      this.endpointStatusCode &&
-      (this.endpointStatusCode < 200 || this.endpointStatusCode >= 300)
-    ) {
-      this.registerHealthState = this.endpointHealthState || "fail";
-      this.registerStatusCode = this.endpointStatusCode;
-      this.registerStatusLabel =
-        this.endpointStatusLabel || `${this.endpointStatusCode} Unreachable`;
-      this.registerStatusMessage = `HTTP ${this.endpointStatusCode} — /register route unreachable because Endpoint URL returned ${this.endpointStatusLabel}.`;
+    const prereq = validateRegisterPrerequisites(
+      url,
+      this.endpointStatusCode,
+      this.endpointHealthState,
+      this.endpointStatusLabel
+    );
+
+    if (!prereq.canProceed) {
+      this.registerHealthState = prereq.state;
+      this.registerStatusCode = prereq.code;
+      this.registerStatusLabel = prereq.label;
+      this.registerStatusMessage = prereq.message;
       return;
     }
 
@@ -1652,66 +898,26 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.registerStatusMessage =
       "Checking /register route auth connectivity...";
 
-    try {
-      let result = await registerAuthToken({
+    const res = await performRegisterEndpointHealthCheck(
+      {
         configName: this.currentProfile?.developerName || "Default",
-        endpointUrl: trimmedUrl,
-        consumerKey: consumerKey || "",
-        consumerSecret: consumerSecret || "",
-        clientCredentialsUser: clientCredentialsUser || ""
-      });
+        endpointUrl: prereq.trimmedUrl,
+        consumerKey: this.currentProfile?.consumerKey || "",
+        consumerSecret: this.currentProfile?.consumerSecret || "",
+        clientCredentialsUser: this.currentProfile?.clientCredentialsUser || ""
+      },
+      registerAuthToken
+    );
 
-      if (result && result.status === "success" && result.token) {
-        this.registerHealthState = "pass";
-        this.registerStatusCode = 200;
-        this.registerStatusLabel = "200 OK";
-        this.registerStatusMessage =
-          "HTTP 200 OK — /register route authenticated and reachable.";
-      } else if (result && result.error) {
-        const errorMsg = String(result.error);
-        if (errorMsg.includes("Unauthorized endpoint")) {
-          this.registerHealthState = "warning";
-          this.registerStatusCode = 401;
-          this.registerStatusLabel = "Setup Warning";
-          this.registerStatusMessage = `Apex callout blocked. Verify Remote Site Setting for ${trimmedUrl} in Setup > Remote Site Settings for server-side callouts.`;
-        } else if (errorMsg.includes("401") || errorMsg.includes("403")) {
-          this.registerHealthState = "fail";
-          this.registerStatusCode = 401;
-          this.registerStatusLabel = "401 Unauthorized";
-          this.registerStatusMessage = `HTTP 401 Unauthorized — /register auth failed: ${errorMsg}`;
-        } else if (errorMsg.includes("404")) {
-          this.registerHealthState = "warning";
-          this.registerStatusCode = 404;
-          this.registerStatusLabel = "404 Not Found";
-          this.registerStatusMessage = `HTTP 404 Not Found — /register route unreachable: ${errorMsg}`;
-        } else {
-          this.registerHealthState = "fail";
-          this.registerStatusCode = 500;
-          this.registerStatusLabel = "Auth Error";
-          this.registerStatusMessage = `/register health check error: ${errorMsg}`;
-        }
-      } else {
-        this.registerHealthState = "warning";
-        this.registerStatusCode = 0;
-        this.registerStatusLabel = "No Response";
-        this.registerStatusMessage = "No response from /register route.";
-      }
-    } catch (err) {
-      const errMsg = err?.body?.message || err?.message || String(err);
-      if (errMsg.includes("Unauthorized endpoint")) {
-        this.registerHealthState = "warning";
-        this.registerStatusCode = 401;
-        this.registerStatusLabel = "Setup Warning";
-        this.registerStatusMessage = `Apex callout blocked. Verify Remote Site Setting for ${trimmedUrl} in Setup > Remote Site Settings for server-side callouts.`;
-      } else {
-        this.registerHealthState = "fail";
-        this.registerStatusCode = 500;
-        this.registerStatusLabel = "Callout Error";
-        this.registerStatusMessage = `/register callout error: ${errMsg}`;
-      }
-    }
+    this.registerHealthState = res.state;
+    this.registerStatusCode = res.code;
+    this.registerStatusLabel = res.label;
+    this.registerStatusMessage = res.message;
   }
 
+  // ===========================================================================
+  // 13. TAB NAVIGATION, MODALS & SIMULATOR MESSAGING
+  // ===========================================================================
   handleTabActive(event) {
     const selectedTab = event.target?.value;
     this.debugLog(
@@ -1728,16 +934,8 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.activeTab = selectedTab;
 
     if (this.isTabsetInitialized) {
-      try {
-        localStorage.setItem("agent_assist_setup_active_tab", selectedTab);
-        sessionStorage.setItem("agent_assist_setup_active_tab", selectedTab);
-        this.debugLog(
-          "Persisted activeTab to storage:",
-          selectedTab
-        );
-      } catch (e) {
-        console.error("[SetupWizard] Error storing activeTab:", e);
-      }
+      this.saveToStorage("agent_assist_setup_active_tab", selectedTab);
+      this.debugLog("Persisted activeTab to storage:", selectedTab);
     } else {
       this.debugLog("Initial mount activation for:", selectedTab);
     }
@@ -1761,10 +959,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
   }
 
-  handleTabSelect(event) {
-    this.handleTabActive(event);
-  }
-
   handleOpenNewProfileModal() {
     this.isTypeModalOpen = true;
   }
@@ -1785,26 +979,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
   handleTypeSwitch(event) {
     const targetType = event.currentTarget.dataset.type;
-    if (this.currentProfile.profileType === targetType) return;
-
-    const updated = {
-      ...this.currentProfile,
-      profileType: targetType
-    };
-
-    if (
-      targetType === "Companion Agent" &&
-      (!updated.title || updated.title === "Google Cloud Agent Assist")
-    ) {
-      updated.title = "Google Cloud Companion Agent";
-    } else if (
-      targetType === "Container" &&
-      (!updated.title || updated.title === "Google Cloud Companion Agent")
-    ) {
-      updated.title = "Google Cloud Agent Assist";
-    }
-
-    this.currentProfile = updated;
+    this.currentProfile = switchProfileType(this.currentProfile, targetType);
   }
 
   handleReloadSimulator(showToast = true) {
@@ -1823,12 +998,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
     setTimeout(() => {
       this.isSimulatorMounted = true;
       if (showToast === true) {
-        this.dispatchEvent(
-          new ShowToastEvent({
-            title: "Simulator Reloaded",
-            message: `Re-mounted "${this.simulatorProfileDevName}" component in simulator.`,
-            variant: "success"
-          })
+        this.showToast(
+          "Simulator Reloaded",
+          `Re-mounted "${this.simulatorProfileDevName}" component in simulator.`,
+          "success"
         );
       }
     }, 50);
@@ -1874,59 +1047,26 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
   sendSimulatedMessage(participantRole, text) {
     if (!text || !text.trim()) return;
-    const trimmedText = text.trim();
-
-    let convId = this.simulatorConversationId;
-    if (!convId) {
-      const containerEl = this.template.querySelector(
-        "c-agent-assist-container, c-agent-assist-companion-agent, c-agent-assist-container-module"
-      );
-      if (containerEl?.conversationId) {
-        convId = containerEl.conversationId;
-      } else if (containerEl?.conversationName) {
-        const parts = containerEl.conversationName.split("/");
-        convId = parts[parts.length - 1];
-      }
-    }
-
-    const payload = {
-      detail: {
-        conversationId: convId,
-        participantRole: participantRole,
-        request: {
-          textInput: {
-            text: trimmedText,
-            languageCode: "us"
-          }
-        }
-      }
-    };
-
-    if (typeof window.dispatchAgentAssistEvent === "function") {
-      window.dispatchAgentAssistEvent("analyze-content-requested", payload);
-    } else {
-      window.dispatchEvent(
-        new CustomEvent("analyze-content-requested", payload)
-      );
-    }
-  }
-
-  handlePlaceholderAction() {
-    this.dispatchEvent(
-      new ShowToastEvent({
-        title: "Setup Action",
-        message:
-          "This setup guide or diagnostic feature is available in the Setup Wizard.",
-        variant: "info"
-      })
+    const containerEl = this.template.querySelector(
+      "c-agent-assist-container, c-agent-assist-companion-agent, c-agent-assist-container-module"
     );
+    const convId = resolveConversationId(
+      this.simulatorConversationId,
+      containerEl
+    );
+    const payload = buildSimulatedMessagePayload(participantRole, text, convId);
+    dispatchSimulatedMessage(payload);
   }
 
+  // ===========================================================================
+  // 7. MANUAL DIAGNOSTICS REFRESH
+  // ===========================================================================
   async handleRunDiagnostics() {
     this.initPendingDiagnostics();
-    console.log(
-      "%c[AgentAssist Diagnostics] 🔄 User triggered manual diagnostic refresh...",
-      "color: #0176d3; font-weight: bold; font-size: 13px;"
+    logDiagnostic(
+      "🔄 User triggered manual diagnostic refresh...",
+      "info",
+      this.debugMode
     );
 
     // eslint-disable-next-line @lwc/lwc/no-async-operation
@@ -1939,31 +1079,23 @@ export default class AgentAssistSetupWizard extends LightningElement {
           }
         }
         const isHealthy = this.diagnosticsState === "healthy";
-        this.dispatchEvent(
-          new ShowToastEvent({
-            title: isHealthy ? "Diagnostics Passed" : "Diagnostics Alert",
-            message: isHealthy
-              ? "All Salesforce platform configurations, backend services, presence statuses, and permission sets are verified and healthy."
-              : "One or more diagnostic checks failed. Check the instrument panel and browser console for details.",
-            variant: isHealthy ? "success" : "error"
-          })
+        this.showToast(
+          isHealthy ? "Diagnostics Passed" : "Diagnostics Alert",
+          isHealthy
+            ? "All Salesforce platform configurations, backend services, presence statuses, and permission sets are verified and healthy."
+            : "One or more diagnostic checks failed. Check the instrument panel and browser console for details.",
+          isHealthy ? "success" : "error"
         );
       } catch (err) {
         this.processDiagnosticsData(null, true, err);
-        this.dispatchEvent(
-          new ShowToastEvent({
-            title: "Diagnostics Error",
-            message:
-              err?.body?.message ||
-              err?.message ||
-              "Failed to run diagnostics.",
-            variant: "error"
-          })
-        );
+        this.showErrorToast("Diagnostics Error", err);
       }
     }, 400);
   }
 
+  // ===========================================================================
+  // 14. PROFILE SELECTION & FORM FIELD EDITING
+  // ===========================================================================
   selectProfileByDevName(devName) {
     const found = this.profiles.find((p) => p.developerName === devName);
     if (found) {
@@ -1975,21 +1107,10 @@ export default class AgentAssistSetupWizard extends LightningElement {
     }
     this.simulatorProfileDevName = this.selectedDevName;
     if (this.selectedDevName) {
-      try {
-        localStorage.setItem(
-          "agent_assist_setup_selected_profile",
-          this.selectedDevName
-        );
-        sessionStorage.setItem(
-          "agent_assist_setup_selected_profile",
-          this.selectedDevName
-        );
-      } catch (e) {
-        console.error(
-          "[SetupWizard] Error storing selectedProfileDevName:",
-          e
-        );
-      }
+      this.saveToStorage(
+        "agent_assist_setup_selected_profile",
+        this.selectedDevName
+      );
     }
     this.evaluateEndpointHealth(this.currentProfile?.endpointUrl);
     this.evaluateRegisterEndpointHealth();
@@ -2057,245 +1178,99 @@ export default class AgentAssistSetupWizard extends LightningElement {
     this.currentProfile = updated;
   }
 
+  // ===========================================================================
+  // 15. PROFILE CRUD & TEMPLATE CREATION ACTIONS
+  // ===========================================================================
   createNewProfile(profileType) {
     this.activeTab = "configurationProfiles";
-    const isCompanion = profileType === "Companion Agent";
-    const randomSuffix = Math.floor(Math.random() * 1000);
-    const newProf = {
-      id: "temp-" + Date.now(),
-      name: isCompanion ? "New Companion Agent" : "New Container Profile",
-      developerName:
-        (isCompanion ? "Custom_Companion_" : "Custom_Container_") +
-        randomSuffix,
-      profileType: profileType,
-      title: isCompanion
-        ? "Google Cloud Companion Agent"
-        : "Google Cloud Agent Assist",
-      endpointUrl: "https://ui-connector-{id}.{region}.run.app",
-      conversationProfile:
-        "projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}",
-      channel: "chat",
-      platform: "base",
-      consumerKey: "",
-      consumerSecret: "",
-      clientCredentialsUser: "",
-      containerHeight: "530px",
-      debugMode: true,
-      showDarkModeToggle: true,
-      showHeader: false,
-      showCorrectnessFeedback: false,
-      disableIntegratedTranscript: false,
-      modelName: "gemini-1.5-pro",
-      welcomeMessage:
-        "Hello! I am your AI Companion Agent. How can I assist you with this record today?",
-      enableAutonomousActions: true,
-      isActive: true
-    };
+    const newProf = createNewProfileTemplate(profileType);
     this.profiles = [newProf, ...this.profiles];
     this.selectProfileByDevName(newProf.developerName);
   }
 
+  buildConfigRecordPayload(profile, overrides = {}) {
+    return buildConfigRecordPayload(profile, overrides);
+  }
+
   async handleSaveProfile() {
     try {
-      const payload = {
-        sobjectType: "Agent_Assist_Config__c",
-        Name: this.currentProfile.name,
-        Developer_Name__c: this.currentProfile.developerName,
-        Profile_Type__c: this.currentProfile.profileType || "Container",
-        Title__c: this.currentProfile.title,
-        Endpoint_URL__c: this.currentProfile.endpointUrl,
-        Conversation_Profile__c: this.currentProfile.conversationProfile,
-        Channel__c: this.currentProfile.channel,
-        Platform__c: this.currentProfile.platform,
-        Consumer_Key__c: this.currentProfile.consumerKey,
-        Consumer_Secret__c: this.currentProfile.consumerSecret,
-        Client_Credentials_User__c: this.currentProfile.clientCredentialsUser,
-        Container_Height__c: this.currentProfile.containerHeight,
-        Debug_Mode__c: this.currentProfile.debugMode,
-        Show_Dark_Mode_Toggle__c: this.currentProfile.showDarkModeToggle,
-        Show_Header__c: this.currentProfile.showHeader,
-        Show_Correctness_Feedback__c:
-          this.currentProfile.showCorrectnessFeedback,
-        Disable_Integrated_Transcript__c:
-          this.currentProfile.disableIntegratedTranscript !== undefined
-            ? this.currentProfile.disableIntegratedTranscript
-            : false,
-        Model_Name__c: this.currentProfile.modelName,
-        Welcome_Message__c: this.currentProfile.welcomeMessage,
-        Enable_Autonomous_Actions__c:
-          this.currentProfile.enableAutonomousActions,
-        Is_Active__c: true
-      };
-
-      if (
-        this.currentProfile.id &&
-        !this.currentProfile.id.startsWith("temp-") &&
-        !this.currentProfile.id.startsWith("mock-")
-      ) {
-        payload.Id = this.currentProfile.id;
-      }
-
-      const saved = await saveConfig({ configRecord: payload });
-
-      const idx = this.profiles.findIndex(
-        (p) => p.developerName === this.currentProfile.developerName
+      const saved = await saveProfileService(this.currentProfile, saveConfig);
+      this.profiles = updateProfileInList(
+        this.profiles,
+        this.currentProfile,
+        saved.Id
       );
-      if (idx >= 0) {
-        this.profiles[idx] = {
-          ...this.currentProfile,
-          id: saved.Id || this.currentProfile.id
-        };
-        this.profiles = [...this.profiles];
-      }
-
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Configuration Saved",
-          message: `Profile "${this.currentProfile.name}" (${this.currentProfile.developerName}) [${this.currentProfile.profileType}] saved successfully.`,
-          variant: "success"
-        })
+      this.showToast(
+        "Configuration Saved",
+        `Profile "${this.currentProfile.name}" (${this.currentProfile.developerName}) [${this.currentProfile.profileType}] saved successfully.`,
+        "success"
       );
-
       if (this.wiredConfigsResult) {
         await refreshApex(this.wiredConfigsResult);
       }
       this.handleReloadSimulator(false);
     } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Saving Profile",
-          message: error.body ? error.body.message : error.message,
-          variant: "error"
-        })
-      );
+      this.showErrorToast("Error Saving Profile", error);
     }
   }
 
   async handleDeleteProfile() {
     if (this.isDefaultProfile) return;
     try {
-      if (
-        this.currentProfile.id &&
-        !this.currentProfile.id.startsWith("temp-") &&
-        !this.currentProfile.id.startsWith("mock-")
-      ) {
-        await deleteConfig({ configId: this.currentProfile.id });
-      }
-      this.profiles = this.profiles.filter(
-        (p) => p.developerName !== this.currentProfile.developerName
+      await deleteProfileService(this.currentProfile, deleteConfig);
+      this.profiles = removeProfileFromList(
+        this.profiles,
+        this.currentProfile.developerName
       );
       this.selectProfileByDevName(this.profiles[0]?.developerName || "Default");
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "LWC Configuration Profile Deleted",
-          message: "LWC configuration profile removed.",
-          variant: "warning"
-        })
+      this.showToast(
+        "LWC Configuration Profile Deleted",
+        "LWC configuration profile removed.",
+        "warning"
       );
       if (this.wiredConfigsResult) {
         refreshApex(this.wiredConfigsResult);
       }
     } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Deleting Profile",
-          message: error.body ? error.body.message : error.message,
-          variant: "error"
-        })
-      );
+      this.showErrorToast("Error Deleting Profile", error);
     }
   }
 
   async handleResetSingleProfile() {
     if (!this.isDefaultProfile) return;
     try {
-      await resetSingleDefaultConfig({
-        developerName: this.currentProfile.developerName
-      });
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Profile Reset",
-          message: `Reset default profile "${this.currentProfile.name}" (${this.currentProfile.developerName}) to factory default settings.`,
-          variant: "success"
-        })
+      await resetProfileService(this.currentProfile, resetSingleDefaultConfig);
+      this.showToast(
+        "Profile Reset",
+        `Reset default profile "${this.currentProfile.name}" (${this.currentProfile.developerName}) to factory default settings.`,
+        "success"
       );
       if (this.wiredConfigsResult) {
         await refreshApex(this.wiredConfigsResult);
       }
       this.selectProfileByDevName(this.currentProfile.developerName);
     } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Resetting Profile",
-          message: error.body ? error.body.message : error.message,
-          variant: "error"
-        })
-      );
+      this.showErrorToast("Error Resetting Profile", error);
     }
   }
 
   async handleSaveAsCopy() {
     try {
-      const randomSuffix = Math.floor(Math.random() * 1000);
-      const baseDevName = (this.currentProfile.developerName || "Custom_Profile")
-        .replace(/^Copy_/, "")
-        .substring(0, 30);
-      const copyDevName = `Copy_${baseDevName}_${randomSuffix}`.replace(/[^a-zA-Z0-9_]/g, "_");
-      const baseName = (this.currentProfile.name || "Configuration Profile").replace(/^Copy of\s*/, "");
-      const copyName = `Copy of ${baseName}`.substring(0, 80);
-
-      const payload = {
-        sobjectType: "Agent_Assist_Config__c",
-        Name: copyName,
-        Developer_Name__c: copyDevName,
-        Profile_Type__c: this.currentProfile.profileType || "Container",
-        Title__c: this.currentProfile.title,
-        Endpoint_URL__c: this.currentProfile.endpointUrl,
-        Conversation_Profile__c: this.currentProfile.conversationProfile,
-        Channel__c: this.currentProfile.channel,
-        Platform__c: this.currentProfile.platform,
-        Consumer_Key__c: this.currentProfile.consumerKey,
-        Consumer_Secret__c: this.currentProfile.consumerSecret,
-        Client_Credentials_User__c: this.currentProfile.clientCredentialsUser,
-        Container_Height__c: this.currentProfile.containerHeight,
-        Debug_Mode__c: this.currentProfile.debugMode,
-        Show_Dark_Mode_Toggle__c: this.currentProfile.showDarkModeToggle,
-        Show_Header__c: this.currentProfile.showHeader,
-        Show_Correctness_Feedback__c: this.currentProfile.showCorrectnessFeedback,
-        Disable_Integrated_Transcript__c:
-          this.currentProfile.disableIntegratedTranscript !== undefined
-            ? this.currentProfile.disableIntegratedTranscript
-            : false,
-        Disabled_Features__c: this.currentProfile.disabledFeatures || "",
-        Model_Name__c: this.currentProfile.modelName,
-        Welcome_Message__c: this.currentProfile.welcomeMessage,
-        Enable_Autonomous_Actions__c: this.currentProfile.enableAutonomousActions,
-        Is_Active__c: true
-      };
-
-      const saved = await saveConfig({ configRecord: payload });
-
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Profile Copied",
-          message: `Created new profile copy "${copyName}" (${copyDevName}).`,
-          variant: "success"
-        })
+      const { saved, copyName, copyDevName } = await saveAsCopyProfileService(
+        this.currentProfile,
+        saveConfig
       );
-
+      this.showToast(
+        "Profile Copied",
+        `Created new profile copy "${copyName}" (${copyDevName}).`,
+        "success"
+      );
       if (this.wiredConfigsResult) {
         await refreshApex(this.wiredConfigsResult);
       }
-
       this.selectProfileByDevName(saved.Developer_Name__c || copyDevName);
     } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Error Copying Profile",
-          message: error.body ? error.body.message : error.message,
-          variant: "error"
-        })
-      );
+      this.showErrorToast("Error Copying Profile", error);
     }
   }
 }

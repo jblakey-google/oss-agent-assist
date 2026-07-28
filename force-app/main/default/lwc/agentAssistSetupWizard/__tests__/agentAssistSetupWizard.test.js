@@ -21,7 +21,6 @@ import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActi
 import checkEndpointHealth from "@salesforce/apex/AgentAssistConfigController.checkEndpointHealth";
 import saveConfig from "@salesforce/apex/AgentAssistConfigController.saveConfig";
 import getAllConfigs from "@salesforce/apex/AgentAssistConfigController.getAllConfigs";
-import resetDefaultConfigs from "@salesforce/apex/AgentAssistConfigController.resetDefaultConfigs";
 import resetSingleDefaultConfig from "@salesforce/apex/AgentAssistConfigController.resetSingleDefaultConfig";
 
 jest.mock(
@@ -506,6 +505,33 @@ describe("c-agent-assist-setup-wizard", () => {
     );
   });
 
+  it("copies profile when clicking Save as Copy button", async () => {
+    const element = createElement("c-agent-assist-setup-wizard", {
+      is: AgentAssistSetupWizard
+    });
+    document.body.appendChild(element);
+    await Promise.resolve();
+
+    const buttons = Array.from(
+      element.shadowRoot.querySelectorAll("lightning-button")
+    );
+    const copyButton = buttons.find((b) => b.label === "Save as Copy");
+    expect(copyButton).not.toBeUndefined();
+
+    copyButton.click();
+    await Promise.resolve();
+
+    expect(saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configRecord: expect.objectContaining({
+          Name: expect.stringMatching(/^Copy of Default Profile/),
+          Developer_Name__c: expect.stringMatching(/^Copy_Default_/),
+          Profile_Type__c: "Container"
+        })
+      })
+    );
+  });
+
   it("renders dedicated top-level Users tab and filters user list with search input", async () => {
     const element = createElement("c-agent-assist-setup-wizard", {
       is: AgentAssistSetupWizard
@@ -550,10 +576,9 @@ describe("c-agent-assist-setup-wizard", () => {
     await Promise.resolve();
 
     const tabs = element.shadowRoot.querySelectorAll("lightning-tab");
-    if (tabs.length > 1) {
-      tabs[1].dispatchEvent(new CustomEvent("active"));
-      await Promise.resolve();
-    }
+    expect(tabs.length).toBeGreaterThan(1);
+    tabs[1].dispatchEvent(new CustomEvent("active"));
+    await Promise.resolve();
   });
 
   it("renders Reset Profile button for default profile and calls resetSingleDefaultConfig when clicked", async () => {
@@ -569,13 +594,12 @@ describe("c-agent-assist-setup-wizard", () => {
     );
     const resetProfileBtn = buttons.find((b) => b.label === "Reset LWC Profile");
 
-    if (resetProfileBtn) {
-      resetProfileBtn.click();
-      await Promise.resolve();
-      expect(resetSingleDefaultConfig).toHaveBeenCalledWith({
-        developerName: "Default"
-      });
-    }
+    expect(resetProfileBtn).not.toBeUndefined();
+    resetProfileBtn.click();
+    await Promise.resolve();
+    expect(resetSingleDefaultConfig).toHaveBeenCalledWith({
+      developerName: "Default"
+    });
   });
 
   it("places Users tab after CX Platform Setup tab in lightning-tabset", async () => {
