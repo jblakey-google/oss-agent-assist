@@ -14,7 +14,33 @@
  * limitations under the License.
  */
 
-import { DIAGNOSTIC_STYLES, logDiagnostic, logDiagnosticGroup } from "c/agentAssistLogger";
+const DIAGNOSTIC_STYLES = {
+  header: "color: #0176d3; font-weight: bold; font-size: 14px;",
+  info: "color: #0176d3; font-weight: bold; font-size: 13px;",
+  sub: "color: #54698d; font-size: 11px;",
+  error: "color: #ea001e; font-weight: bold;",
+  warn: "color: #fe9339; font-weight: bold;",
+  pending: "color: #eab308;",
+  pass: "color: #2e844a; font-weight: bold;"
+};
+
+function logDiagnostic(message, styleType = "info", debugMode = true) {
+  if (!debugMode) return;
+  const style = DIAGNOSTIC_STYLES[styleType] || DIAGNOSTIC_STYLES.info;
+  if (styleType === "error") {
+    console.error(`%c[AgentAssist Diagnostics] ${message}`, style);
+  } else if (styleType === "warn") {
+    console.warn(`%c[AgentAssist Diagnostics] ${message}`, style);
+  } else {
+    console.log(`%c[AgentAssist Diagnostics] ${message}`, style);
+  }
+}
+
+function logDiagnosticGroup(message, styleType = "info", debugMode = true, debugGroupFn = console.group) {
+  if (!debugMode) return;
+  const style = DIAGNOSTIC_STYLES[styleType] || DIAGNOSTIC_STYLES.info;
+  debugGroupFn(`%c${message}`, style);
+}
 
 export function evaluateDiagnosticsSuite(data, options = {}) {
   const {

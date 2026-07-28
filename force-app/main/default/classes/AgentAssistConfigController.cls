@@ -15,6 +15,9 @@
  */
 
 public without sharing class AgentAssistConfigController {
+  // ==========================================================================
+  // 1. WRAPPER CLASSES & DATA MODELS
+  // ==========================================================================
   public class ConfigWrapper {
     @AuraEnabled
     public String id { get; set; }
@@ -76,6 +79,9 @@ public without sharing class AgentAssistConfigController {
     public Boolean isFound { get; set; }
   }
 
+  // ==========================================================================
+  // 2. CONFIGURATION MANAGEMENT METHODS
+  // ==========================================================================
   /**
    * Retrieves the resolved configuration state for a container or companion agent instance.
    * Note: cacheable=true methods must be strictly read-only and cannot execute DML.
@@ -334,57 +340,6 @@ public without sharing class AgentAssistConfigController {
     }
   }
 
-  /**
-   * Seeds default configuration records (Container and Companion Agent) into the database.
-   */
-  @AuraEnabled
-  public static void seedDefaultConfigs() {
-    List<Agent_Assist_Config__c> defaults = new List<Agent_Assist_Config__c>{
-      new Agent_Assist_Config__c(
-        Name = 'Default Profile',
-        Developer_Name__c = 'Default',
-        Profile_Type__c = 'Container',
-        Title__c = 'Google Cloud Agent Assist',
-        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
-        Conversation_Profile__c = 'projects/{project-id}/locations/{location-id}/conversationProfiles/{profile-id}',
-        Channel__c = 'chat',
-        Platform__c = 'base',
-        Container_Height__c = '530px',
-        Debug_Mode__c = true,
-        Show_Dark_Mode_Toggle__c = true,
-        Show_Header__c = false,
-        Show_Correctness_Feedback__c = false,
-        Disable_Integrated_Transcript__c = false,
-        Disabled_Features__c = '',
-        Is_Active__c = true
-      ),
-      new Agent_Assist_Config__c(
-        Name = 'Default Companion Agent',
-        Developer_Name__c = 'Default_Companion',
-        Profile_Type__c = 'Companion Agent',
-        Title__c = 'Google Cloud Companion Agent',
-        Endpoint_URL__c = 'https://ui-connector-{id}.{region}.run.app',
-        Model_Name__c = 'gemini-1.5-pro',
-        Welcome_Message__c = 'Hello! I am your AI Companion Agent. How can I assist you with this record today?',
-        Enable_Autonomous_Actions__c = true,
-        Is_Active__c = true
-      )
-    };
-
-    try {
-      upsert defaults Developer_Name__c;
-    } catch (Exception ex) {
-      // Log or ignore if read-only
-    }
-  }
-
-  /**
-   * Resets default configuration records back to factory default settings.
-   */
-  @AuraEnabled
-  public static void resetDefaultConfigs() {
-    seedDefaultConfigs();
-  }
 
   /**
    * Resets a specific default configuration profile back to factory default settings.
@@ -470,10 +425,10 @@ public without sharing class AgentAssistConfigController {
       delete [SELECT Id FROM Agent_Assist_Config__c WHERE Id = :configId];
     }
   }
-
-  /**
-   * Retrieves active users in the org for the OAuth Client Credentials user picklist.
-   */
+  
+  // ==========================================================================
+  // 3. USER & PERMISSION SET MANAGEMENT METHODS
+  // ==========================================================================
   /**
    * Retrieves active users in the org for the OAuth Client Credentials user picklist.
    * Only includes users with Salesforce User License or System Administrator Profile.
@@ -767,6 +722,9 @@ public without sharing class AgentAssistConfigController {
     }
   }
 
+  // ==========================================================================
+  // 4. ORG DIAGNOSTICS & HEALTH CHECK METHODS
+  // ==========================================================================
   /**
    * Retrieves comprehensive org diagnostics with itemized health status indicators for instrument panel.
    */
@@ -1519,6 +1477,9 @@ public without sharing class AgentAssistConfigController {
 
 
 
+  // ==========================================================================
+  // 5. TOKEN REGISTRATION & INTEGRATION METHODS
+  // ==========================================================================
   /**
    * Health checks a UI Connector Endpoint URL and returns the HTTP status and connectivity diagnosis.
    */
@@ -1784,9 +1745,32 @@ public without sharing class AgentAssistConfigController {
     return response;
   }
 
+  // ==========================================================================
+  // 6. PACKAGE DETECTION & UTILITIES
+  // ==========================================================================
   /**
    * Checks installation status for target CX integration subscriber package IDs.
    * Uses direct SOQL, Tooling API REST callout, and PackageLicense namespace fallback across all packages.
+   * Returns a map of packageId -> Boolean (true if installed).
+   */
+  private static void addPackageIds(Set<String> installedIds, String verId, String pkgId) {
+    if (String.isNotBlank(verId)) {
+      installedIds.add(verId);
+      if (verId.length() >= 15) {
+        installedIds.add(verId.substring(0, 15));
+      }
+    }
+    if (String.isNotBlank(pkgId)) {
+      installedIds.add(pkgId);
+      if (pkgId.length() >= 15) {
+        installedIds.add(pkgId.substring(0, 15));
+      }
+    }
+  }
+
+  /**
+   * Checks installation status for target CX integration subscriber package IDs.
+   * Uses direct SOQL, Tooling API REST callout, and PackageLicense namespace fallback.
    * Returns a map of packageId -> Boolean (true if installed).
    */
   @AuraEnabled(cacheable=true)
@@ -1795,36 +1779,28 @@ public without sharing class AgentAssistConfigController {
       '04tTN000000C1rZYAS' => false, // Five9 Fusion
       '04t8Z0000012JNXQA2' => false, // Twilio Flex CTI
       '04tUi000000L76XIAS' => false, // NICE CXone
-      '04tQp000000ngyzIAA' => false // Genesys Cloud CX
+      '04tQp000000ngyzIAA' => false  // Genesys Cloud CX
     };
 
     Set<String> installedIds = new Set<String>();
 
-    // Strategy 1: Standard SOQL on InstalledSubscriberPackage (checking VersionId & PackageId)
+    // Strategy 1: Standard SOQL on InstalledSubscriberPackage
     try {
       List<SObject> installedPkgs = Database.query(
         'SELECT Id, SubscriberPackageId, SubscriberPackageVersionId FROM InstalledSubscriberPackage'
       );
       for (SObject pkg : installedPkgs) {
-        String verId = (String) pkg.get('SubscriberPackageVersionId');
-        String pkgId = (String) pkg.get('SubscriberPackageId');
-        if (String.isNotBlank(verId)) {
-          installedIds.add(verId);
-          if (verId.length() >= 15) {
-            installedIds.add(verId.substring(0, 15));
-          }
-        }
-        if (String.isNotBlank(pkgId)) {
-          installedIds.add(pkgId);
-          if (pkgId.length() >= 15) {
-            installedIds.add(pkgId.substring(0, 15));
-          }
-        }
+        addPackageIds(
+          installedIds,
+          (String) pkg.get('SubscriberPackageVersionId'),
+          (String) pkg.get('SubscriberPackageId')
+        );
       }
     } catch (Exception ex) {
+      // Fallback: InstalledSubscriberPackage may be unavailable in certain environments
     }
 
-    // Strategy 2: Tooling API REST Callout (always run to supplement installedIds)
+    // Strategy 2: Tooling API REST Callout (supplement installedIds)
     String toolingSessionId = UserInfo.getSessionId();
     if (String.isNotBlank(toolingSessionId)) {
       try {
@@ -1839,63 +1815,32 @@ public without sharing class AgentAssistConfigController {
         req.setMethod('GET');
         req.setHeader('Authorization', 'Bearer ' + toolingSessionId);
 
-        Http http = new Http();
-        HttpResponse res = http.send(req);
-
+        HttpResponse res = new Http().send(req);
         if (res.getStatusCode() == 200) {
-          Map<String, Object> respMap = (Map<String, Object>) JSON.deserializeUntyped(
-            res.getBody()
-          );
+          Map<String, Object> respMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
           List<Object> records = (List<Object>) respMap.get('records');
           if (records != null) {
             for (Object recObj : records) {
               Map<String, Object> rec = (Map<String, Object>) recObj;
-              String verId = (String) rec.get('SubscriberPackageVersionId');
-              String pkgId = (String) rec.get('SubscriberPackageId');
-              if (String.isNotBlank(verId)) {
-                installedIds.add(verId);
-                if (verId.length() >= 15) {
-                  installedIds.add(verId.substring(0, 15));
-                }
-              }
-              if (String.isNotBlank(pkgId)) {
-                installedIds.add(pkgId);
-                if (pkgId.length() >= 15) {
-                  installedIds.add(pkgId.substring(0, 15));
-                }
-              }
+              addPackageIds(
+                installedIds,
+                (String) rec.get('SubscriberPackageVersionId'),
+                (String) rec.get('SubscriberPackageId')
+              );
             }
           }
         }
       } catch (Exception ex) {
+        // Fallback: Tooling API callout may fail or be restricted
       }
     }
 
     // Match tokens (VersionId, PackageId, and Namespaces) per integration
     Map<String, List<String>> targetMap = new Map<String, List<String>>{
-      '04tTN000000C1rZYAS' => new List<String>{
-        '04tTN000000C1rZYAS',
-        '0334x000000dEX3AAM',
-        'Five9BYOT'
-      },
-      '04t8Z0000012JNXQA2' => new List<String>{
-        '04t8Z0000012JNXQA2',
-        '0338Z0000009aZ0QAI',
-        'TwilioFlexCTI',
-        'TwilioFlex'
-      },
-      '04tUi000000L76XIAS' => new List<String>{
-        '04tUi000000L76XIAS',
-        'nice_cxone',
-        'NICECXone',
-        'inContact'
-      },
-      '04tQp000000ngyzIAA' => new List<String>{
-        '04tQp000000ngyzIAA',
-        'genesyscloud',
-        'purecloud',
-        'Genesys'
-      }
+      '04tTN000000C1rZYAS' => new List<String>{ '04tTN000000C1rZYAS', '0334x000000dEX3AAM', 'Five9BYOT' },
+      '04t8Z0000012JNXQA2' => new List<String>{ '04t8Z0000012JNXQA2', '0338Z0000009aZ0QAI', 'TwilioFlexCTI', 'TwilioFlex' },
+      '04tUi000000L76XIAS' => new List<String>{ '04tUi000000L76XIAS', 'nice_cxone', 'NICECXone', 'inContact' },
+      '04tQp000000ngyzIAA' => new List<String>{ '04tQp000000ngyzIAA', 'genesyscloud', 'purecloud', 'Genesys' }
     };
 
     for (String targetId : result.keySet()) {
@@ -1911,16 +1856,12 @@ public without sharing class AgentAssistConfigController {
 
     // Strategy 3: Check PackageLicense by NamespacePrefix (standard SOQL fallback)
     try {
-      List<PackageLicense> licenses = [
-        SELECT Id, NamespacePrefix
-        FROM PackageLicense
-      ];
+      List<PackageLicense> licenses = [SELECT Id, NamespacePrefix FROM PackageLicense];
       for (PackageLicense lic : licenses) {
         if (String.isNotBlank(lic.NamespacePrefix)) {
           String ns = lic.NamespacePrefix.toLowerCase();
           for (String targetId : targetMap.keySet()) {
-            List<String> matchTokens = targetMap.get(targetId);
-            for (String token : matchTokens) {
+            for (String token : targetMap.get(targetId)) {
               if (token.toLowerCase() == ns) {
                 result.put(targetId, true);
                 break;
@@ -1930,6 +1871,7 @@ public without sharing class AgentAssistConfigController {
         }
       }
     } catch (Exception ex) {
+      // Fallback: PackageLicense object may be restricted or unavailable
     }
 
     return result;

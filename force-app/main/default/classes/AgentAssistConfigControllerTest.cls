@@ -400,22 +400,6 @@ private class AgentAssistConfigControllerTest {
   }
 
   @IsTest
-  static void testResetDefaultConfigs() {
-    Test.startTest();
-    AgentAssistConfigController.resetDefaultConfigs();
-    Test.stopTest();
-
-    Agent_Assist_Config__c def = [
-      SELECT Id, Title__c
-      FROM Agent_Assist_Config__c
-      WHERE Developer_Name__c = 'Default'
-      LIMIT 1
-    ];
-    Assert.isNotNull(def, 'Default configuration record should exist after reset');
-    Assert.areEqual('Google Cloud Agent Assist', def.Title__c, 'Default profile title should be reset to standard');
-  }
-
-  @IsTest
   static void testResetSingleDefaultConfig() {
     Test.startTest();
     Agent_Assist_Config__c res = AgentAssistConfigController.resetSingleDefaultConfig('Default');

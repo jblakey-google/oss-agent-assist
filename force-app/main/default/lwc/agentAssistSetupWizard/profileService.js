@@ -111,7 +111,7 @@ export async function saveProfileService(currentProfile, saveConfigFn) {
   ) {
     payload.Id = currentProfile.id;
   }
-  return await saveConfigFn({ configRecord: payload });
+  return saveConfigFn({ configRecord: payload });
 }
 
 export async function saveAsCopyProfileService(currentProfile, saveConfigFn) {
@@ -139,13 +139,13 @@ export async function deleteProfileService(currentProfile, deleteConfigFn) {
     !currentProfile.id.startsWith("temp-") &&
     !currentProfile.id.startsWith("mock-")
   ) {
-    return await deleteConfigFn({ configId: currentProfile.id });
+    return deleteConfigFn({ configId: currentProfile.id });
   }
   return null;
 }
 
 export async function resetProfileService(currentProfile, resetConfigFn) {
-  return await resetConfigFn({
+  return resetConfigFn({
     developerName: currentProfile.developerName
   });
 }

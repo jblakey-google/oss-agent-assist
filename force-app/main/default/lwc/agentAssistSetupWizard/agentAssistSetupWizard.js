@@ -45,15 +45,12 @@ import {
 } from "./constants";
 import {
   isValidEndpointUrl,
-  checkBrowserFetchHealth,
-  formatEndpointStatusResult,
-  formatRegisterTokenResult,
   performEndpointHealthCheck,
   performRegisterEndpointHealthCheck,
   validateRegisterPrerequisites
 } from "./healthCheckService";
 import { evaluateDiagnosticsSuite } from "./diagnosticsService";
-import { logComponentBadge, logDiagnostic } from "c/agentAssistLogger";
+
 import {
   createNewProfileTemplate,
   switchProfileType,
@@ -218,7 +215,12 @@ export default class AgentAssistSetupWizard extends LightningElement {
 
   debugLog(message, ...extra) {
     if (this.debugMode) {
-      logComponentBadge("AgentAssistSetupWizard", message, ...extra);
+      console.log(
+        `%c[AgentAssistSetupWizard]%c ${message}`,
+        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+        "",
+        ...extra
+      );
     }
   }
 
@@ -1063,11 +1065,6 @@ export default class AgentAssistSetupWizard extends LightningElement {
   // ===========================================================================
   async handleRunDiagnostics() {
     this.initPendingDiagnostics();
-    logDiagnostic(
-      "🔄 User triggered manual diagnostic refresh...",
-      "info",
-      this.debugMode
-    );
 
     // eslint-disable-next-line @lwc/lwc/no-async-operation
     setTimeout(async () => {

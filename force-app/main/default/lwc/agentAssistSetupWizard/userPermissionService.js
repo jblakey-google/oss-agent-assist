@@ -61,7 +61,7 @@ export function calculateUserAssignmentStatus(usersList = [], selectedUserId = "
 
 export async function toggleUserPermissionService(params, toggleFn) {
   const { userId, assign, permissionSetName } = params;
-  return await toggleFn({
+  return toggleFn({
     userId,
     assign,
     permissionSetName

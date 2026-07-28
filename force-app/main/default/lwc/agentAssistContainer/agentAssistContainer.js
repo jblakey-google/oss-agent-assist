@@ -22,7 +22,6 @@ import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { MessageContext } from "lightning/messageService";
 import { refreshApex } from "@salesforce/apex";
 import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getResolvedConfig";
-import { logComponentBadge } from "c/agentAssistLogger";
 
 // Static Resources
 import ui_modules from "@salesforce/resourceUrl/ui_modules";
@@ -418,9 +417,14 @@ export default class AgentAssistContainer extends LightningElement {
   }
 
   @api
-  debugLog(message) {
+  debugLog(message, ...extra) {
     if (this.debugMode) {
-      logComponentBadge("AgentAssistContainer", message);
+      console.log(
+        `%c[AgentAssistContainer]%c ${message}`,
+        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+        "",
+        ...extra
+      );
     }
   }
 

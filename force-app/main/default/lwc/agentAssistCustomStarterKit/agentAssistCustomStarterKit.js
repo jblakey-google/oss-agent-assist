@@ -15,7 +15,6 @@
  */
 
 import { LightningElement, api, track } from "lwc";
-import { logComponentBadge } from "c/agentAssistLogger";
 
 /* global dispatchAgentAssistEvent, addAgentAssistEventListener */
 
@@ -268,9 +267,14 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     }
   }
 
-  debugLog(...args) {
+  debugLog(message, ...extra) {
     if (this.isDebugEnabled) {
-      logComponentBadge("AgentAssistCustomStarterKit", ...args);
+      console.log(
+        `%c[AgentAssistCustomStarterKit]%c ${message}`,
+        "background-color: #0070d2; color: #ffffff; padding: 2px 4px; border-radius: 3px; font-weight: bold;",
+        "",
+        ...extra
+      );
     }
   }
 }
