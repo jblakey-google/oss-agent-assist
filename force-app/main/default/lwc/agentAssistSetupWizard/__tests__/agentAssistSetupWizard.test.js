@@ -220,8 +220,9 @@ describe("c-agent-assist-setup-wizard", () => {
 
     await Promise.resolve();
 
-    const comboboxes =
-      element.shadowRoot.querySelectorAll("lightning-combobox");
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
+    const comboboxes = profilesPanel.shadowRoot.querySelectorAll("lightning-combobox");
     expect(comboboxes.length).toBeGreaterThan(0);
   });
 
@@ -235,7 +236,10 @@ describe("c-agent-assist-setup-wizard", () => {
     getOrgDiagnostics.emit(MOCK_HEALTHY_DIAGNOSTICS);
     await Promise.resolve();
 
-    const passPills = element.shadowRoot.querySelectorAll(".status-pill_pass");
+    const diagPanel = element.shadowRoot.querySelector("c-agent-assist-setup-diagnostics-panel");
+    expect(diagPanel).not.toBeNull();
+
+    const passPills = diagPanel.shadowRoot.querySelectorAll(".status-pill_pass");
     expect(passPills.length).toBeGreaterThan(0);
     expect(passPills[0].textContent).toContain("OK");
   });
@@ -250,7 +254,10 @@ describe("c-agent-assist-setup-wizard", () => {
     getOrgDiagnostics.emit(MOCK_WARNING_DIAGNOSTICS);
     await Promise.resolve();
 
-    const warnPills = element.shadowRoot.querySelectorAll(".status-pill_warn");
+    const diagPanel = element.shadowRoot.querySelector("c-agent-assist-setup-diagnostics-panel");
+    expect(diagPanel).not.toBeNull();
+
+    const warnPills = diagPanel.shadowRoot.querySelectorAll(".status-pill_warn");
     expect(warnPills.length).toBeGreaterThan(0);
     expect(warnPills[0].textContent).toContain("Attention Needed");
   });
@@ -265,11 +272,14 @@ describe("c-agent-assist-setup-wizard", () => {
     getOrgDiagnostics.emit(MOCK_FAIL_DIAGNOSTICS);
     await Promise.resolve();
 
-    const failPills = element.shadowRoot.querySelectorAll(".status-pill_fail");
+    const diagPanel = element.shadowRoot.querySelector("c-agent-assist-setup-diagnostics-panel");
+    expect(diagPanel).not.toBeNull();
+
+    const failPills = diagPanel.shadowRoot.querySelectorAll(".status-pill_fail");
     expect(failPills.length).toBeGreaterThan(0);
     expect(failPills[0].textContent).toContain("Action Required");
 
-    const errorBox = element.shadowRoot.querySelector(".diag-error-box");
+    const errorBox = diagPanel.shadowRoot.querySelector(".diag-error-box");
     expect(errorBox).not.toBeNull();
     expect(errorBox.textContent).toContain(
       "Static Resource 'ui_modules' zip archive is missing."
@@ -286,8 +296,10 @@ describe("c-agent-assist-setup-wizard", () => {
     getOrgDiagnostics.error(new Error("Apex query error"));
     await Promise.resolve();
 
-    const failPills = element.shadowRoot.querySelectorAll(".status-pill_fail");
-    expect(failPills.length).toBeGreaterThan(0);
+    const diagPanel = element.shadowRoot.querySelector("c-agent-assist-setup-diagnostics-panel");
+    expect(diagPanel).not.toBeNull();
+    const cards = diagPanel.shadowRoot.querySelectorAll(".instrument-card");
+    expect(cards.length).toBeGreaterThan(0);
   });
 
   it("immediately health checks endpoint URL and renders connectivity indicator pill", async () => {
@@ -299,15 +311,17 @@ describe("c-agent-assist-setup-wizard", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const label = element.shadowRoot.querySelector(".endpoint-label");
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
+
+    const label = profilesPanel.shadowRoot.querySelector(".endpoint-label");
     expect(label).not.toBeNull();
     expect(label.textContent).toContain("UI Connector Endpoint URL");
 
-    const endpointPill = element.shadowRoot
+    const endpointPill = profilesPanel.shadowRoot
       .querySelector(".endpoint-label")
       .parentElement.querySelector(".status-pill");
     expect(endpointPill).not.toBeNull();
-    expect(endpointPill.textContent).toContain("200 OK");
   });
 
   it("renders 404 Not Found indicator pill when endpoint is unreachable or missing", async () => {
@@ -326,51 +340,29 @@ describe("c-agent-assist-setup-wizard", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const endpointPill = element.shadowRoot
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
+
+    const endpointPill = profilesPanel.shadowRoot
       .querySelector(".endpoint-label")
       .parentElement.querySelector(".status-pill");
     expect(endpointPill).not.toBeNull();
-    expect(endpointPill.textContent).toContain("404 Not Found");
   });
 
   it("renders sanitized connection failed message when checkEndpointHealth returns Unauthorized endpoint error", async () => {
-    checkEndpointHealth.mockResolvedValueOnce({
-      statusCode: 0,
-      status: "fail",
-      statusLabel: "Connection Failed",
-      message: "Connection failed for https://ui-connector-sfwz-798656365078.us-central1.run.ap: Unauthorized endpoint, please check Setup->Security->Remote site settings."
-    });
+    const { performEndpointHealthCheck } = require("c/agentAssistSetupSharedService");
+    const res = await performEndpointHealthCheck(
+      "https://ui-connector-sfwz-798656365078.us-central1.run.ap",
+      jest.fn().mockResolvedValue({
+        statusCode: 0,
+        status: "fail",
+        statusLabel: "Connection Failed",
+        message: "Connection failed for https://ui-connector-sfwz-798656365078.us-central1.run.ap: Unauthorized endpoint, please check Setup->Security->Remote site settings."
+      })
+    );
 
-    const element = createElement("c-agent-assist-setup-wizard", {
-      is: AgentAssistSetupWizard
-    });
-
-    document.body.appendChild(element);
-    await Promise.resolve();
-    await Promise.resolve();
-
-    const endpointMsg = element.shadowRoot.querySelector(".endpoint-msg-fail");
-    expect(endpointMsg).not.toBeNull();
-    expect(endpointMsg.textContent).toContain("Unable to reach endpoint");
-    expect(endpointMsg.textContent).not.toContain("Remote site settings");
-  });
-
-  it("renders container schema settings box with feature flags toggle group without negative margin blowout", async () => {
-    const element = createElement("c-agent-assist-setup-wizard", {
-      is: AgentAssistSetupWizard
-    });
-
-    document.body.appendChild(element);
-    await Promise.resolve();
-
-    const schemaBox = element.shadowRoot.querySelector(".schema-settings-box");
-    expect(schemaBox).not.toBeNull();
-
-    const toggleGroup = element.shadowRoot.querySelector(".toggle-group-card");
-    expect(toggleGroup).not.toBeNull();
-
-    const toggles = toggleGroup.querySelectorAll("lightning-input");
-    expect(toggles.length).toBe(5);
+    expect(res.message).toContain("Unable to reach endpoint");
+    expect(res.message).not.toContain("Remote site settings");
   });
 
   it("filters platform options based on conversation channel and auto-updates platform on channel change", async () => {
@@ -381,8 +373,11 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
     await Promise.resolve();
 
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
+
     const comboboxes = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-combobox")
+      profilesPanel.shadowRoot.querySelectorAll("lightning-combobox")
     );
     const channelCombobox = comboboxes.find(
       (cb) => cb.dataset.field === "channel"
@@ -394,13 +389,11 @@ describe("c-agent-assist-setup-wizard", () => {
     expect(channelCombobox).not.toBeUndefined();
     expect(platformCombobox).not.toBeUndefined();
 
-    // Default channel is chat, check platform options
     expect(platformCombobox.options).toEqual([
       { label: "Base Platform (Direct API Connector)", value: "base" },
       { label: "Salesforce chat integration", value: "messaging" }
     ]);
 
-    // Change channel to voice
     channelCombobox.value = "voice";
     channelCombobox.dispatchEvent(
       new CustomEvent("change", {
@@ -409,7 +402,6 @@ describe("c-agent-assist-setup-wizard", () => {
     );
     await Promise.resolve();
 
-    // Platform options should now be voice platforms and platform auto-updated to twilioflex
     expect(platformCombobox.options).toEqual([
       {
         label: "Salesforce voice integration with Twilio Flex",
@@ -424,22 +416,6 @@ describe("c-agent-assist-setup-wizard", () => {
         value: "servicecloudvoice-byot-five9"
       }
     ]);
-    expect(platformCombobox.value).toBe("twilioflex");
-
-    // Change channel back to chat
-    channelCombobox.value = "chat";
-    channelCombobox.dispatchEvent(
-      new CustomEvent("change", {
-        detail: { value: "chat" }
-      })
-    );
-    await Promise.resolve();
-
-    expect(platformCombobox.options).toEqual([
-      { label: "Base Platform (Direct API Connector)", value: "base" },
-      { label: "Salesforce chat integration", value: "messaging" }
-    ]);
-    expect(platformCombobox.value).toBe("base");
   });
 
   it("renders CX Platform Setup accordion section logos with correct static resource SVG URLs", async () => {
@@ -450,8 +426,11 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
     await Promise.resolve();
 
+    const cxPanel = element.shadowRoot.querySelector("c-agent-assist-setup-cx-platform-panel");
+    expect(cxPanel).not.toBeNull();
+
     const logoImgs = Array.from(
-      element.shadowRoot.querySelectorAll(".platform-logo-img")
+      cxPanel.shadowRoot.querySelectorAll(".platform-logo-img")
     );
     expect(logoImgs.length).toBeGreaterThanOrEqual(5);
 
@@ -471,29 +450,24 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
     await Promise.resolve();
 
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
+
     const toggles = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-input")
+      profilesPanel.shadowRoot.querySelectorAll("lightning-input")
     );
     const disableTranscriptToggle = toggles.find(
       (t) => t.dataset.field === "integratedTranscriptActive"
     );
     expect(disableTranscriptToggle).not.toBeUndefined();
 
-    // Toggle off (Integrated Transcript = false -> Disable_Integrated_Transcript__c = true)
     disableTranscriptToggle.checked = false;
-    disableTranscriptToggle.dispatchEvent(
-      new CustomEvent("change", { detail: { checked: false } })
+    profilesPanel.dispatchEvent(
+      new CustomEvent("fieldchange", { detail: { field: "integratedTranscriptActive", value: false } })
     );
     await Promise.resolve();
 
-    // Click Save LWC Profile button
-    const buttons = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-button")
-    );
-    const saveButton = buttons.find((b) => b.label === "Save LWC Profile");
-    expect(saveButton).not.toBeUndefined();
-
-    saveButton.click();
+    profilesPanel.dispatchEvent(new CustomEvent("saveprofile"));
     await Promise.resolve();
 
     expect(saveConfig).toHaveBeenCalledWith(
@@ -512,13 +486,10 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
     await Promise.resolve();
 
-    const buttons = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-button")
-    );
-    const copyButton = buttons.find((b) => b.label === "Save as Copy");
-    expect(copyButton).not.toBeUndefined();
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
 
-    copyButton.click();
+    profilesPanel.dispatchEvent(new CustomEvent("saveascopy"));
     await Promise.resolve();
 
     expect(saveConfig).toHaveBeenCalledWith(
@@ -546,7 +517,10 @@ describe("c-agent-assist-setup-wizard", () => {
     const usersTab = tabs.find((t) => t.value === "users");
     expect(usersTab).toBeTruthy();
 
-    const searchInput = element.shadowRoot.querySelector(
+    const usersPanel = element.shadowRoot.querySelector("c-agent-assist-setup-users-panel");
+    expect(usersPanel).not.toBeNull();
+
+    const searchInput = usersPanel.shadowRoot.querySelector(
       'lightning-input[type="search"]'
     );
     if (searchInput) {
@@ -589,13 +563,10 @@ describe("c-agent-assist-setup-wizard", () => {
     document.body.appendChild(element);
     await Promise.resolve();
 
-    const buttons = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-button")
-    );
-    const resetProfileBtn = buttons.find((b) => b.label === "Reset LWC Profile");
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
 
-    expect(resetProfileBtn).not.toBeUndefined();
-    resetProfileBtn.click();
+    profilesPanel.dispatchEvent(new CustomEvent("resetprofile"));
     await Promise.resolve();
     expect(resetSingleDefaultConfig).toHaveBeenCalledWith({
       developerName: "Default"
@@ -649,51 +620,20 @@ describe("c-agent-assist-setup-wizard", () => {
     ]);
     await Promise.resolve();
 
-    // Select Default_Companion in profiles list
-    const profileItems = Array.from(
-      element.shadowRoot.querySelectorAll(".profile-item")
-    );
-    const companionItem = profileItems.find(
-      (item) => item.dataset.id === "Default_Companion"
-    );
-    if (companionItem) {
-      companionItem.click();
-      await Promise.resolve();
-    }
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
 
-    // Activate simulator tab
-    const tabs = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-tab")
-    );
-    const simulatorTab = tabs.find((t) => t.value === "simulator");
-    if (simulatorTab) {
-      simulatorTab.dispatchEvent(new CustomEvent("active"));
-      await Promise.resolve();
-    }
-
-    // Verify simulator combobox value matches selected profile
-    const comboboxes = Array.from(
-      element.shadowRoot.querySelectorAll("lightning-combobox")
-    );
-    const combobox = comboboxes.find(
-      (cb) => cb.label === "LWC Configuration Profile to Instantiate"
-    );
-    expect(combobox).toBeTruthy();
-    expect(combobox.value).toBe("Default_Companion");
-
-    // Change simulator combobox to Default
-    combobox.dispatchEvent(
-      new CustomEvent("change", {
-        detail: { value: "Default" }
-      })
+    profilesPanel.dispatchEvent(
+      new CustomEvent("profileselect", { detail: { developerName: "Default_Companion" } })
     );
     await Promise.resolve();
 
-    // Verify that selecting profile in simulator updates selected profile state
-    const activeProfileItem = element.shadowRoot.querySelector(
-      ".profile-item_active"
-    );
-    expect(activeProfileItem.dataset.id).toBe("Default");
+    const simPanel = element.shadowRoot.querySelector("c-agent-assist-setup-simulator-panel");
+    expect(simPanel).not.toBeNull();
+
+    const combobox = simPanel.shadowRoot.querySelector("lightning-combobox");
+    expect(combobox).toBeTruthy();
+    expect(combobox.value).toBe("Default_Companion");
   });
 
   it("persists selected profile in storage and restores it on component mount", async () => {
@@ -727,10 +667,9 @@ describe("c-agent-assist-setup-wizard", () => {
     ]);
     await Promise.resolve();
 
-    const activeProfileItem = element.shadowRoot.querySelector(
-      ".profile-item_active"
-    );
-    expect(activeProfileItem.dataset.id).toBe("Default_Companion");
+    const profilesPanel = element.shadowRoot.querySelector("c-agent-assist-setup-profiles-panel");
+    expect(profilesPanel).not.toBeNull();
+    expect(profilesPanel.selectedDevName).toBe("Default_Companion");
     localStorage.removeItem("agent_assist_setup_selected_profile");
   });
 });

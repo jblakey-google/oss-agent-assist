@@ -1,0 +1,162 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template>
+  <div class="slds-p-top_medium">
+    <lightning-card title="Live LWC Component Simulator" icon-name="utility:chat">
+      <div class="slds-p-around_medium">
+        <p class="slds-text-body_regular slds-m-bottom_medium">
+          Select any LWC configuration profile to instantiate and test the live&#32;<strong>agentAssistContainer</strong>&#32;or&#32;<strong>agentAssistCompanionAgent</strong>&#32;LWC component directly inside the simulator. You can also test your conversation profile using the&#32;<a
+            href="https://docs.cloud.google.com/agent-assist/docs/simulator"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="slds-text-link"
+          >Agent Assist Console Simulator</a>.
+        </p>
+
+        <!-- Profile Selector for Simulator -->
+        <div class="slds-box slds-theme_shade slds-m-bottom_medium slds-p-around_medium">
+          <div class="slds-grid slds-gutters slds-grid_vertical-align-center slds-wrap">
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_5-of-12">
+              <lightning-combobox
+                label="LWC Configuration Profile to Instantiate"
+                value={simulatorProfileDevName}
+                options={simulatorProfileOptions}
+                onchange={handleSimulatorProfileChange}
+                field-level-help="Select an LWC configuration profile to preview the live LWC."
+              >
+              </lightning-combobox>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12 slds-m-top_small slds-medium-m-top_none">
+              <div class="slds-text-title_bold">
+                Instantiated LWC Type:
+              </div>
+              <div class="slds-text-body_small slds-m-top_xxx-small">
+                <span class="slds-badge slds-badge_inverse slds-m-right_xx-small">{simulatorProfile.profileType}</span>
+                <code>{simulatorProfileDevName}</code>
+              </div>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-m-top_small slds-medium-m-top_none slds-grid slds-grid_align-end slds-grid_vertical-align-center">
+              <lightning-button
+                label="Reload Component"
+                title="Reload/Remount LWC in Simulator"
+                icon-name="utility:refresh"
+                onclick={handleReloadSimulator}
+              >
+              </lightning-button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Grid: Left Column Chat Inputs | Right Column Live LWC Component -->
+        <div class="slds-grid slds-gutters slds-wrap">
+          <!-- Left Column: Chat Simulator Controls / Inputs -->
+          <div class="slds-col slds-size_1-of-1 slds-large-size_5-of-12 slds-m-bottom_medium">
+            <div class="slds-card slds-card_boundary slds-p-around_medium">
+              <div class="simulator-card-header slds-text-align_center slds-m-bottom_medium">
+                <h3 class="slds-text-heading_medium slds-text-title_bold slds-text-align_center">
+                  Start a conversation
+                </h3>
+                <p class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small slds-text-align_center">
+                  Use the chat inputs below to simulate conversation messages.
+                </p>
+              </div>
+
+              <!-- Customer Input Section -->
+              <div class="slds-m-bottom_medium">
+                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                  <span class="slds-text-title_bold">Customer</span>
+                </div>
+                <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+                  <div class="slds-col slds-grow">
+                    <lightning-input
+                      type="text"
+                      variant="label-hidden"
+                      label="Type a customer's message"
+                      placeholder="Type a customer's message"
+                      value={customerMessage}
+                      onchange={handleCustomerMessageChange}
+                      onkeyup={handleCustomerKeyUp}
+                    ></lightning-input>
+                  </div>
+                  <div class="slds-col slds-no-flex">
+                    <lightning-button-icon
+                      icon-name="utility:send"
+                      variant="brand"
+                      alternative-text="Send as Customer"
+                      title="Send as Customer"
+                      onclick={handleSendCustomerMessage}
+                    ></lightning-button-icon>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Agent Input Section -->
+              <div class="slds-m-bottom_medium">
+                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                  <span class="slds-text-title_bold">Agent</span>
+                </div>
+                <div class="slds-grid slds-gutters_x-small slds-grid_vertical-align-center">
+                  <div class="slds-col slds-grow">
+                    <lightning-input
+                      type="text"
+                      variant="label-hidden"
+                      label="Type an agent's message"
+                      placeholder="Type an agent's message"
+                      value={agentMessage}
+                      onchange={handleAgentMessageChange}
+                      onkeyup={handleAgentKeyUp}
+                    ></lightning-input>
+                  </div>
+                  <div class="slds-col slds-no-flex">
+                    <lightning-button-icon
+                      icon-name="utility:send"
+                      variant="brand"
+                      alternative-text="Send as Agent"
+                      title="Send as Agent"
+                      onclick={handleSendAgentMessage}
+                    ></lightning-button-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Instantiated Component -->
+          <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12">
+            <template lwc:if={isSimulatorContainer}>
+              <div>
+                <c-agent-assist-container
+                  config-name={simulatorProfileDevName}
+                  refresh-key={simulatorRefreshKey}
+                ></c-agent-assist-container>
+              </div>
+            </template>
+
+            <template lwc:if={isSimulatorCompanion}>
+              <div>
+                <c-agent-assist-companion-agent
+                  config-name={simulatorProfileDevName}
+                  refresh-key={simulatorRefreshKey}
+                ></c-agent-assist-companion-agent>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </lightning-card>
+  </div>
+</template>

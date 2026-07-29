@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
+// =============================================================================
+// #region 1. USER FILTERING & SORTING UTILITIES
+// =============================================================================
+
+/**
+ * Filters a list of user objects by search term and sorts assigned users to the top.
+ *
+ * @param {Array<Object>} [usersList=[]] - Raw list of user objects.
+ * @param {string} [searchTerm=""] - Search term to filter user labels.
+ * @returns {Array<Object>} Processed, filtered, and sorted user list with badge UI fields.
+ */
 export function filterAndSortUsers(usersList = [], searchTerm = "") {
   const term = (searchTerm || "").toLowerCase().trim();
   const users = term
     ? usersList.filter((u) => (u.label || "").toLowerCase().includes(term))
     : [...usersList];
 
-  // Sort assigned users to the top, then alphabetically by name
   users.sort((a, b) => {
     if (a.isAssigned !== b.isAssigned) {
       return a.isAssigned ? -1 : 1;
@@ -40,6 +50,13 @@ export function filterAndSortUsers(usersList = [], searchTerm = "") {
   }));
 }
 
+/**
+ * Processes Apex response for agent users data and updates selected user ID.
+ *
+ * @param {Array<Object>} data - Apex returned list of user objects.
+ * @param {string} currentSelectedUserId - Currently selected user ID.
+ * @returns {{ usersList: Array<Object>, selectedUserId: string }} Updated user list and selection.
+ */
 export function processAgentUsersData(data, currentSelectedUserId) {
   if (data && data.length > 0) {
     const selectedId = !currentSelectedUserId ? data[0].value : currentSelectedUserId;
@@ -54,20 +71,30 @@ export function processAgentUsersData(data, currentSelectedUserId) {
   };
 }
 
+// #endregion
+
+// =============================================================================
+// #region 2. USER ASSIGNMENT STATUS UI FORMATTERS
+// =============================================================================
+
+/**
+ * Calculates whether a specific user ID has the permission set assigned.
+ *
+ * @param {Array<Object>} [usersList=[]] - List of user objects.
+ * @param {string} [selectedUserId=""] - Target user ID.
+ * @returns {boolean} True if user is assigned.
+ */
 export function calculateUserAssignmentStatus(usersList = [], selectedUserId = "") {
   const found = usersList.find((u) => u.value === selectedUserId);
   return found ? found.isAssigned : false;
 }
 
-export async function toggleUserPermissionService(params, toggleFn) {
-  const { userId, assign, permissionSetName } = params;
-  return toggleFn({
-    userId,
-    assign,
-    permissionSetName
-  });
-}
-
+/**
+ * Formats badge CSS classes, labels, and button variants for a selected user assignment card.
+ *
+ * @param {boolean} isAssigned - Whether the user is currently assigned.
+ * @returns {{ badgeClass: string, statusText: string, buttonLabel: string, buttonVariant: string, buttonIcon: string }} UI button & badge properties.
+ */
 export function formatSelectedUserUI(isAssigned) {
   return {
     badgeClass: isAssigned
@@ -79,3 +106,5 @@ export function formatSelectedUserUI(isAssigned) {
     buttonIcon: isAssigned ? "utility:close" : "utility:add"
   };
 }
+
+// #endregion

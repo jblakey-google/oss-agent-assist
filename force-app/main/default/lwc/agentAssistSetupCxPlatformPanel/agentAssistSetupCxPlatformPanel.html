@@ -1,0 +1,487 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template>
+  <div class="slds-p-top_medium">
+    <lightning-card
+      title="Contact Center (CX) Platform Integration Guides"
+      icon-name="utility:call"
+    >
+      <div class="slds-p-around_medium">
+        <p class="slds-text-body_regular slds-m-bottom_medium">
+          Step-by-step instructions, documentation links, and checklists
+          for connecting your contact center platform to Google Cloud
+          Agent Assist & Companion Agent.
+        </p>
+
+        <lightning-accordion active-section-name="base">
+          <lightning-accordion-section
+            name="base"
+            label="Salesforce Base Connector"
+          >
+            <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+              <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                <div class="platform-logo-badge slds-m-right_small">
+                  <img
+                    src={salesforceLogoUrl}
+                    alt="Salesforce logo"
+                    class="platform-logo-img"
+                  />
+                </div>
+                <div>
+                  <h3 class="slds-text-heading_small platform-header-title">Google Cloud Agent Assist Base Connector</h3>
+                  <p class="slds-text-body_small slds-text-color_weak">
+                    Standard platform connector supporting Salesforce Chat, Messaging, Case, Contact, and custom record pages out of the box.
+                  </p>
+                </div>
+              </div>
+              <ul
+                class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+              >
+                <li>
+                  Provides core event handling, session lifecycle management, and UI module rendering for Salesforce LWCs.
+                </li>
+                <li>
+                  Place the&#32;<code class="xml-code">agentAssistContainer</code>&#32;or&#32;<code class="xml-code">agentAssistCompanionAgent</code>&#32;LWC on standard record pages (Case, Contact, MessagingSession, etc.).
+                </li>
+                <li>
+                  Select&#32;<code class="xml-code">base</code>&#32;in the Platform dropdown when configuring LWC Configuration Profiles.
+                </li>
+                <li>
+                  Bring your own custom chat or telephony system and communicate directly with Agent Assist using&#32;<a
+                    href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="slds-text-link"
+                    >Agent Assist UI Module Events</a
+                  >&#32;(e.g.,&#32;<code class="xml-code">dispatchAgentAssistEvent</code>).
+                </li>
+                <li>
+                  Use the&#32;<code class="xml-code">agentAssistCustomStarterKit</code>&#32;LWC to test the base connector and custom event stream on any Lightning Experience page.
+                </li>
+              </ul>
+              <div
+                class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+              >
+                <a
+                  href="https://docs.cloud.google.com/agent-assist/docs/modules-overview"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:new_window"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  View UI Modules Overview
+                </a>
+                <a
+                  href="https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:new_window"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  UI Modules Events Guide
+                </a>
+              </div>
+            </div>
+          </lightning-accordion-section>
+
+          <lightning-accordion-section
+            name="messaging"
+            label="Salesforce chat integration"
+          >
+            <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+              <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                <div class="platform-logo-badge slds-m-right_small">
+                  <img
+                    src={salesforceLogoUrl}
+                    alt="Salesforce logo"
+                    class="platform-logo-img"
+                  />
+                </div>
+                <div>
+                  <h3 class="slds-text-heading_small platform-header-title">Salesforce Chat &amp; Messaging Integration</h3>
+                  <p class="slds-text-body_small slds-text-color_weak">
+                    Connect Salesforce Enhanced Chat or Salesforce Chat sessions directly to Google Cloud Agent Assist.
+                  </p>
+                </div>
+              </div>
+              <ul
+                class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+              >
+                <li>
+                  Configure Messaging Channels and Omni-Channel Routing in Salesforce Setup.
+                </li>
+                <li>
+                  Place the&#32;<code class="xml-code">agentAssistContainer</code>&#32;or&#32;<code class="xml-code">agentAssistCompanionAgent</code>&#32;LWC on MessagingSession / LiveChatTranscript record pages.
+                </li>
+                <li>
+                  Configure MessagingPlatformService to listen for chat payload dispatches and push real-time suggestions to agents.
+                </li>
+              </ul>
+              <a
+                href="https://docs.cloud.google.com/agent-assist/docs/aaforsalesforce-chat"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="slds-button slds-button_neutral doc-pill-link"
+              >
+                <lightning-icon
+                  icon-name="utility:new_window"
+                  size="xx-small"
+                  class="slds-m-right_xx-small"
+                ></lightning-icon>
+                View Salesforce Chat &amp; Messaging Setup Guide
+              </a>
+            </div>
+          </lightning-accordion-section>
+
+          <lightning-accordion-section
+            name="five9"
+            label="Salesforce voice integration with Five9"
+          >
+            <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+              <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                <div class="platform-logo-badge slds-m-right_small">
+                  <img
+                    src={five9LogoUrl}
+                    alt="Five9 logo"
+                    class="platform-logo-img"
+                  />
+                </div>
+                <div>
+                  <h3 class="slds-text-heading_small platform-header-title">Five9 Service Cloud Voice Integration</h3>
+                  <p class="slds-text-body_small slds-text-color_weak">
+                    Integrate Five9 Bring Your Own Telephony (BYOT) and Service Cloud Voice real-time audio streams with Agent Assist.
+                  </p>
+                </div>
+              </div>
+              <div class="slds-m-bottom_small">
+                <template lwc:if={isFive9PackageInstalled}>
+                  <span class="pkg-status-pill pkg-status-pill_pass">
+                    <span class="status-led status-led_pass"></span>
+                    Installed (04tTN000000C1rZYAS)
+                  </span>
+                </template>
+                <template lwc:else>
+                  <span class="pkg-status-pill pkg-status-pill_warn">
+                    <span class="status-led status-led_warn"></span>
+                    Package Not Detected (04tTN000000C1rZYAS)
+                  </span>
+                </template>
+              </div>
+              <ul
+                class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+              >
+                <li>
+                  Install and configure Five9 BYOT managed package in Salesforce using&#32;<code class="xml-code">npm run install-five9-package</code>&#32;or AppExchange.
+                </li>
+                <li>
+                  Enable Service Cloud Voice real-time audio streaming and Five9 telephony connector.
+                </li>
+                <li>
+                  Place the&#32;<code class="xml-code">agentAssistContainer</code>&#32;or&#32;<code class="xml-code">agentAssistCompanionAgent</code>&#32;LWC on VoiceCall record pages with Five9 platform handler enabled.
+                </li>
+              </ul>
+              <div
+                class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+              >
+                <a
+                  href="https://docs.cloud.google.com/agent-assist/priv/docs/salesforce-voice-five9"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:new_window"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  View Five9 Service Cloud Voice Setup Guide
+                </a>
+                <a
+                  href="https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GuYVdUAN"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:shopping_bag"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  Five9 AppExchange Listing
+                </a>
+              </div>
+            </div>
+          </lightning-accordion-section>
+
+          <lightning-accordion-section
+            name="nice"
+            label="Salesforce voice integration with NICE CXone"
+          >
+            <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+              <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                <div class="platform-logo-badge slds-m-right_small">
+                  <img
+                    src={niceLogoUrl}
+                    alt="NICE CXone logo"
+                    class="platform-logo-img"
+                  />
+                </div>
+                <div>
+                  <h3 class="slds-text-heading_small platform-header-title">NICE CXone Service Cloud Voice Integration</h3>
+                  <p class="slds-text-body_small slds-text-color_weak">
+                    Integrate NICE CXone Service Cloud Voice (SCV) audio streams directly with Google Cloud Agent Assist.
+                  </p>
+                </div>
+              </div>
+              <div class="slds-m-bottom_small">
+                <template lwc:if={isNicePackageInstalled}>
+                  <span class="pkg-status-pill pkg-status-pill_pass">
+                    <span class="status-led status-led_pass"></span>
+                    Installed (04tUi000000L76XIAS)
+                  </span>
+                </template>
+                <template lwc:else>
+                  <span class="pkg-status-pill pkg-status-pill_warn">
+                    <span class="status-led status-led_warn"></span>
+                    Package Not Detected (04tUi000000L76XIAS)
+                  </span>
+                </template>
+              </div>
+              <ul
+                class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+              >
+                <li>
+                  Configure NICE CXone Service Cloud Voice partner integration and AudioStream connector using&#32;<code class="xml-code">npm run install-nice-package</code>&#32;or AppExchange.
+                </li>
+                <li>
+                  Enable real-time audio streaming from NICE CXone contact center to Agent Assist backend.
+                </li>
+                <li>
+                  Place the&#32;<code class="xml-code">agentAssistContainer</code>&#32;or&#32;<code class="xml-code">agentAssistCompanionAgent</code>&#32;LWC on VoiceCall record pages to display real-time suggestions.
+                </li>
+              </ul>
+              <div
+                class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+              >
+                <a
+                  href="https://docs.cloud.google.com/agent-assist/docs/salesforce-voice-nice"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:new_window"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  View NICE CXone Service Cloud Voice Setup Guide
+                </a>
+                <a
+                  href="https://appexchange.salesforce.com/appxListingDetail?listingId=175e1542-c700-459c-8f9b-6fcb1bce7a14"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:shopping_bag"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  NICE CXone AppExchange Listing
+                </a>
+              </div>
+            </div>
+          </lightning-accordion-section>
+
+          <lightning-accordion-section
+            name="genesys"
+            label="Salesforce voice integration with Genesys Cloud CX"
+          >
+            <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+              <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                <div class="platform-logo-badge slds-m-right_small">
+                  <img
+                    src={genesysLogoUrl}
+                    alt="Genesys Cloud CX logo"
+                    class="platform-logo-img"
+                  />
+                </div>
+                <div>
+                  <h3 class="slds-text-heading_small platform-header-title">Genesys Cloud CX Voice Integration</h3>
+                  <p class="slds-text-body_small slds-text-color_weak">
+                    Integrate with Genesys Cloud via AudioHook WebSocket streams and custom Client Application widgets.
+                  </p>
+                </div>
+              </div>
+              <div class="slds-m-bottom_small">
+                <template lwc:if={isGenesysPackageInstalled}>
+                  <span class="pkg-status-pill pkg-status-pill_pass">
+                    <span class="status-led status-led_pass"></span>
+                    Installed (04tQp000000ngyzIAA)
+                  </span>
+                </template>
+                <template lwc:else>
+                  <span class="pkg-status-pill pkg-status-pill_warn">
+                    <span class="status-led status-led_warn"></span>
+                    Package Not Detected (04tQp000000ngyzIAA)
+                  </span>
+                </template>
+              </div>
+              <ul
+                class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+              >
+                <li>
+                  Install Genesys Cloud CX package in Salesforce using&#32;<code class="xml-code">npm run install-genesys-package</code>&#32;or AppExchange.
+                </li>
+                <li>
+                  Create an AudioHook integration in Genesys Cloud Admin.
+                </li>
+                <li>
+                  Configure Client Credentials OAuth grant with required permissions.
+                </li>
+                <li>
+                  Embed the Agent Assist or Companion Agent Interaction Widget in Genesys Agent Workspace.
+                </li>
+              </ul>
+              <div
+                class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+              >
+                <a
+                  href="https://docs.cloud.google.com/agent-assist/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:new_window"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  View Genesys Cloud Setup Guide
+                </a>
+                <a
+                  href="https://appexchange.salesforce.com/appxListingDetail?listingId=7f59a36f-86c0-4cac-b8af-2c1722ede4d1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:shopping_bag"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  Genesys Cloud AppExchange Listing
+                </a>
+              </div>
+            </div>
+          </lightning-accordion-section>
+
+          <lightning-accordion-section
+            name="twilio"
+            label="Salesforce voice integration with Twilio Flex"
+          >
+            <div class="slds-p-around_small slds-theme_shade platform-accordion-card">
+              <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small platform-logo-header">
+                <div class="platform-logo-badge slds-m-right_small">
+                  <img
+                    src={twilioLogoUrl}
+                    alt="Twilio Flex logo"
+                    class="platform-logo-img"
+                  />
+                </div>
+                <div>
+                  <h3 class="slds-text-heading_small platform-header-title">Twilio Flex Integration</h3>
+                  <p class="slds-text-body_small slds-text-color_weak">
+                    Deploy the Agent Assist Flex Plugin to Twilio Flex UI and route media streams to the UI Connector backend.
+                  </p>
+                </div>
+              </div>
+              <div class="slds-m-bottom_small">
+                <template lwc:if={isTwilioPackageInstalled}>
+                  <span class="pkg-status-pill pkg-status-pill_pass">
+                    <span class="status-led status-led_pass"></span>
+                    Installed (04t8Z0000012JNXQA2)
+                  </span>
+                </template>
+                <template lwc:else>
+                  <span class="pkg-status-pill pkg-status-pill_warn">
+                    <span class="status-led status-led_warn"></span>
+                    Package Not Detected (04t8Z0000012JNXQA2)
+                  </span>
+                </template>
+              </div>
+              <ul
+                class="slds-list_dotted slds-text-body_small slds-m-bottom_small"
+              >
+                <li>
+                  Install Twilio Flex package in Salesforce using&#32;<code class="xml-code">npm run install-twilioflex-package</code>&#32;or AppExchange.
+                </li>
+                <li>
+                  Install and build the Flex UI Agent Assist Plugin.
+                </li>
+                <li>
+                  Configure bidirectional media streaming in TwiML/Studio Flow.
+                </li>
+                <li>
+                  Configure SSO authentication bridging Flex agent sessions to Salesforce.
+                </li>
+              </ul>
+              <div
+                class="slds-grid slds-gutters_x-small slds-wrap slds-m-top_small"
+              >
+                <a
+                  href="https://docs.cloud.google.com/agent-assist/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-right_x-small slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:new_window"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  View Twilio Flex Setup Guide
+                </a>
+                <a
+                  href="https://appexchange.salesforce.com/appxListingDetail?listingId=a0N4V00000GZ7AuUAL"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="slds-button slds-button_neutral doc-pill-link slds-m-bottom_x-small"
+                >
+                  <lightning-icon
+                    icon-name="utility:shopping_bag"
+                    size="xx-small"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  Twilio Flex AppExchange Listing
+                </a>
+              </div>
+            </div>
+          </lightning-accordion-section>
+        </lightning-accordion>
+      </div>
+    </lightning-card>
+  </div>
+</template>

@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+// =============================================================================
+// #region 1. PROFILE TEMPLATE & TYPE FACTORY
+// =============================================================================
+
+/**
+ * Creates a default profile template object for a new Container or Companion Agent profile.
+ *
+ * @param {string} profileType - Profile type ('Container' | 'Companion Agent').
+ * @returns {Object} Fresh profile template object with default fields.
+ */
 export function createNewProfileTemplate(profileType) {
   const isCompanion = profileType === "Companion Agent";
   const randomSuffix = Math.floor(Math.random() * 1000);
@@ -48,6 +58,13 @@ export function createNewProfileTemplate(profileType) {
   };
 }
 
+/**
+ * Switches the profile type of an existing profile object, adjusting titles appropriately.
+ *
+ * @param {Object} currentProfile - Current active profile object.
+ * @param {string} targetType - Target profile type ('Container' | 'Companion Agent').
+ * @returns {Object} Updated profile object.
+ */
 export function switchProfileType(currentProfile, targetType) {
   if (!currentProfile || currentProfile.profileType === targetType) {
     return currentProfile;
@@ -70,6 +87,19 @@ export function switchProfileType(currentProfile, targetType) {
   return updated;
 }
 
+// #endregion
+
+// =============================================================================
+// #region 2. APEX DTO PAYLOAD BUILDER
+// =============================================================================
+
+/**
+ * Builds the standard Agent_Assist_Config__c sobject payload for Apex save operations.
+ *
+ * @param {Object} profile - Profile object containing UI form fields.
+ * @param {Object} [overrides={}] - Optional field overrides (e.g. for copying profile).
+ * @returns {Object} Apex sobject record payload.
+ */
 export function buildConfigRecordPayload(profile, overrides = {}) {
   return {
     sobjectType: "Agent_Assist_Config__c",
@@ -102,6 +132,19 @@ export function buildConfigRecordPayload(profile, overrides = {}) {
   };
 }
 
+// #endregion
+
+// =============================================================================
+// #region 3. APEX SERVICE PERSISTENCE OPERATIONS
+// =============================================================================
+
+/**
+ * Persists changes to an existing or new profile via the Apex saveConfig function.
+ *
+ * @param {Object} currentProfile - Profile object to save.
+ * @param {Function} saveConfigFn - Apex saveConfig function reference.
+ * @returns {Promise<Object>} Saved record result.
+ */
 export async function saveProfileService(currentProfile, saveConfigFn) {
   const payload = buildConfigRecordPayload(currentProfile);
   if (
@@ -114,13 +157,26 @@ export async function saveProfileService(currentProfile, saveConfigFn) {
   return saveConfigFn({ configRecord: payload });
 }
 
+/**
+ * Creates a duplicate copy of an existing profile with a unique developer name.
+ *
+ * @param {Object} currentProfile - Profile object to copy.
+ * @param {Function} saveConfigFn - Apex saveConfig function reference.
+ * @returns {Promise<{ saved: Object, copyName: string, copyDevName: string }>} Result containing saved record details.
+ */
 export async function saveAsCopyProfileService(currentProfile, saveConfigFn) {
   const randomSuffix = Math.floor(Math.random() * 900) + 100;
   const baseDevName = (currentProfile.developerName || "Custom_Profile")
     .replace(/^Copy_/, "")
     .substring(0, 30);
-  const copyDevName = `Copy_${baseDevName}_${randomSuffix}`.replace(/[^a-zA-Z0-9_]/g, "_");
-  const baseName = (currentProfile.name || "Configuration Profile").replace(/^Copy of\s*/, "");
+  const copyDevName = `Copy_${baseDevName}_${randomSuffix}`.replace(
+    /[^a-zA-Z0-9_]/g,
+    "_"
+  );
+  const baseName = (currentProfile.name || "Configuration Profile").replace(
+    /^Copy of\s*/,
+    ""
+  );
   const copyName = `Copy of ${baseName}`.substring(0, 80);
 
   const payload = buildConfigRecordPayload(currentProfile, {
@@ -133,6 +189,13 @@ export async function saveAsCopyProfileService(currentProfile, saveConfigFn) {
   return { saved, copyName, copyDevName };
 }
 
+/**
+ * Deletes a custom configuration profile via the Apex deleteConfig function.
+ *
+ * @param {Object} currentProfile - Profile object to delete.
+ * @param {Function} deleteConfigFn - Apex deleteConfig function reference.
+ * @returns {Promise<Object|null>} Apex delete operation result.
+ */
 export async function deleteProfileService(currentProfile, deleteConfigFn) {
   if (
     currentProfile.id &&
@@ -144,12 +207,33 @@ export async function deleteProfileService(currentProfile, deleteConfigFn) {
   return null;
 }
 
+/**
+ * Resets a single default configuration profile back to out-of-the-box defaults.
+ *
+ * @param {Object} currentProfile - Default profile object to reset.
+ * @param {Function} resetConfigFn - Apex resetSingleDefaultConfig function reference.
+ * @returns {Promise<Object>} Reset record result.
+ */
 export async function resetProfileService(currentProfile, resetConfigFn) {
   return resetConfigFn({
     developerName: currentProfile.developerName
   });
 }
 
+// #endregion
+
+// =============================================================================
+// #region 4. LIST MUTATION HELPERS
+// =============================================================================
+
+/**
+ * Updates a profile item inside an array of profiles.
+ *
+ * @param {Array<Object>} profiles - Existing array of profile objects.
+ * @param {Object} currentProfile - Profile object being updated.
+ * @param {string} [savedId] - Saved database Id.
+ * @returns {Array<Object>} Immutable updated array of profiles.
+ */
 export function updateProfileInList(profiles, currentProfile, savedId) {
   const idx = profiles.findIndex(
     (p) => p.developerName === currentProfile.developerName
@@ -165,7 +249,15 @@ export function updateProfileInList(profiles, currentProfile, savedId) {
   return profiles;
 }
 
+/**
+ * Removes a profile item from an array of profiles by developer name.
+ *
+ * @param {Array<Object>} profiles - Existing array of profile objects.
+ * @param {string} devName - Developer name of profile to remove.
+ * @returns {Array<Object>} Filtered array of profiles.
+ */
 export function removeProfileFromList(profiles, devName) {
   return profiles.filter((p) => p.developerName !== devName);
 }
 
+// #endregion

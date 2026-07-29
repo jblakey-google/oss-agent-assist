@@ -1,0 +1,471 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template>
+  <div class="slds-p-top_medium">
+    <div class="slds-grid slds-gutters slds-wrap">
+      <!-- Left Column: Profile Selector List -->
+      <div
+        class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+      >
+        <lightning-card
+          title="LWC Configuration Profiles"
+          icon-name="utility:bundle_config"
+        >
+          <div class="slds-p-around_small">
+            <div class="slds-m-bottom_small">
+              <button
+                type="button"
+                class="slds-button slds-button_brand slds-button_stretch slds-size_1-of-1"
+                onclick={handleOpenNewProfileModal}
+              >
+                <lightning-icon
+                  icon-name="utility:add"
+                  size="x-small"
+                  variant="inverse"
+                  class="slds-m-right_x-small"
+                ></lightning-icon>
+                New LWC Profile
+              </button>
+            </div>
+
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+            >
+              Select an LWC configuration profile to edit. Profiles appear in the Lightning App Builder
+              dropdown for&#32;<code class="xml-code">agentAssistContainer</code>&#32;or&#32;<code class="xml-code">agentAssistCompanionAgent</code>.
+            </p>
+
+            <div class="slds-nav-vertical">
+              <template for:each={profileList} for:item="prof">
+                <div
+                  key={prof.id}
+                  class={prof.cssClass}
+                  onclick={handleSelectProfile}
+                  data-id={prof.developerName}
+                >
+                  <div
+                    class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+                  >
+                    <div>
+                      <div class="slds-text-title_bold">{prof.name}</div>
+                      <div
+                        class="slds-text-body_small slds-text-color_weak slds-m-top_xxx-small"
+                      >
+                        configName:&#32;<strong>{prof.developerName}</strong>
+                      </div>
+                      <div
+                        class="slds-text-body_small slds-m-top_xxx-small slds-grid slds-grid_vertical-align-center"
+                      >
+                        <span class="slds-text-color_weak slds-m-right_xxx-small">type:</span>
+                        <span class={prof.typeClass}>{prof.typeLabel}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </lightning-card>
+      </div>
+
+      <!-- Middle Column: Profile Editor Form -->
+      <div
+        class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
+      >
+        <div class="slds-m-bottom_medium">
+          <div
+            class="slds-box slds-box_small slds-theme_shade info-panel-box slds-p-around_medium"
+          >
+            <div
+              class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+            >
+              <lightning-icon
+                icon-name="utility:bundle_config"
+                size="small"
+                class="slds-m-right_x-small"
+              ></lightning-icon>
+              <strong class="slds-text-heading_small"
+                >How LWC Configuration Profiles Work</strong
+              >
+            </div>
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-p-left_small slds-m-bottom_xx-small"
+            >
+              <strong>Dropdown Select in Lightning Editor:</strong>&#32;Every LWC configuration profile created here is
+              automatically populated into the&#32;<strong>LWC Configuration Profile Name</strong>&#32;dropdown in Lightning App Builder. Drop the&#32;<code class="xml-code">agentAssistContainer</code>&#32;or&#32;<code class="xml-code">agentAssistCompanionAgent</code>&#32;on any page and select the LWC profile directly.
+            </p>
+          </div>
+        </div>
+
+        <lightning-card title={editorCardTitle} icon-name="utility:edit">
+          <div class="slds-p-around_medium">
+            <!-- Type Selector -->
+            <div
+              class="type-selector-bar slds-box slds-box_x-small slds-theme_shade slds-m-bottom_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
+            >
+              <div class="slds-grid slds-grid_vertical-align-center">
+                <span class="slds-text-title_bold slds-m-right_small">Type:</span>
+                <div class="slds-button-group" role="group">
+                  <button
+                    type="button"
+                    class={companionTypeBtnClass}
+                    data-type="Companion Agent"
+                    onclick={handleTypeSwitch}
+                  >
+                    Companion Agent
+                  </button>
+                  <button
+                    type="button"
+                    class={containerTypeBtnClass}
+                    data-type="Container"
+                    onclick={handleTypeSwitch}
+                  >
+                    Container
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="slds-grid slds-gutters slds-wrap">
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+              >
+                <lightning-input
+                  label="Display Name"
+                  value={currentProfile.name}
+                  data-field="name"
+                  onchange={handleFieldChange}
+                  required
+                >
+                </lightning-input>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small"
+              >
+                <lightning-input
+                  label="Developer Name"
+                  value={currentProfile.developerName}
+                  data-field="developerName"
+                  onchange={handleFieldChange}
+                  disabled={isDeveloperNameDisabled}
+                  required
+                >
+                </lightning-input>
+              </div>
+
+              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                <lightning-input
+                  label="Header Title"
+                  value={currentProfile.title}
+                  data-field="title"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+
+              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                <div
+                  class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_xx-small"
+                >
+                  <label class="slds-form-element__label slds-no-margin endpoint-label">
+                    UI Connector Endpoint URL&#32;
+                    <a
+                      href="https://docs.cloud.google.com/agent-assist/docs/backend-basics"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="slds-text-link slds-m-left_x-small deploy-doc-link"
+                    >
+                      Deployment Documentation&#32;
+                      <lightning-icon
+                        icon-name="utility:new_window"
+                        size="xx-small"
+                        variant="link"
+                        class="slds-m-left_xxx-small"
+                      ></lightning-icon>
+                    </a>
+                  </label>
+                  <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class={endpointStatusPillClass} title={endpointStatusTooltip}>
+                      <span class={endpointStatusLedClass}></span>
+                      <span>{endpointStatusLabel}</span>
+                    </span>
+                    <lightning-button-icon
+                      icon-name="utility:refresh"
+                      variant="border-filled"
+                      size="x-small"
+                      alternative-text="Re-check Endpoint Health"
+                      title="Re-check Endpoint Health"
+                      onclick={handleRecheckEndpoint}
+                      class="slds-m-left_xx-small"
+                    ></lightning-button-icon>
+                  </div>
+                </div>
+                <lightning-input
+                  label="UI Connector Endpoint URL"
+                  variant="label-hidden"
+                  value={currentProfile.endpointUrl}
+                  data-field="endpointUrl"
+                  onchange={handleFieldChange}
+                  placeholder="https://ui-connector-xxx.a.run.app"
+                >
+                </lightning-input>
+                <div class={endpointStatusMessageClass}>
+                  {endpointStatusMessage}
+                </div>
+              </div>
+
+              <!-- Auth Credentials -->
+              <div class="slds-col slds-size_1-of-1 slds-m-bottom_medium">
+                <div class="slds-box slds-box_small slds-theme_shade">
+                  <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_x-small">
+                    <span class="slds-text-title_bold">Authentication Credentials (/register route)</span>
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                      <span class={registerStatusPillClass} title={registerStatusTooltip}>
+                        <span class={registerStatusLedClass}></span>
+                        <span>{registerStatusLabel}</span>
+                      </span>
+                      <lightning-button-icon
+                        icon-name="utility:refresh"
+                        variant="border-filled"
+                        size="x-small"
+                        alternative-text="Re-check /register Route Health"
+                        title="Re-check /register Route Health"
+                        onclick={handleRecheckRegisterEndpoint}
+                        class="slds-m-left_xx-small"
+                      ></lightning-button-icon>
+                    </div>
+                  </div>
+                  <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_x-small">
+                      <lightning-input
+                        label="Consumer Key (Client ID)"
+                        value={currentProfile.consumerKey}
+                        data-field="consumerKey"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_x-small">
+                      <lightning-input
+                        type="password"
+                        label="Consumer Secret"
+                        value={currentProfile.consumerSecret}
+                        data-field="consumerSecret"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_x-small">
+                      <lightning-combobox
+                        label="Client Credentials User"
+                        value={currentProfile.clientCredentialsUser}
+                        options={userOptions}
+                        data-field="clientCredentialsUser"
+                        onchange={handleFieldChange}
+                      >
+                      </lightning-combobox>
+                    </div>
+                  </div>
+                  <div class={registerStatusMessageClass}>
+                    {registerStatusMessage}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Remote Site Notice -->
+              <template if:true={showRemoteSiteNotice}>
+                <div class="slds-col slds-size_1-of-1 slds-m-bottom_medium">
+                  <div class="slds-scoped-notification slds-media slds-media_center slds-theme_warning" role="status">
+                    <div class="slds-media__figure">
+                      <lightning-icon icon-name="utility:warning" variant="warning" size="small"></lightning-icon>
+                    </div>
+                    <div class="slds-media__body">
+                      <p>
+                        <strong>Remote Site Setting Required for Server-Side Auth:</strong>&#32;
+                        Apex callouts to <code>{currentProfile.endpointUrl}</code> require a Remote Site Setting in Salesforce Setup.
+                        <a href={remoteSiteSettingSetupUrl} target="_blank" rel="noopener noreferrer" class="slds-text-link_reset slds-text-title_bold slds-m-left_xx-small">
+                          Open Setup &gt; Remote Site Settings &#8599;
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- GCP Section -->
+              <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                <lightning-input
+                  label="Conversation Profile ID"
+                  value={currentProfile.conversationProfile}
+                  data-field="conversationProfile"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <lightning-combobox
+                  label="Channel"
+                  value={currentProfile.channel}
+                  options={channelOptions}
+                  data-field="channel"
+                  onchange={handleFieldChange}
+                >
+                </lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <lightning-combobox
+                  label="Target Platform"
+                  value={currentProfile.platform}
+                  options={platformOptions}
+                  data-field="platform"
+                  onchange={handleFieldChange}
+                >
+                </lightning-combobox>
+              </div>
+
+              <!-- Settings Switches -->
+              <template if:true={isCompanionProfile}>
+                <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                  <lightning-textarea
+                    label="Welcome Message"
+                    value={currentProfile.welcomeMessage}
+                    data-field="welcomeMessage"
+                    onchange={handleFieldChange}
+                  >
+                  </lightning-textarea>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                  <lightning-input
+                    type="toggle"
+                    label="Enable Autonomous Actions"
+                    checked={currentProfile.enableAutonomousActions}
+                    data-field="enableAutonomousActions"
+                    onchange={handleFieldChange}
+                  >
+                  </lightning-input>
+                </div>
+              </template>
+
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <lightning-input
+                  type="toggle"
+                  label="Integrated Transcript Component"
+                  checked={isIntegratedTranscriptActive}
+                  data-field="integratedTranscriptActive"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <lightning-input
+                  type="toggle"
+                  label="Debug Mode"
+                  checked={currentProfile.debugMode}
+                  data-field="debugMode"
+                  onchange={handleFieldChange}
+                >
+                </lightning-input>
+              </div>
+
+              <template if:true={isContainerProfile}>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                  <lightning-input
+                    type="toggle"
+                    label="Show Dark Mode Toggle"
+                    checked={currentProfile.showDarkModeToggle}
+                    data-field="showDarkModeToggle"
+                    onchange={handleFieldChange}
+                  >
+                  </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                  <lightning-input
+                    type="toggle"
+                    label="Show Component Header"
+                    checked={currentProfile.showHeader}
+                    data-field="showHeader"
+                    onchange={handleFieldChange}
+                  >
+                  </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                  <lightning-input
+                    type="toggle"
+                    label="Show Correctness Feedback"
+                    checked={currentProfile.showCorrectnessFeedback}
+                    data-field="showCorrectnessFeedback"
+                    onchange={handleFieldChange}
+                  >
+                  </lightning-input>
+                </div>
+              </template>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+              <div>
+                <button
+                  type="button"
+                  class="slds-button slds-button_brand slds-m-right_x-small"
+                  onclick={handleSaveProfile}
+                >
+                  <lightning-icon
+                    icon-name="utility:save"
+                    size="x-small"
+                    variant="inverse"
+                    class="slds-m-right_xx-small"
+                  ></lightning-icon>
+                  Save Profile
+                </button>
+                <button
+                  type="button"
+                  class="slds-button slds-button_neutral slds-m-right_x-small"
+                  onclick={handleSaveAsCopy}
+                >
+                  Save as Copy
+                </button>
+                <template if:true={isDefaultProfile}>
+                  <button
+                    type="button"
+                    class="slds-button slds-button_neutral"
+                    onclick={handleResetSingleProfile}
+                  >
+                    Reset Default Profile
+                  </button>
+                </template>
+              </div>
+
+              <template if:false={isDefaultProfile}>
+                <div>
+                  <button
+                    type="button"
+                    class="slds-button slds-button_destructive"
+                    onclick={handleDeleteProfile}
+                  >
+                    Delete Profile
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </lightning-card>
+      </div>
+    </div>
+  </div>
+</template>

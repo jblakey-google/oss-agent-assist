@@ -1,0 +1,156 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template>
+  <div class="slds-p-top_medium">
+    <div class="slds-grid slds-gutters slds-wrap">
+      <!-- Left Column: User Search & Quick Assignment Card -->
+      <div
+        class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_medium"
+      >
+        <lightning-card
+          title="User Permission Management"
+          icon-name="utility:user"
+        >
+          <div class="slds-p-around_medium">
+            <p class="slds-text-body_regular slds-m-bottom_small">
+              Assign and manage permission set access for agents and administrators using Agent Assist components in Salesforce.
+            </p>
+
+            <div class="slds-m-bottom_medium">
+              <lightning-combobox
+                label="Permission Set to Manage"
+                value={selectedPermissionSetName}
+                options={permissionSetOptions}
+                onchange={handlePermissionSetChange}
+              >
+              </lightning-combobox>
+            </div>
+
+            <div class="slds-m-bottom_small">
+              <lightning-input
+                type="search"
+                label="Search Salesforce Users"
+                value={userSearchTerm}
+                placeholder="Type a user name or username..."
+                onchange={handleUserSearchChange}
+              >
+              </lightning-input>
+            </div>
+
+            <!-- Inline Search Results List -->
+            <div class="slds-m-top_small">
+              <template lwc:if={hasFilteredUsers}>
+                <div class="user-search-results-container slds-border_top slds-p-top_small">
+                  <template for:each={filteredUsersList} for:item="u">
+                    <div
+                      key={u.value}
+                      class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-p-vertical_x-small slds-border_bottom"
+                    >
+                      <div class="slds-grid slds-grid_vertical-align-center slds-truncate slds-m-right_small">
+                        <lightning-icon
+                          icon-name="standard:user"
+                          size="small"
+                          class="slds-m-right_x-small"
+                        ></lightning-icon>
+                        <div class="slds-truncate">
+                          <div class="slds-text-title_bold slds-truncate">{u.label}</div>
+                          <span class={u.badgeClass}>{u.statusText}</span>
+                        </div>
+                      </div>
+                      <lightning-button
+                        label={u.buttonLabel}
+                        variant={u.buttonVariant}
+                        icon-name={u.buttonIcon}
+                        data-user-id={u.value}
+                        data-assigned={u.isAssigned}
+                        onclick={handleToggleUserInline}
+                        disabled={isUserPermissionLoading}
+                      >
+                      </lightning-button>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <template lwc:else>
+                <div class="slds-box slds-box_small slds-theme_shade slds-m-top_small">
+                  <p class="slds-text-color_weak slds-text-body_small">
+                    No users match your search criteria.
+                  </p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </lightning-card>
+      </div>
+
+      <!-- Right Column: Permission Details & Assigned Users List Card -->
+      <div
+        class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-m-bottom_medium"
+      >
+        <lightning-card
+          title="Permission Set Assignment Details"
+          icon-name="utility:people"
+        >
+          <div class="slds-p-around_medium">
+            <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+              <h3 class="slds-text-heading_small slds-m-bottom_xx-small">
+                {selectedPermissionSetLabel}&#32;(<code>{selectedPermissionSetName}</code>)
+              </h3>
+              <p class="slds-text-body_small slds-text-color_weak">
+                {selectedPermissionSetDescription}
+              </p>
+            </div>
+
+            <!-- Assigned Users List -->
+            <div class="slds-m-top_small">
+              <div
+                class="slds-text-title_bold slds-m-bottom_small slds-text-color_weak slds-grid slds-grid_vertical-align-center"
+              >
+                <lightning-icon
+                  icon-name="utility:people"
+                  size="x-small"
+                  class="slds-m-right_x-small"
+                ></lightning-icon>
+                <span>Assigned Users ({assignedUsersCount})</span>
+              </div>
+              <template lwc:if={hasAssignedAgentUsers}>
+                <div class="assigned-users-container slds-p-around_small slds-border">
+                  <template for:each={assignedAgentUsers} for:item="u">
+                    <lightning-pill
+                      key={u.value}
+                      label={u.label}
+                      name={u.value}
+                      onremove={handleQuickRemoveUserPermissionSet}
+                      class="slds-m-around_xx-small"
+                    ></lightning-pill>
+                  </template>
+                </div>
+              </template>
+              <template lwc:else>
+                <div class="slds-box slds-box_small slds-theme_shade">
+                  <p class="slds-text-color_weak slds-text-body_small">
+                    {assignedUsersEmptyMessage}
+                  </p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </lightning-card>
+      </div>
+    </div>
+  </div>
+</template>

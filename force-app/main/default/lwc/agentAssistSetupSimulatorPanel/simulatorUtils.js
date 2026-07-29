@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+// =============================================================================
+// #region 1. COMBOBOX & PROFILE RESOLUTION HELPERS
+// =============================================================================
+
+/**
+ * Formats a list of profile objects into combobox option objects.
+ *
+ * @param {Array<Object>} [profiles=[]] - List of profile objects.
+ * @returns {Array<{ label: string, value: string }>} Combobox options.
+ */
 export function formatSimulatorProfileOptions(profiles = []) {
   return profiles.map((prof) => {
     const typeStr =
@@ -25,11 +35,30 @@ export function formatSimulatorProfileOptions(profiles = []) {
   });
 }
 
+/**
+ * Resolves the currently active simulator profile object by developer name.
+ *
+ * @param {Array<Object>} [profiles=[]] - List of profile objects.
+ * @param {string} devName - Developer name to find.
+ * @returns {Object|null} Matching profile object with isFound flag.
+ */
 export function getActiveSimulatorProfile(profiles = [], devName) {
   const prof = profiles.find((p) => p.developerName === devName) || profiles[0];
   return prof ? { ...prof, isFound: true } : null;
 }
 
+// #endregion
+
+// =============================================================================
+// #region 2. CONVERSATION ID RESOLUTION & PAYLOAD UTILITIES
+// =============================================================================
+
+/**
+ * Extracts conversationId and conversationName from a container component event detail.
+ *
+ * @param {Object} event - DOM event emitted by agent assist container.
+ * @returns {{ conversationName: string|null, conversationId: string|null }} Extracted IDs.
+ */
 export function extractConversationIdFromEvent(event) {
   if (event?.detail?.conversationName) {
     const parts = event.detail.conversationName.split("/");
@@ -47,6 +76,13 @@ export function extractConversationIdFromEvent(event) {
   return { conversationName: null, conversationId: null };
 }
 
+/**
+ * Resolves the current conversation ID from local state or DOM element properties.
+ *
+ * @param {string|null} currentId - Currently tracked conversation ID in state.
+ * @param {HTMLElement|null} containerEl - Sub-component DOM element reference.
+ * @returns {string|null} Resolved conversation ID string or null.
+ */
 export function resolveConversationId(currentId, containerEl) {
   if (currentId) return currentId;
   if (containerEl?.conversationId) {
@@ -59,6 +95,14 @@ export function resolveConversationId(currentId, containerEl) {
   return null;
 }
 
+/**
+ * Builds the simulated analyze-content event payload for customer or agent messages.
+ *
+ * @param {string} participantRole - Role of message sender ('END_USER' | 'HUMAN_AGENT').
+ * @param {string} text - Message text input.
+ * @param {string|null} conversationId - Conversation ID string.
+ * @returns {Object} Structured event payload for analyze-content request.
+ */
 export function buildSimulatedMessagePayload(
   participantRole,
   text,
@@ -79,6 +123,12 @@ export function buildSimulatedMessagePayload(
   };
 }
 
+/**
+ * Dispatches the simulated event to window using global bridge function or standard dispatch.
+ *
+ * @param {Object} payload - Simulated message payload.
+ * @param {Window} [win=window] - Window object context.
+ */
 export function dispatchSimulatedMessage(payload, win = window) {
   if (typeof win.dispatchAgentAssistEvent === "function") {
     win.dispatchAgentAssistEvent("analyze-content-requested", payload);
@@ -86,3 +136,5 @@ export function dispatchSimulatedMessage(payload, win = window) {
     win.dispatchEvent(new CustomEvent("analyze-content-requested", payload));
   }
 }
+
+// #endregion
