@@ -17,7 +17,7 @@
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 // =============================================================================
-// #region 1. CONSTANTS & CONFIGURATION SCHEMAS
+// #region 1. Constants and Configuration Schemas
 // =============================================================================
 
 export const DEFAULT_DIAGNOSTIC_SECTIONS = [
@@ -402,8 +402,9 @@ export const STATUS_LABELS = {
 // #endregion
 
 // =============================================================================
-// #region 2. STORAGE & TOAST UTILITIES
+// #region 2. Storage and Toast Utilities
 // =============================================================================
+/* eslint-disable @lwc/lwc/no-async-operation */
 
 /**
  * Reads a value from localStorage or sessionStorage with fallback and error handling.
@@ -465,7 +466,7 @@ export function dispatchErrorToast(element, title, error) {
 // #endregion
 
 // =============================================================================
-// #region 3. HEALTH CHECK UTILITIES
+// #region 3. Health Check Utilities
 // =============================================================================
 
 /**

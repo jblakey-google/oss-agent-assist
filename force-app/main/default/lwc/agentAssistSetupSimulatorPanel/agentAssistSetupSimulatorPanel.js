@@ -19,7 +19,7 @@ import { dispatchToast } from "c/agentAssistSetupSharedService";
 
 export default class AgentAssistSetupSimulatorPanel extends LightningElement {
   // =============================================================================
-  // #region 1. REACTIVE PROPERTIES & STATE
+  // #region 1. Reactive Properties and State
   // =============================================================================
 
   @api profiles = [];
@@ -35,7 +35,7 @@ export default class AgentAssistSetupSimulatorPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 2. LIFECYCLE & EVENT LISTENERS
+  // #region 2. Lifecycle and Event Listeners
   // =============================================================================
 
   connectedCallback() {
@@ -73,7 +73,7 @@ export default class AgentAssistSetupSimulatorPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 3. GETTERS & COMPUTED PROPERTIES
+  // #region 3. Getters and Computed Properties
   // =============================================================================
 
   get simulatorProfileOptions() {
@@ -111,7 +111,7 @@ export default class AgentAssistSetupSimulatorPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 4. EVENT HANDLERS & SIMULATOR DISPATCH
+  // #region 4. Event Handlers and Simulator Dispatch
   // =============================================================================
 
   handleSimulatorProfileChange(event) {

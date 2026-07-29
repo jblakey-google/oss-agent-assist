@@ -15,7 +15,7 @@
  */
 
 // =============================================================================
-// #region 1. COMBOBOX & PROFILE RESOLUTION HELPERS
+// #region 1. Combobox and Profile Resolution Helpers
 // =============================================================================
 
 /**
@@ -50,7 +50,7 @@ export function getActiveSimulatorProfile(profiles = [], devName) {
 // #endregion
 
 // =============================================================================
-// #region 2. CONVERSATION ID RESOLUTION & PAYLOAD UTILITIES
+// #region 2. Conversation ID Resolution and Payload Utilities
 // =============================================================================
 
 /**

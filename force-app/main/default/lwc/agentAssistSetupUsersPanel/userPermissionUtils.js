@@ -15,7 +15,7 @@
  */
 
 // =============================================================================
-// #region 1. USER FILTERING & SORTING UTILITIES
+// #region 1. User Filtering and Sorting Utilities
 // =============================================================================
 
 /**
@@ -74,7 +74,7 @@ export function processAgentUsersData(data, currentSelectedUserId) {
 // #endregion
 
 // =============================================================================
-// #region 2. USER ASSIGNMENT STATUS UI FORMATTERS
+// #region 2. User Assignment Status UI Formatters
 // =============================================================================
 
 /**

@@ -43,21 +43,64 @@ const VENDOR_CALL_KEY_FIELD = "VoiceCall.VendorCallKey";
 // Prevent Zone.js monkey patching for Lightning Web Security (LWS)
 window.__Zone_disable_on_property = true;
 
+/**
+ * AgentAssistContainer
+ *
+ * Primary container LWC embedding Google Cloud Agent Assist UI Modules
+ * into Salesforce Service Cloud, Omni-Channel Messaging, and Service Cloud Voice (Five9, Twilio, NICE CXone).
+ */
 export default class AgentAssistContainer extends LightningElement {
+  // =============================================================================
+  // #region 1. Public API and Reactive Properties
+  // =============================================================================
+
+  /** Salesforce record ID context when placed on a Record Page. */
   @api recordId;
+
+  /** Salesforce object API name (e.g. Case, Account, VoiceCall). */
   @api objectApiName;
+
+  /** Developer Name of the Agent_Assist_Config__c record to load. */
   @api configName = "Default";
+
+  /** Active Dialogflow conversation ID string. */
+  @api conversationId = null;
+
+  /** Full Dialogflow conversation resource path. */
+  @api conversationName = null;
+
+  /** Optional manual configuration override object. */
+  @api configOverride;
 
   // Runtime reactive state properties
   @track loadError = null;
-  @api conversationId = null;
-  @api conversationName = null;
   @track isConversationInitialized = false;
   @track cancelSummarizationTimeout = null;
   @track token = null;
   @track showTranscript = false;
   @track _resolvedState = {};
-  @api configOverride;
+  @track isLoading = true;
+
+  platformService = null;
+  wiredConfigResult;
+  _appliedHeight = null;
+  tokenRefreshInterval = null;
+  conversationNamePollingInterval = null;
+  _refreshKey;
+
+  /**
+   * Public reactive key to force configuration refresh.
+   */
+  @api
+  get refreshKey() {
+    return this._refreshKey;
+  }
+  set refreshKey(value) {
+    this._refreshKey = value;
+    if (this.wiredConfigResult) {
+      refreshApex(this.wiredConfigResult);
+    }
+  }
 
   get resolvedState() {
     return this.configOverride || this._resolvedState;
@@ -65,7 +108,75 @@ export default class AgentAssistContainer extends LightningElement {
   set resolvedState(value) {
     this._resolvedState = value;
   }
-  @track isLoading = true;
+
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Apex Wires and Data Resolution
+  // =============================================================================
+
+  @wire(MessageContext) messageContext;
+
+  @wire(getRecord, { recordId: "$recordId", fields: ["Contact.Phone"] })
+  contact;
+
+  get voiceCallFields() {
+    if (this.objectApiName !== "VoiceCall") {
+      return undefined;
+    }
+    const fields = [VENDOR_CALL_KEY_FIELD];
+    if (this.platformService) {
+      fields.push(...this.platformService.getVoiceCallFields());
+    }
+    return fields;
+  }
+
+  @wire(getRecord, {
+    recordId: "$recordId",
+    fields: "$voiceCallFields"
+  })
+  wiredVoiceCall({ error, data }) {
+    if (data) {
+      this.voiceCallData = data;
+      this.debugLog(`Wired VoiceCall record updated: ${JSON.stringify(data)}`);
+      const sessionId = this.sessionId;
+      if (sessionId && this.platformService) {
+        this.platformService.handleSessionIdUpdated(sessionId);
+      }
+    } else if (error) {
+      this.debugLog(`Error wiring VoiceCall record: ${JSON.stringify(error)}`);
+    }
+  }
+
+  @wire(getResolvedConfig, { configName: "$configName" })
+  wiredConfig(result) {
+    this.wiredConfigResult = result;
+    const { data, error } = result;
+    this.isLoading = false;
+    if (data) {
+      this.resolvedState = data;
+      if (data.isFound) {
+        this.showTranscript = !this.disableIntegratedTranscript;
+      }
+    } else if (error) {
+      console.error(
+        "Error loading Agent Assist Container configuration:",
+        error
+      );
+      const errorMsg =
+        error?.body?.message ||
+        error?.message ||
+        "Access denied to AgentAssistConfigController Apex class.";
+      this.loadError = new Error(`Configuration access error: ${errorMsg}`);
+      this.resolvedState = { isFound: true };
+    }
+  }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 3. Computed Getters and Profile Resolution
+  // =============================================================================
 
   get showEmptyState() {
     return (
@@ -87,17 +198,6 @@ export default class AgentAssistContainer extends LightningElement {
       : "transcript-container hidden";
   }
 
-  platformService = null;
-  wiredConfigResult;
-  _appliedHeight = null;
-  tokenRefreshInterval = null;
-  conversationNamePollingInterval = null;
-
-  @wire(MessageContext) messageContext;
-  @wire(getRecord, { recordId: "$recordId", fields: ["Contact.Phone"] })
-  contact;
-
-  // Getters resolving from Apex configuration profile state
   @api get endpoint() {
     const ep =
       this.resolvedState?.endpointUrl ||
@@ -153,35 +253,6 @@ export default class AgentAssistContainer extends LightningElement {
       ? this.resolvedState.disableIntegratedTranscript
       : false;
   }
-
-  get voiceCallFields() {
-    if (this.objectApiName !== "VoiceCall") {
-      return undefined;
-    }
-    const fields = [VENDOR_CALL_KEY_FIELD];
-    if (this.platformService) {
-      fields.push(...this.platformService.getVoiceCallFields());
-    }
-    return fields;
-  }
-
-  @wire(getRecord, {
-    recordId: "$recordId",
-    fields: "$voiceCallFields"
-  })
-  wiredVoiceCall({ error, data }) {
-    if (data) {
-      this.voiceCallData = data;
-      this.debugLog(`Wired VoiceCall record updated: ${JSON.stringify(data)}`);
-      const sessionId = this.sessionId;
-      if (sessionId && this.platformService) {
-        this.platformService.handleSessionIdUpdated(sessionId);
-      }
-    } else if (error) {
-      this.debugLog(`Error wiring VoiceCall record: ${JSON.stringify(error)}`);
-    }
-  }
-
   @api get contactPhone() {
     return getFieldValue(this.contact?.data, "Contact.Phone");
   }
@@ -208,41 +279,11 @@ export default class AgentAssistContainer extends LightningElement {
     return this.resolvedState && this.resolvedState.isFound === false;
   }
 
-  _refreshKey;
-  @api
-  get refreshKey() {
-    return this._refreshKey;
-  }
-  set refreshKey(value) {
-    this._refreshKey = value;
-    if (this.wiredConfigResult) {
-      refreshApex(this.wiredConfigResult);
-    }
-  }
+  // #endregion
 
-  @wire(getResolvedConfig, { configName: "$configName" })
-  wiredConfig(result) {
-    this.wiredConfigResult = result;
-    const { data, error } = result;
-    this.isLoading = false;
-    if (data) {
-      this.resolvedState = data;
-      if (data.isFound) {
-        this.showTranscript = !this.disableIntegratedTranscript;
-      }
-    } else if (error) {
-      console.error(
-        "Error loading Agent Assist Container configuration:",
-        error
-      );
-      const errorMsg =
-        error?.body?.message ||
-        error?.message ||
-        "Access denied to AgentAssistConfigController Apex class.";
-      this.loadError = new Error(`Configuration access error: ${errorMsg}`);
-      this.resolvedState = { isFound: true };
-    }
-  }
+  // =============================================================================
+  // #region 4. Lifecycle and Platform Service Initialization
+  // =============================================================================
 
   connectedCallback() {
     if (this.debugMode) {
@@ -252,14 +293,6 @@ export default class AgentAssistContainer extends LightningElement {
       refreshApex(this.wiredConfigResult);
     }
     this.showTranscript = !this.disableIntegratedTranscript;
-  }
-
-  @api
-  async refreshConfig() {
-    if (this.wiredConfigResult) {
-      return refreshApex(this.wiredConfigResult);
-    }
-    return Promise.resolve();
   }
 
   async renderedCallback() {
@@ -291,6 +324,27 @@ export default class AgentAssistContainer extends LightningElement {
     }
   }
 
+  disconnectedCallback() {
+    this.debugLog("disconnectedCallback called");
+
+    if (this.platformService) {
+      this.platformService.teardown();
+    }
+    if (this.conversationNamePollingInterval) {
+      clearInterval(this.conversationNamePollingInterval);
+    }
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval);
+    }
+
+    if (window._uiModuleEventTarget) {
+      window._uiModuleEventTarget = window._uiModuleEventTarget.cloneNode(true);
+    }
+  }
+
+  /**
+   * Instantiates platform-specific telephony or chat service handler.
+   */
   async initPlatformService() {
     this.debugLog("initPlatformService called");
     const refs = {
@@ -348,13 +402,9 @@ export default class AgentAssistContainer extends LightningElement {
           this.platformService.initEventDragnet();
         }
 
-        // Initialize Agent Assist UI Modules
         this.platformService.initAgentAssistEvents();
-
-        // Initialize platform service logic
         await this.platformService.init();
 
-        // Wait for a conversationName before initializing UI Modules
         if (!this.conversationName) {
           await this.waitForConversationName();
         } else {
@@ -364,25 +414,6 @@ export default class AgentAssistContainer extends LightningElement {
         this.loadError = err;
         this.debugLog(`Container init error: ${err.message}`);
       }
-    }
-  }
-
-  disconnectedCallback() {
-    this.debugLog("disconnectedCallback called");
-
-    if (this.platformService) {
-      this.platformService.teardown();
-    }
-    if (this.conversationNamePollingInterval) {
-      clearInterval(this.conversationNamePollingInterval);
-    }
-    if (this.tokenRefreshInterval) {
-      clearInterval(this.tokenRefreshInterval);
-    }
-
-    // Clears all listeners (_uiModuleEventTarget is not attached to the DOM)
-    if (window._uiModuleEventTarget) {
-      window._uiModuleEventTarget = window._uiModuleEventTarget.cloneNode(true);
     }
   }
 
@@ -416,6 +447,29 @@ export default class AgentAssistContainer extends LightningElement {
     this._appliedHeight = this.containerHeight;
   }
 
+  // #endregion
+
+  // =============================================================================
+  // #region 5. Public Utility and Action Methods
+  // =============================================================================
+
+  /**
+   * Refreshes the Apex configuration wire result.
+   */
+  @api
+  async refreshConfig() {
+    if (this.wiredConfigResult) {
+      return refreshApex(this.wiredConfigResult);
+    }
+    return Promise.resolve();
+  }
+
+  /**
+   * Logs debug messages to browser console with styled container badge.
+   *
+   * @param {string} message - Main debug message.
+   * @param {...*} extra - Additional parameters to log.
+   */
   @api
   debugLog(message, ...extra) {
     if (this.debugMode) {
@@ -428,6 +482,9 @@ export default class AgentAssistContainer extends LightningElement {
     }
   }
 
+  /**
+   * Programmatically triggers summarization generation in embedded UI modules.
+   */
   @api
   triggerSummarization() {
     const uiModulesElement = this.template.querySelector(
@@ -443,6 +500,9 @@ export default class AgentAssistContainer extends LightningElement {
     }
   }
 
+  /**
+   * Ingests demo context references into the active Dialogflow session.
+   */
   @api
   ingestDemoContextReferences() {
     if (!this.platformService || !this.conversationName) return;
@@ -471,4 +531,6 @@ export default class AgentAssistContainer extends LightningElement {
     // eslint-disable-next-line @lwc/lwc/no-async-operation
     setTimeout(injectContext, CONTEXT_INJECTION_DELAY_MS);
   }
+
+  // #endregion
 }

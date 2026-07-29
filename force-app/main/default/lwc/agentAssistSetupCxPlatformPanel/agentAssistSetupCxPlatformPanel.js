@@ -20,7 +20,7 @@ import getInstalledPackageStatus from "@salesforce/apex/AgentAssistConfigControl
 
 export default class AgentAssistSetupCxPlatformPanel extends LightningElement {
   // =============================================================================
-  // #region 1. REACTIVE PROPERTIES & WIRES
+  // #region 1. Reactive Properties and Wires
   // =============================================================================
 
   @api packageStatus = {};
@@ -37,7 +37,7 @@ export default class AgentAssistSetupCxPlatformPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 2. GETTERS & COMPUTED LOGO URLS
+  // #region 2. Getters and Computed Logo URLs
   // =============================================================================
 
   get salesforceLogoUrl() {

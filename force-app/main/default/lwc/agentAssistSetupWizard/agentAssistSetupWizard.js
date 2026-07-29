@@ -33,7 +33,7 @@ import {
 } from "c/agentAssistSetupSharedService";
 
 // =============================================================================
-// PARENT ORCHESTRATOR COMPONENT: AgentAssistSetupWizard
+// Parent Orchestrator Component: AgentAssistSetupWizard
 // =============================================================================
 
 /**
@@ -45,7 +45,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   appIcon = sfAgentAssistIcon;
 
   // =============================================================================
-  // #region 1. REACTIVE COMPONENT STATE
+  // #region 1. Reactive Component State
   // =============================================================================
 
   @track activeTab = "configurationProfiles";
@@ -62,7 +62,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 2. LIFECYCLE & PERSISTENCE
+  // #region 2. Lifecycle and Persistence
   // =============================================================================
 
   connectedCallback() {
@@ -98,7 +98,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 3. APEX DATA WIRES
+  // #region 3. Apex Data Wires
   // =============================================================================
 
   /**
@@ -156,7 +156,7 @@ export default class AgentAssistSetupWizard extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 4. EVENT HANDLERS & DELEGATION
+  // #region 4. Event Handlers and Delegation
   // =============================================================================
 
   handleTabActive(event) {

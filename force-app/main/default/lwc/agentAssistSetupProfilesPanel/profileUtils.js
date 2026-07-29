@@ -15,7 +15,7 @@
  */
 
 // =============================================================================
-// #region 1. PROFILE TEMPLATE & TYPE FACTORY
+// #region 1. Profile Template and Type Factory
 // =============================================================================
 
 /**
@@ -90,7 +90,7 @@ export function switchProfileType(currentProfile, targetType) {
 // #endregion
 
 // =============================================================================
-// #region 2. APEX DTO PAYLOAD BUILDER
+// #region 2. Apex DTO Payload Builder
 // =============================================================================
 
 /**
@@ -135,7 +135,7 @@ export function buildConfigRecordPayload(profile, overrides = {}) {
 // #endregion
 
 // =============================================================================
-// #region 3. APEX SERVICE PERSISTENCE OPERATIONS
+// #region 3. Apex Service Persistence Operations
 // =============================================================================
 
 /**
@@ -223,7 +223,7 @@ export async function resetProfileService(currentProfile, resetConfigFn) {
 // #endregion
 
 // =============================================================================
-// #region 4. LIST MUTATION HELPERS
+// #region 4. List Mutation Helpers
 // =============================================================================
 
 /**

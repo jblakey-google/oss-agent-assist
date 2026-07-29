@@ -34,7 +34,7 @@ import { evaluateDiagnosticsSuite } from "./diagnosticsUtils";
 
 export default class AgentAssistSetupDiagnosticsPanel extends LightningElement {
   // =============================================================================
-  // #region 1. REACTIVE PROPERTIES & STATE
+  // #region 1. Reactive Properties and State
   // =============================================================================
 
   @track diagnosticsState = "pending";
@@ -47,7 +47,7 @@ export default class AgentAssistSetupDiagnosticsPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 2. LIFECYCLE & WIRES
+  // #region 2. Lifecycle and Wires
   // =============================================================================
 
   connectedCallback() {
@@ -101,7 +101,7 @@ export default class AgentAssistSetupDiagnosticsPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 3. GETTERS & COMPUTED PROPERTIES
+  // #region 3. Getters and Computed Properties
   // =============================================================================
 
   get diagnosticsTabIcon() {
@@ -145,7 +145,7 @@ export default class AgentAssistSetupDiagnosticsPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 4. EVENT HANDLERS & ACTIONS
+  // #region 4. Event Handlers and Actions
   // =============================================================================
 
   async togglePackageAlerts() {

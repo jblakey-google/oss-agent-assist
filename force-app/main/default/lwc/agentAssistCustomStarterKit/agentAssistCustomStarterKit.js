@@ -34,8 +34,17 @@ import { LightningElement, api, track } from "lwc";
  * - Events Reference: https://docs.cloud.google.com/agent-assist/docs/ui-modules-events-documentation#AnalyzeContentRequested
  */
 export default class AgentAssistCustomStarterKit extends LightningElement {
+  // =============================================================================
+  // #region 1. Public API and Reactive Properties
+  // =============================================================================
+
+  /** Salesforce record ID context when placed on a Record Page. */
   @api recordId;
+
+  /** Developer Name of the Agent_Assist_Config__c record to load. */
   @api configName = "Default";
+
+  /** Enable verbose console debug logging. */
   @api debugMode = false;
 
   get isDebugEnabled() {
@@ -54,6 +63,12 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   get isNotConnected() {
     return !this.isConnected;
   }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Lifecycle and Connection Monitoring
+  // =============================================================================
 
   connectedCallback() {
     this.debugLog("AgentAssistCustomStarterKit initialized.");
@@ -77,6 +92,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
    * Pings the Agent Assist Connector by requesting conversation profile.
    * If an active Agent Assist Connector is present, it will respond with conversation-profile-received.
    */
+  @api
   pingConnector() {
     this.dispatchCustomEvent("conversation-profile-requested", {});
   }
@@ -84,6 +100,7 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
   /**
    * Checks if the Agent Assist Connector (container, companion, or transcript component) is present on the page.
    */
+  @api
   checkConnectionStatus() {
     /* eslint-disable @lwc/lwc/no-document-query */
     const tags = [
@@ -114,6 +131,12 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       }
     }
   }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 3. Event Listeners and Dispatch Bridge
+  // =============================================================================
 
   /**
    * Registers event listeners on the active Agent Assist Connector event bus.
@@ -171,7 +194,11 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
 
   /**
    * Dispatches an event to the active Agent Assist Connector event bus with full verbose payload logging.
+   *
+   * @param {string} eventName - Name of Agent Assist event (e.g. 'analyze-content-requested').
+   * @param {Object} [payload={}] - Event detail payload.
    */
+  @api
   dispatchCustomEvent(eventName, payload = {}) {
     const detailData = payload.detail ? payload.detail : payload;
     const fullPayload = { detail: detailData };
@@ -206,6 +233,12 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       );
     }
   }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 4. UI Handlers and Message Turns
+  // =============================================================================
 
   _sendTurn(text, participantRole, sender, isUser) {
     if (!text || !text.trim()) return;
@@ -267,6 +300,13 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
     }
   }
 
+  /**
+   * Console debug logging method formatted with component badge styling.
+   *
+   * @param {string} message - Main debug message.
+   * @param {...*} extra - Additional parameters.
+   */
+  @api
   debugLog(message, ...extra) {
     if (this.isDebugEnabled) {
       console.log(
@@ -277,4 +317,6 @@ export default class AgentAssistCustomStarterKit extends LightningElement {
       );
     }
   }
+
+  // #endregion
 }

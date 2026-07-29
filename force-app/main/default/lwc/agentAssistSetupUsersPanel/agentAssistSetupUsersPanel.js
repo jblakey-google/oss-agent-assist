@@ -27,7 +27,7 @@ import {
 
 export default class AgentAssistSetupUsersPanel extends LightningElement {
   // =============================================================================
-  // #region 1. REACTIVE PROPERTIES & STATE
+  // #region 1. Reactive Properties and State
   // =============================================================================
 
   @track agentUsersList = [];
@@ -40,7 +40,7 @@ export default class AgentAssistSetupUsersPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 2. LIFECYCLE & WIRES
+  // #region 2. Lifecycle and Wires
   // =============================================================================
 
   connectedCallback() {
@@ -50,7 +50,7 @@ export default class AgentAssistSetupUsersPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 3. GETTERS & COMPUTED PROPERTIES
+  // #region 3. Getters and Computed Properties
   // =============================================================================
 
   get permissionSetOptions() {
@@ -119,7 +119,7 @@ export default class AgentAssistSetupUsersPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 4. EVENT HANDLERS & APEX CALLOUTS
+  // #region 4. Event Handlers and Apex Callouts
   // =============================================================================
 
   handleUserSearchChange(event) {

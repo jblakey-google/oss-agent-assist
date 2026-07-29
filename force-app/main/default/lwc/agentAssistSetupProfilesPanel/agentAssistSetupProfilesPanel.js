@@ -33,7 +33,7 @@ import getActiveUsers from "@salesforce/apex/AgentAssistConfigController.getActi
 
 export default class AgentAssistSetupProfilesPanel extends LightningElement {
   // =============================================================================
-  // #region 1. REACTIVE PROPERTIES & STATE
+  // #region 1. Reactive Properties and State
   // =============================================================================
 
   @api profiles = [];
@@ -57,7 +57,7 @@ export default class AgentAssistSetupProfilesPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 2. LIFECYCLE & WIRES
+  // #region 2. Lifecycle and Wires
   // =============================================================================
 
   connectedCallback() {
@@ -80,7 +80,7 @@ export default class AgentAssistSetupProfilesPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 3. GETTERS & COMPUTED PROPERTIES
+  // #region 3. Getters and Computed Properties
   // =============================================================================
 
   channelOptions = CHANNEL_OPTIONS;
@@ -207,7 +207,7 @@ export default class AgentAssistSetupProfilesPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 4. EVENT HANDLERS
+  // #region 4. Event Handlers
   // =============================================================================
 
   handleOpenNewProfileModal() {
@@ -284,7 +284,7 @@ export default class AgentAssistSetupProfilesPanel extends LightningElement {
   // #endregion
 
   // =============================================================================
-  // #region 5. HEALTH CHECK EVALUATION
+  // #region 5. Health Check Evaluation
   // =============================================================================
 
   @api

@@ -21,7 +21,7 @@ import {
 } from "c/agentAssistSetupSharedService";
 
 // =============================================================================
-// #region 1. HELPER UTILITIES
+// #region 1. Helper Utilities
 // =============================================================================
 
 /**
@@ -55,7 +55,7 @@ function calculateSectionStatus(secFailCount, secWarnCount) {
 // #endregion
 
 // =============================================================================
-// #region 2. DIAGNOSTICS SUITE EVALUATOR
+// #region 2. Diagnostics Suite Evaluator
 // =============================================================================
 
 /**

@@ -24,10 +24,26 @@ import ui_modules from "@salesforce/resourceUrl/ui_modules";
 // Prevent Zone.js monkey patching for Lightning Web Security (LWS)
 window.__Zone_disable_on_property = true;
 
+/**
+ * AgentAssistTranscript
+ *
+ * Standalone transcript UI LWC embedding `agent-assist-transcript` module for full conversation history rendering.
+ */
 export default class AgentAssistTranscript extends LightningElement {
+  // =============================================================================
+  // #region 1. Public API and Reactive Properties
+  // =============================================================================
+
+  /** Salesforce record ID context when placed on a Record Page. */
   @api recordId;
+
+  /** Salesforce object API name (e.g. Case, Account, VoiceCall). */
   @api objectApiName;
+
+  /** Developer Name of the Agent_Assist_Config__c record to load. */
   @api configName = "Default";
+
+  /** Custom container height override string (e.g. '500px'). */
   @api containerHeight;
 
   // Runtime reactive state properties
@@ -38,27 +54,17 @@ export default class AgentAssistTranscript extends LightningElement {
   _appliedHeight = null;
   _transcriptMounted = false;
   _scriptsLoaded = false;
+  wiredConfigResult;
 
-  get transcriptContainerClass() {
-    return "transcript-container";
-  }
+  // #endregion
 
-  get isProfileMissing() {
-    return this.resolvedState && this.resolvedState.isFound === false;
-  }
+  // =============================================================================
+  // #region 2. Apex Wires and Data Resolution
+  // =============================================================================
 
-  @api get debugMode() {
-    return this.resolvedState?.debugMode !== undefined
-      ? this.resolvedState.debugMode
-      : true;
-  }
-
-  get resolvedContainerHeight() {
-    return (
-      this.containerHeight || this.resolvedState?.containerHeight || "530px"
-    );
-  }
-
+  /**
+   * Wire adapter fetching configuration profile settings by configName.
+   */
   @wire(getResolvedConfig, { configName: "$configName" })
   wiredConfig(result) {
     this.wiredConfigResult = result;
@@ -79,6 +85,41 @@ export default class AgentAssistTranscript extends LightningElement {
       this.resolvedState = { isFound: true };
     }
   }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 3. Computed Getters and Styling
+  // =============================================================================
+
+  get transcriptContainerClass() {
+    return "transcript-container";
+  }
+
+  get isProfileMissing() {
+    return this.resolvedState && this.resolvedState.isFound === false;
+  }
+
+  /**
+   * Public property getter returning debug log mode state.
+   */
+  @api get debugMode() {
+    return this.resolvedState?.debugMode !== undefined
+      ? this.resolvedState.debugMode
+      : true;
+  }
+
+  get resolvedContainerHeight() {
+    return (
+      this.containerHeight || this.resolvedState?.containerHeight || "530px"
+    );
+  }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 4. Lifecycle and Module Mounting
+  // =============================================================================
 
   connectedCallback() {
     this.debugLog("AgentAssistTranscript connectedCallback called");
@@ -122,13 +163,23 @@ export default class AgentAssistTranscript extends LightningElement {
     }
   }
 
+  disconnectedCallback() {
+    this.debugLog("AgentAssistTranscript disconnectedCallback called");
+
+    if (window._uiModuleEventTarget) {
+      window._uiModuleEventTarget = window._uiModuleEventTarget.cloneNode(true);
+    }
+  }
+
+  /**
+   * Instantiates and mounts the custom web component `agent-assist-transcript` into the DOM.
+   */
   mountTranscriptModule() {
     if (this._transcriptMounted) {
       return;
     }
     const transcriptContainerEl = this.refs.agentAssistTranscript;
     if (transcriptContainerEl) {
-      // Clear container safely using replaceChildren
       transcriptContainerEl.replaceChildren();
       const transcriptEl = document.createElement("agent-assist-transcript");
       if (this.recordId) {
@@ -150,6 +201,26 @@ export default class AgentAssistTranscript extends LightningElement {
     }
   }
 
+  applyHeightOverride() {
+    const height = this.resolvedContainerHeight;
+    if (!height || isNaN(parseInt(height, 10))) {
+      return;
+    }
+    this.template.host?.style.setProperty("--aa-container-height", height);
+    this._appliedHeight = height;
+  }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 5. Public Utility and Event Handlers
+  // =============================================================================
+
+  /**
+   * Event listener toggling dark mode styling on transcript elements.
+   *
+   * @param {CustomEvent} event - Event object with dark mode status.
+   */
   @api
   handleDarkModeToggled(event) {
     const isDark = !!(event?.detail?.on ?? event?.detail);
@@ -171,24 +242,12 @@ export default class AgentAssistTranscript extends LightningElement {
     }
   }
 
-  applyHeightOverride() {
-    const height = this.resolvedContainerHeight;
-    if (!height || isNaN(parseInt(height, 10))) {
-      return;
-    }
-    this.template.host?.style.setProperty("--aa-container-height", height);
-    this._appliedHeight = height;
-  }
-
-  disconnectedCallback() {
-    this.debugLog("AgentAssistTranscript disconnectedCallback called");
-
-    // Clear event target listeners if window._uiModuleEventTarget exists
-    if (window._uiModuleEventTarget) {
-      window._uiModuleEventTarget = window._uiModuleEventTarget.cloneNode(true);
-    }
-  }
-
+  /**
+   * Console debug logging method formatted with component badge styling.
+   *
+   * @param {string} message - Message text to log.
+   * @param {...*} extra - Additional parameters.
+   */
   @api
   debugLog(message, ...extra) {
     if (this.debugMode) {
@@ -200,4 +259,6 @@ export default class AgentAssistTranscript extends LightningElement {
       );
     }
   }
+
+  // #endregion
 }

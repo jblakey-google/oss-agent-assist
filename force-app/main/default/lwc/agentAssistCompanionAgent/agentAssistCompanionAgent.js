@@ -19,23 +19,30 @@ import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getResolvedConfig from "@salesforce/apex/AgentAssistConfigController.getResolvedConfig";
 
+/**
+ * AgentAssistCompanionAgent
+ *
+ * Standalone AI Companion Agent component providing LLM chat assistance, context-aware
+ * recommendations, and autonomous action execution for Salesforce FlexiPages & Utility Bar.
+ */
 export default class AgentAssistCompanionAgent extends LightningElement {
+  // =============================================================================
+  // #region 1. Reactive Properties and Public API
+  // =============================================================================
+
+  /** Salesforce record ID context when placed on a Record Page. */
   @api recordId;
+
+  /** Salesforce object API name (e.g. Case, Account, VoiceCall). */
   @api objectApiName;
 
-  // App Builder Design Property
+  /** Developer Name of the Agent_Assist_Config__c record to load. */
   @api configName = "Default_Companion";
 
-  // Component Reactive State
-  @track _resolvedState = {};
+  /** Optional manual configuration override object. */
   @api configOverride;
 
-  get resolvedState() {
-    return this.configOverride || this._resolvedState;
-  }
-  set resolvedState(value) {
-    this._resolvedState = value;
-  }
+  @track _resolvedState = {};
   @track isLoading = true;
   @track showConfigDetails = false;
   @track userPrompt = "";
@@ -43,8 +50,11 @@ export default class AgentAssistCompanionAgent extends LightningElement {
   @track messages = [];
 
   wiredConfigResult;
-
   _refreshKey;
+
+  /**
+   * Public reactive key to force configuration refresh.
+   */
   @api
   get refreshKey() {
     return this._refreshKey;
@@ -56,6 +66,22 @@ export default class AgentAssistCompanionAgent extends LightningElement {
     }
   }
 
+  get resolvedState() {
+    return this.configOverride || this._resolvedState;
+  }
+  set resolvedState(value) {
+    this._resolvedState = value;
+  }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Lifecycle and Wires
+  // =============================================================================
+
+  /**
+   * Apex Wire adapter retrieving configuration settings for the requested configName.
+   */
   @wire(getResolvedConfig, {
     configName: "$configName"
   })
@@ -92,6 +118,11 @@ export default class AgentAssistCompanionAgent extends LightningElement {
     }
   }
 
+  /**
+   * Public method allowing parent components to force a configuration refresh.
+   *
+   * @returns {Promise<void>}
+   */
   @api
   async refreshConfig() {
     if (this.wiredConfigResult) {
@@ -100,6 +131,9 @@ export default class AgentAssistCompanionAgent extends LightningElement {
     return Promise.resolve();
   }
 
+  /**
+   * Initializes the welcome message in the conversation thread if no messages exist.
+   */
   initWelcomeMessage() {
     if (this.messages.length === 0 && this.resolvedState?.isFound !== false) {
       const welcome =
@@ -123,6 +157,12 @@ export default class AgentAssistCompanionAgent extends LightningElement {
       ];
     }
   }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 3. Getters and Computed Properties
+  // =============================================================================
 
   get isProfileMissing() {
     return this.resolvedState && this.resolvedState.isFound === false;
@@ -201,6 +241,12 @@ export default class AgentAssistCompanionAgent extends LightningElement {
       : "View Architecture Details";
   }
 
+  // #endregion
+
+  // =============================================================================
+  // #region 4. Event Handlers and Chat Dispatch
+  // =============================================================================
+
   toggleConfigDetails() {
     this.showConfigDetails = !this.showConfigDetails;
   }
@@ -244,7 +290,6 @@ export default class AgentAssistCompanionAgent extends LightningElement {
       minute: "2-digit"
     });
 
-    // Add user message
     const userMsgId = "msg-" + Date.now();
     this.messages = [
       ...this.messages,
@@ -358,4 +403,6 @@ export default class AgentAssistCompanionAgent extends LightningElement {
     this.messages = [];
     this.initWelcomeMessage();
   }
+
+  // #endregion
 }
