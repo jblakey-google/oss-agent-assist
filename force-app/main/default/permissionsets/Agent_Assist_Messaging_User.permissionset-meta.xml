@@ -29,10 +29,6 @@
         <enabled>true</enabled>
     </classAccesses>
     <hasActivationRequired>false</hasActivationRequired>
-    <externalCredentialPrincipalAccesses>
-        <enabled>true</enabled>
-        <externalCredentialPrincipal>Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
-    </externalCredentialPrincipalAccesses>
     <label>Google Cloud Agent Assist Messaging User</label>
     <description
   >Grants contact center digital messaging agents standard access to Google Cloud Agent Assist &amp; Companion Agent LWCs, UI Connector callouts, and Messaging objects.</description>
