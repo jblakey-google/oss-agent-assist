@@ -15,7 +15,6 @@
  */
 
 import agentAssistEventNames from "../data/agentAssistEventNames";
-import sampleContext from "../data/sampleContext";
 import registerAuthTokenApex from "@salesforce/apex/AgentAssistConfigController.registerAuthToken";
 import {
   DIALOGFLOW_API_VERSION,
@@ -30,6 +29,10 @@ import {
 let lastTokenHealthyLogTimeMs = 0;
 
 export default class BasePlatformService {
+  // =============================================================================
+  // #region 1. Constructor and Lifecycle Initialization
+  // =============================================================================
+
   lwc;
   refs = {};
   uiModulesInitialized = false;
@@ -82,9 +85,11 @@ export default class BasePlatformService {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // AUTH & INIT UI MODULES
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Authentication and Token Management
+  // =============================================================================
 
   async registerAuthToken() {
     try {
@@ -136,7 +141,6 @@ export default class BasePlatformService {
         const currentTimeSec = Math.floor(Date.now() / 1000);
         const timeUntilExpSec = payload.exp - currentTimeSec;
 
-        // Refresh if token is within 1 minute (60s) of expiring
         if (timeUntilExpSec < TOKEN_EXPIRATION_THRESHOLD_SEC) {
           this.lwc.debugLog(
             `Token is expiring in ${timeUntilExpSec}s (threshold ${TOKEN_EXPIRATION_THRESHOLD_SEC}s). Refreshing...`
@@ -167,6 +171,12 @@ export default class BasePlatformService {
       );
     }
   }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 3. UI Modules Initialization
+  // =============================================================================
 
   initUIModules() {
     this.lwc.debugLog("initUIModules called");
@@ -282,9 +292,11 @@ export default class BasePlatformService {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // GENERATE CONVERSATION NAME OR FETCH ONE FROM UI CONNECTOR
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
+
+  // =============================================================================
+  // #region 4. Dialogflow API and Network Utilities
+  // =============================================================================
 
   createRequestOptions(method, body = null) {
     // Construct fetch authed request options object
@@ -297,81 +309,6 @@ export default class BasePlatformService {
     };
     if (body) options.body = body;
     return options;
-  }
-
-  ////////////////////////////////////////////////////////////////////////////
-  // HANDLE UI MODULE EVENTS
-  ////////////////////////////////////////////////////////////////////////////
-
-  initAgentAssistEvents() {
-    this.lwc.debugLog("initAgentAssistEvents called");
-    if (typeof addAgentAssistEventListener !== "function") {
-      return;
-    }
-    // Add event listeners for Agent Assist UI Modules events.
-    if (this.lwc.channel === "chat") {
-      this.lwc.debugLog("initAgentAssistEvents - this.lwc.channel is 'chat'");
-      addAgentAssistEventListener(
-        "api-connector-initialized",
-        async () => await this.handleConnectorInitialized(),
-        { namespace: this.lwc.recordId }
-      );
-    } else if (this.lwc.channel === "voice") {
-      this.lwc.debugLog("initAgentAssistEvents - this.lwc.channel is 'voice'");
-      addAgentAssistEventListener(
-        "event-based-connector-initialized",
-        async () => await this.handleConnectorInitialized(),
-        { namespace: this.lwc.recordId }
-      );
-    }
-    addAgentAssistEventListener(
-      "conversation-initialized",
-      (event) => this.handleConversationInitialized(event),
-      { namespace: this.lwc.recordId }
-    );
-    addAgentAssistEventListener(
-      "copy-to-clipboard",
-      (event) => this.handleCopyToClipboard(event),
-      { namespace: this.lwc.recordId }
-    );
-    addAgentAssistEventListener(
-      "dark-mode-toggled",
-      (event) => this.handleDarkModeToggled(event),
-      { namespace: this.lwc.recordId }
-    );
-  }
-
-  handleConversationInitialized(event) {
-    this.lwc.debugLog("handleConversationInitialized called", event);
-    this.lwc.isConversationInitialized = true;
-  }
-
-  async handleConnectorInitialized() {
-    this.lwc.debugLog("handleConnectorInitialized called");
-    this.lwc.isConversationInitialized = true;
-
-    // Ensure we have a token before proceeding.
-    this.lwc.debugLog("waiting for ui connector token...");
-    while (!this.lwc.token) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, TOKEN_WAIT_INTERVAL_MS)
-      );
-    }
-    this.lwc.debugLog(`ui connector token: ${this.lwc.token}`);
-
-    // Poll until Dialogflow confirms the existence of the conversationName.
-    if (this.lwc.channel !== "chat") {
-      await this.pollDialogflowForConversationExistence();
-    }
-
-    // Set the active conversation for UIM on connector initialization.
-    if (typeof dispatchAgentAssistEvent === "function") {
-      dispatchAgentAssistEvent(
-        "active-conversation-selected",
-        { detail: { conversationName: this.lwc.conversationName } },
-        { namespace: this.lwc.recordId }
-      );
-    }
   }
 
   async pollDialogflowForConversationExistence(
@@ -544,6 +481,93 @@ export default class BasePlatformService {
       .then((conversation) => conversation.lifecycleState);
   }
 
+  async isConversationCompleted(conversationIntegrationKey) {
+    const lifecycleState = await this.fetchConversationLifecycleState();
+    if (lifecycleState === "COMPLETED") {
+      this.lwc.debugLog(`conversation COMPLETED, deleting key from redis.`);
+      this.deleteConversationName(conversationIntegrationKey);
+      return true;
+    }
+    return false;
+  }
+
+  // #endregion
+
+  // =============================================================================
+  // #region 5. Agent Assist Event Listeners and Handlers
+  // =============================================================================
+
+  initAgentAssistEvents() {
+    this.lwc.debugLog("initAgentAssistEvents called");
+    if (typeof addAgentAssistEventListener !== "function") {
+      return;
+    }
+    // Add event listeners for Agent Assist UI Modules events.
+    if (this.lwc.channel === "chat") {
+      this.lwc.debugLog("initAgentAssistEvents - this.lwc.channel is 'chat'");
+      addAgentAssistEventListener(
+        "api-connector-initialized",
+        async () => await this.handleConnectorInitialized(),
+        { namespace: this.lwc.recordId }
+      );
+    } else if (this.lwc.channel === "voice") {
+      this.lwc.debugLog("initAgentAssistEvents - this.lwc.channel is 'voice'");
+      addAgentAssistEventListener(
+        "event-based-connector-initialized",
+        async () => await this.handleConnectorInitialized(),
+        { namespace: this.lwc.recordId }
+      );
+    }
+    addAgentAssistEventListener(
+      "conversation-initialized",
+      (event) => this.handleConversationInitialized(event),
+      { namespace: this.lwc.recordId }
+    );
+    addAgentAssistEventListener(
+      "copy-to-clipboard",
+      (event) => this.handleCopyToClipboard(event),
+      { namespace: this.lwc.recordId }
+    );
+    addAgentAssistEventListener(
+      "dark-mode-toggled",
+      (event) => this.handleDarkModeToggled(event),
+      { namespace: this.lwc.recordId }
+    );
+  }
+
+  handleConversationInitialized(event) {
+    this.lwc.debugLog("handleConversationInitialized called", event);
+    this.lwc.isConversationInitialized = true;
+  }
+
+  async handleConnectorInitialized() {
+    this.lwc.debugLog("handleConnectorInitialized called");
+    this.lwc.isConversationInitialized = true;
+
+    // Ensure we have a token before proceeding.
+    this.lwc.debugLog("waiting for ui connector token...");
+    while (!this.lwc.token) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, TOKEN_WAIT_INTERVAL_MS)
+      );
+    }
+    this.lwc.debugLog(`ui connector token: ${this.lwc.token}`);
+
+    // Poll until Dialogflow confirms the existence of the conversationName.
+    if (this.lwc.channel !== "chat") {
+      await this.pollDialogflowForConversationExistence();
+    }
+
+    // Set the active conversation for UIM on connector initialization.
+    if (typeof dispatchAgentAssistEvent === "function") {
+      dispatchAgentAssistEvent(
+        "active-conversation-selected",
+        { detail: { conversationName: this.lwc.conversationName } },
+        { namespace: this.lwc.recordId }
+      );
+    }
+  }
+
   async handleCopyToClipboard(event) {
     // Handle copy to clipboard event from UI Modules.
     navigator.clipboard.writeText(event.detail.textToCopy);
@@ -581,20 +605,11 @@ export default class BasePlatformService {
     }
   }
 
-  async isConversationCompleted(conversationIntegrationKey) {
-    // Checks if this.conversationName is COMPLETED.
-    const lifecycleState = await this.fetchConversationLifecycleState();
-    if (lifecycleState === "COMPLETED") {
-      this.lwc.debugLog(`conversation COMPLETED, deleting key from redis.`);
-      this.deleteConversationName(conversationIntegrationKey);
-      return true;
-    }
-    return false;
-  }
+  // #endregion
 
-  ////////////////////////////////////////////////////////////////////////////
-  // DEBUG & DEMO
-  ////////////////////////////////////////////////////////////////////////////
+  // =============================================================================
+  // #region 6. Debug Dragnet Utilities
+  // =============================================================================
 
   initEventDragnet() {
     if (typeof addAgentAssistEventListener !== "function") {
@@ -622,4 +637,6 @@ export default class BasePlatformService {
       }
     });
   }
+
+  // #endregion
 }

@@ -18,6 +18,10 @@
  * Base class for Service Cloud Voice platform handlers.
  */
 export default class BasePlatformHandler {
+  // =============================================================================
+  // #region 1. Lifecycle and Telephony Callbacks
+  // =============================================================================
+
   service;
 
   constructor(service) {
@@ -47,4 +51,6 @@ export default class BasePlatformHandler {
   getSessionId(voiceCallData) {
     return null;
   }
+
+  // #endregion
 }

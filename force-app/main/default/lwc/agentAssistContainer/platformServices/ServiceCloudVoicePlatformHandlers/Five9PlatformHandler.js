@@ -32,6 +32,10 @@ const SESSION_ID_WAIT_TIMEOUT_SECONDS = 5;
 
 let cachedSessionId;
 
+// =============================================================================
+// #region 1. Five9 LMS Transport Provider
+// =============================================================================
+
 class ChannelTransportProvider {
   _messageContext;
   _msgChannelSubscription;
@@ -70,16 +74,22 @@ class ChannelTransportProvider {
   }
 }
 
+// #endregion
+
+// =============================================================================
+// #region 2. Five9 Platform Handler
+// =============================================================================
+
 export default class Five9PlatformHandler extends BasePlatformHandler {
   _five9Sdk;
   _channelTransportProvider;
   sessionId;
+  _activePollGuid = null;
+  isDestroyed = false;
 
   constructor(service) {
     super(service);
   }
-
-  _activePollGuid = null;
 
   async init() {
     this.lwc.debugLog("Initializing Five9 SDK in handler...");
@@ -96,192 +106,163 @@ export default class Five9PlatformHandler extends BasePlatformHandler {
       this.lwc.debugLog(
         "Late load fallback: VendorCallKey present but no sessionId on boot. Retrying poll in 1s..."
       );
+      // eslint-disable-next-line @lwc/lwc/no-async-operation
       setTimeout(() => {
         const finalGuid =
           this.lwc.sessionId || cachedSessionId || this.lwc.vendorCallKey;
-        this.lwc.debugLog(`Starting delayed late poll with key: ${finalGuid}`);
+        this.lwc.debugLog(
+          `Late load fallback executing with resolved GUID: ${finalGuid}`
+        );
         this.startConversationNamePolling(finalGuid);
       }, 1000);
     }
   }
 
-  startConversationNamePolling(guid) {
-    if (this._activePollGuid === guid) {
+  teardown() {
+    super.teardown();
+    this.isDestroyed = true;
+    if (this._channelTransportProvider) {
+      this._channelTransportProvider.unsubscribe();
+    }
+    if (this._five9Sdk && typeof this._five9Sdk.terminate === "function") {
+      this._five9Sdk.terminate();
+    }
+    this._activePollGuid = null;
+    cachedSessionId = null;
+  }
+
+  async _initializeFive9SDK() {
+    try {
+      if (
+        typeof window !== "undefined" &&
+        window.Five9Sdk &&
+        typeof window.Five9Sdk.create === "function"
+      ) {
+        this._five9Sdk = window.Five9Sdk.create();
+      } else if (
+        typeof global !== "undefined" &&
+        global.Five9Sdk &&
+        typeof global.Five9Sdk.create === "function"
+      ) {
+        this._five9Sdk = global.Five9Sdk.create();
+      } else {
+        const five9Module = await import("Five9BYOT/five9ServiceCloudVoiceSdk");
+        const Five9BYOTServiceCloudVoiceSdk = five9Module.default;
+        this._channelTransportProvider = new ChannelTransportProvider();
+        this._five9Sdk = new Five9BYOTServiceCloudVoiceSdk(
+          this._channelTransportProvider
+        );
+      }
+      if (this._five9Sdk) {
+        this._registerFive9Hooks();
+      }
+      this.lwc.debugLog("Five9 BYOT SDK loaded dynamically.");
+    } catch (e) {
       this.lwc.debugLog(
-        `Polling already active for GUID: ${guid}. Ignoring duplicate poll request.`
+        `Five9 BYOT Package not installed or un-importable. Error: ${e.message}`
+      );
+    }
+  }
+
+  _registerFive9Hooks() {
+    if (!this._five9Sdk || typeof this._five9Sdk.getHookApi !== "function")
+      return;
+    const hookApi = this._five9Sdk.getHookApi();
+    if (hookApi && typeof hookApi.registerMethods === "function") {
+      hookApi.registerMethods({
+        beforeMakeCall: async (data) => {
+          this.lwc.debugLog("Five9 Hook: beforeMakeCall", data);
+          return { status: "Proceed" };
+        },
+        beforeCallDisposition: async (data) => {
+          this.lwc.debugLog("Five9 Hook: beforeCallDisposition", data);
+          return { status: "Proceed" };
+        },
+        beforeCallEnd: async (data) => {
+          this.lwc.debugLog("Five9 Hook: beforeCallEnd", data);
+          return { status: "Proceed" };
+        }
+      });
+    }
+  }
+
+  startConversationNamePolling(integrationKey) {
+    if (this._activePollGuid === integrationKey) {
+      this.lwc.debugLog(
+        `Polling already active for GUID: ${integrationKey}. Skipping duplicate poll.`
       );
       return;
     }
-    this._activePollGuid = guid;
-    this.service.pollForConversationNameByIntegrationKey(guid);
-  }
-
-  handleSessionIdUpdated(sessionId) {
-    if (this.destroyed) return;
-    this.lwc.debugLog(`handleSessionIdUpdated received: ${sessionId}`);
-    cachedSessionId = sessionId;
-
-    // If active poll key has not been set or is different from the newly resolved sessionId,
-    // trigger the poller immediately to override the fallback SCV callId.
-    if (this._activePollGuid !== sessionId) {
-      this.lwc.debugLog(
-        `Telemetry update mapping resolved. Starting poll for: ${sessionId}`
-      );
-      this.startConversationNamePolling(sessionId);
-    }
+    this._activePollGuid = integrationKey;
+    this.lwc.debugLog(
+      `Starting fresh conversation polling loop for GUID: ${integrationKey}`
+    );
+    this.service.pollForConversationNameByIntegrationKey(integrationKey);
   }
 
   async handleCallConnected(event) {
     this.lwc.debugLog(
-      `handleCallConnected called with SCV callId: ${event.detail.callId}. Waiting for sessionId...`
+      `Five9PlatformHandler.handleCallConnected: ${JSON.stringify(event)}`
     );
 
-    // Wait for sessionId to be populated by Five9 SDK events
-    const waitIntervalMs = 100;
-    const maxAttempts =
-      (SESSION_ID_WAIT_TIMEOUT_SECONDS * 1000) / waitIntervalMs;
-    let attempts = 0;
-    while (!cachedSessionId && attempts < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, waitIntervalMs));
-      attempts++;
+    let activeGuid = this.lwc.sessionId || cachedSessionId;
+
+    if (!activeGuid) {
+      this.lwc.debugLog(
+        `Five9 sessionId unavailable on callconnected. Waiting up to ${SESSION_ID_WAIT_TIMEOUT_SECONDS}s for Five9 SDK populate...`
+      );
+      let attempts = 0;
+      const maxAttempts = Math.floor((SESSION_ID_WAIT_TIMEOUT_SECONDS * 1000) / 100);
+      while (!activeGuid && attempts < maxAttempts) {
+        attempts++;
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        activeGuid = this.lwc.sessionId || cachedSessionId;
+      }
     }
 
-    const guid = cachedSessionId || event.detail.callId;
+    if (!activeGuid) {
+      activeGuid = event?.detail?.callId || this.lwc.vendorCallKey;
+      this.lwc.debugLog(
+        `Five9 sessionId timed out after ${SESSION_ID_WAIT_TIMEOUT_SECONDS}s. Falling back to SCV CallId: ${activeGuid}`
+      );
+    } else {
+      this.lwc.debugLog(
+        `Five9 sessionId captured successfully: ${activeGuid}`
+      );
+    }
+
+    if (activeGuid) {
+      this.startConversationNamePolling(activeGuid);
+    }
+  }
+
+  handleSessionIdUpdated(sessionId) {
+    if (this.isDestroyed) return;
     this.lwc.debugLog(
-      `Starting poll for conversation name with Integration Key (SessionId): ${guid} (waited ${attempts * waitIntervalMs}ms)`
+      `Five9PlatformHandler.handleSessionIdUpdated: ${sessionId}`
     );
-    this.startConversationNamePolling(guid);
+    if (sessionId) {
+      cachedSessionId = sessionId;
+      this.sessionId = sessionId;
+      this.startConversationNamePolling(sessionId);
+    }
   }
 
   getVoiceCallFields() {
-    return ["VoiceCall.Five9BYOT__F9_SessionId__c"];
+    return ["VoiceCall.Five9BYOT__sessionId__c"];
   }
 
   getSessionId(voiceCallData) {
-    return getFieldValue(voiceCallData, "VoiceCall.Five9BYOT__F9_SessionId__c");
-  }
-
-  teardown() {
-    this.lwc.debugLog("Five9PlatformHandler teardown called");
-    this.destroyed = true;
-    this._activePollGuid = null;
-  }
-
-  async _initializeFive9SDK() {
-    this.lwc.debugLog("_initializeFive9SDK called");
-    const { SdkStatus } = window.Five9Sdk.SdkTypes;
-    this._five9Sdk = window.Five9Sdk.create();
-
-    // BEGIN: The initialization should be done in this order
-    this._channelTransportProvider = new ChannelTransportProvider();
-    this._five9Sdk.initialize(this._channelTransportProvider);
-    this._channelTransportProvider.subscribe();
-    // END: The initialization should be done in this order
-
-    const interactionApi = this._five9Sdk.getInteractionApi();
-    const hookApi = this._five9Sdk.getHookApi();
-
-    let result = await interactionApi.registerEventHandlers({
-      callStarted: (param) => {
-        if (this.destroyed) return;
-        this.lwc.debugLog(
-          "Five9 SDK InteractionApi - callStarted FULL DATA: " +
-            JSON.stringify(param)
-        );
-        const sessionId = param.sessionId || (param.arg && param.arg.sessionId);
-        if (sessionId) {
-          cachedSessionId = sessionId;
-          this.lwc.debugLog(
-            `Five9 SDK InteractionApi - Cached sessionId: ${cachedSessionId}`
-          );
-        }
-      },
-      callAccepted: (param) => {
-        if (this.destroyed) return;
-        this.lwc.debugLog(
-          "Five9 SDK InteractionApi - callAccepted FULL DATA: " +
-            JSON.stringify(param)
-        );
-        const sessionId = param.sessionId || (param.arg && param.arg.sessionId);
-        if (sessionId && !cachedSessionId) {
-          cachedSessionId = sessionId;
-          this.lwc.debugLog(
-            `Five9 SDK InteractionApi - Cached sessionId in callAccepted: ${cachedSessionId}`
-          );
-        }
-      },
-      callRejected: (param) => {
-        this.lwc.debugLog(
-          "Five9 SDK InteractionApi - callRejected FULL DATA: " +
-            JSON.stringify(param)
-        );
-      },
-      callEnded: (param) => {
-        this.lwc.debugLog(
-          "Five9 SDK InteractionApi - callEnded FULL DATA: " +
-            JSON.stringify(param)
-        );
-      },
-      callFinished: (param) => {
-        this.lwc.debugLog(
-          "Five9 SDK InteractionApi - callFinished FULL DATA: " +
-            JSON.stringify(param)
-        );
-        this.closeVoiceCallTab(param.sfVoiceCallId);
-      }
-    });
-    if (result.status !== SdkStatus.Success) {
-      console.error(
-        "Five9 SDK InteractionApi - registerEventHandlers error",
-        result.errorMessage
-      );
-    }
-
-    result = await hookApi.registerMethods(
-      {
-        beforeMakeCall: (param) => {
-          this.lwc.debugLog("Five9 SDK HookApi - beforeMakeCall", param);
-          // Add custom validation or business logic here if needed.
-          // Example: Restricting manual dialing or validating campaign selection.
-          return Promise.resolve({ status: SdkStatus.Proceed });
-        },
-        beforeCallDisposition: (param) => {
-          this.lwc.debugLog("Five9 SDK HookApi - beforeCallDisposition", param);
-          // Add custom validation or business logic here if needed.
-          return Promise.resolve({ status: SdkStatus.Proceed });
-        },
-        beforeCallEnd: (param) => {
-          this.lwc.debugLog("Five9 SDK HookApi - beforeCallEnd", param);
-          // Add custom validation or business logic here if needed.
-          return Promise.resolve({ status: SdkStatus.Proceed });
-        }
-      },
-      20
+    const val = getFieldValue(
+      voiceCallData,
+      "VoiceCall.Five9BYOT__sessionId__c"
     );
-    if (result.status !== SdkStatus.Success) {
-      console.error(
-        "Five9 SDK HookApi - registerMethods error",
-        result.errorMessage
-      );
+    if (val) {
+      cachedSessionId = val;
     }
-  }
-
-  async closeVoiceCallTab(sfVoiceCallId) {
-    const workspaceAPI = document.querySelector("lightning-workspace-api");
-    if (workspaceAPI) {
-      const enclosingTabId = await workspaceAPI.getEnclosingTabId();
-      if (enclosingTabId) {
-        await workspaceAPI.closeTab({ tabId: enclosingTabId });
-        return;
-      }
-
-      const tabInfo = await workspaceAPI.getAllTabInfo();
-      const voiceCallTab = tabInfo.find(
-        (tab) => tab.recordId === sfVoiceCallId
-      );
-      if (voiceCallTab) {
-        await workspaceAPI.closeTab({ tabId: voiceCallTab.tabId });
-      }
-    }
+    return val || cachedSessionId || null;
   }
 }
+
+// #endregion

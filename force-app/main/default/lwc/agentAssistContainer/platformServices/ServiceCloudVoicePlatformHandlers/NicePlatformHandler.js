@@ -16,22 +16,24 @@
 
 import BasePlatformHandler from "./BasePlatformHandler";
 
-// SCV telephony config for Nice CXone
 const CONFIG = {
-  // For this.platform = "servicecloudvoice-nice", the Nice Business Unit Number
-  // https://help.nicecxone.com/content/acd/businessunits/managebusinessunit.htm
-  niceBusNo: 1234567 // TODO: make sure this matches your Nice CXone Business Unit Number.
+  niceBusNo: 1234567
 };
 
 export default class NicePlatformHandler extends BasePlatformHandler {
+  // =============================================================================
+  // #region 1. Nice CXone Telephony Event Handlers
+  // =============================================================================
+
   constructor(service) {
     super(service);
   }
 
   handleCallConnected(event) {
-    // Generate Nice CXone (Agent Assist Hub) formatted conversationName.
     const prefix = this.lwc.projectLocationName;
     this.lwc.conversationId = `BusNo-${CONFIG.niceBusNo}_ContactId-${event.detail.callId}`;
     this.lwc.conversationName = `${prefix}/conversations/${this.lwc.conversationId}`;
   }
+
+  // #endregion
 }

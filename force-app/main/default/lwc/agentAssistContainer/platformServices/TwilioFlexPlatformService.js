@@ -6,7 +6,6 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,14 +14,16 @@
  * limitations under the License.
  */
 
+/* global addAgentAssistEventListener */
+
 import BasePlatformService from "./BasePlatformService";
 
 export default class TwilioFlexPlatformService extends BasePlatformService {
-  pollingTimeout = null;
+  // =============================================================================
+  // #region 1. Initialization and Teardown
+  // =============================================================================
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Init & Teardown
-  ////////////////////////////////////////////////////////////////////////////
+  pollingTimeout = null;
 
   constructor(lwc, refs) {
     super(lwc, refs);
@@ -53,9 +54,11 @@ export default class TwilioFlexPlatformService extends BasePlatformService {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Setup Event Listeners and Subscriptions
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Twilio Flex Event Listeners and Handlers
+  // =============================================================================
 
   listenToAgentAssistEventsForTwilioFlex() {
     this.lwc.debugLog("listenToAgentAssistEventsForTwilioFlex called");
@@ -67,14 +70,12 @@ export default class TwilioFlexPlatformService extends BasePlatformService {
     );
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Handle Events
-  ////////////////////////////////////////////////////////////////////////////
-
   handleConversationEndedForTwilioFlex() {
     // Generate a summary when a Twilio Flex conversation ends
     this.lwc.debugLog("handleConversationEndedForTwilioFlex called");
     this.lwc.triggerSummarization();
     this.pollForConversationNameByIntegrationKey(this.lwc.contactPhone);
   }
+
+  // #endregion
 }

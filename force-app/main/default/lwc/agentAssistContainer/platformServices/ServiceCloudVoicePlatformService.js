@@ -26,6 +26,10 @@ const SCV_EVENTS_TO_SUBSCRIBE = [
 ];
 
 export default class ServiceCloudVoicePlatformService extends BasePlatformService {
+  // =============================================================================
+  // #region 1. Initialization and Sub-Platform Delegation
+  // =============================================================================
+
   /** @type {BasePlatformHandler} */
   platformHandler;
 
@@ -46,10 +50,6 @@ export default class ServiceCloudVoicePlatformService extends BasePlatformServic
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Init & Teardown
-  ////////////////////////////////////////////////////////////////////////////
-
   async init() {
     // Set up Agent Assist UIM to work with Service Cloud Voice.
     this.lwc.debugLog("initServiceCloudVoice called");
@@ -68,9 +68,11 @@ export default class ServiceCloudVoicePlatformService extends BasePlatformServic
     this.platformHandler.teardown();
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Setup Event Listeners and Subscriptions
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Voice Toolkit Event Subscriptions
+  // =============================================================================
 
   subscribeToVoiceToolkit(toolkitApi, telephonyEventListener) {
     this.lwc.debugLog(`subscribeToVoiceToolkit: ${SCV_EVENTS_TO_SUBSCRIBE}`);
@@ -88,9 +90,11 @@ export default class ServiceCloudVoicePlatformService extends BasePlatformServic
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Handle Events
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
+
+  // =============================================================================
+  // #region 3. Telephony Event Handlers
+  // =============================================================================
 
   onTelephonyEvent(event) {
     this.lwc.debugLog(
@@ -151,4 +155,6 @@ export default class ServiceCloudVoicePlatformService extends BasePlatformServic
     }
     return null;
   }
+
+  // #endregion
 }

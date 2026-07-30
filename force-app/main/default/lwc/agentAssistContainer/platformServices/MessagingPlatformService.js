@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+/* global addAgentAssistEventListener, dispatchAgentAssistEvent */
+
 import {
   APPLICATION_SCOPE,
   subscribe,
-  unsubscribe,
-  MessageContext
+  unsubscribe
 } from "lightning/messageService";
 
 import conversationAgentSendChannel from "@salesforce/messageChannel/lightning__conversationAgentSend";
@@ -30,11 +31,11 @@ import BasePlatformService from "./BasePlatformService";
 import { DIALOGFLOW_API_VERSION } from "../config";
 
 export default class MessagingPlatformService extends BasePlatformService {
-  subscriptions = [];
+  // =============================================================================
+  // #region 1. Initialization and Teardown
+  // =============================================================================
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Init & Teardown
-  ////////////////////////////////////////////////////////////////////////////
+  subscriptions = [];
 
   init() {
     // Set up Agent Assist UIM to work with Enhanced Chat
@@ -52,9 +53,11 @@ export default class MessagingPlatformService extends BasePlatformService {
     this.unsubscribeFromMessagingChannels();
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Setup Event Listeners and Subscriptions
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
+
+  // =============================================================================
+  // #region 2. Lightning Message Channel Subscriptions
+  // =============================================================================
 
   listenToAgentAssistEventsForMessaging() {
     // Handle Agent Assist events
@@ -112,105 +115,108 @@ export default class MessagingPlatformService extends BasePlatformService {
   }
 
   unsubscribeFromMessagingChannels() {
-    // Detach handler functions from Messaging events
-    this.subscriptions.forEach((sub) => {
-      unsubscribe(sub);
-    });
+    this.subscriptions.forEach((subscription) => unsubscribe(subscription));
     this.subscriptions = [];
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Handle Events
-  ////////////////////////////////////////////////////////////////////////////
+  // #endregion
 
-  handleMessageSendForMessaging(senderRole, message) {
-    // Send new Messaging messages to the UI Connector
-    if (this.lwc.recordId !== message.recordId) return;
-    dispatchAgentAssistEvent(
-      "analyze-content-requested",
-      {
-        detail: {
-          conversationId: this.lwc.conversationId,
-          participantRole: senderRole,
-          request: {
-            textInput: { text: message.content, languageCode: "us" }
-          }
-        }
-      },
-      { namespace: this.lwc.recordId }
-    );
-  }
+  // =============================================================================
+  // #region 3. Agent Assist Messaging Event Handlers
+  // =============================================================================
 
-  async handleAgentAssistEventForMessaging(eventName, event) {
-    // Handle Agent Assist events
-    if (eventName === "agent-coaching-response-selected") {
-      // Handle Agent Coaching response selection
-      await this.refs.conversationToolkitApi.setAgentInput(this.lwc.recordId, {
-        text: event.detail.selectedResponse
-      });
-    } else if (eventName === "smart-reply-selected") {
-      // Handle Smart Reply selection by the agent
-      await this.refs.conversationToolkitApi.setAgentInput(this.lwc.recordId, {
-        text: event.detail.answer.reply
-      });
+  handleAgentAssistEventForMessaging(eventName, event) {
+    let messageText;
+    if (eventName === "smart-reply-selected") {
+      messageText =
+        event.detail?.answer?.reply ||
+        event.detail?.answerRecord?.reply?.text ||
+        event.detail?.reply?.text ||
+        event.detail?.text;
+    } else if (eventName === "agent-coaching-response-selected") {
+      messageText =
+        event.detail?.selectedResponse ||
+        event.detail?.action?.suggestionAnswerRecord?.reply?.text ||
+        event.detail?.reply?.text ||
+        event.detail?.text;
+    }
+    if (messageText) {
+      this.sendSmartReplyForMessaging(messageText);
     }
   }
 
-  generateConversationName() {
-    // Generate a Dialogflow conversation name.
-    // Works when the Dialogflow conversation isn't created outside SF.
-    let prefix = this.lwc.projectLocationName;
-    this.lwc.conversationId = `SF-${this.lwc.recordId || Date.now()}`;
-    this.lwc.conversationName = `${prefix}/conversations/${this.lwc.conversationId}`;
-    this.lwc.debugLog(
-      `this.lwc.conversationName - ${this.lwc.conversationName}`
-    );
+  handleMessageSendForMessaging(participantRole, event) {
+    if (event.recordId === this.lwc.recordId) {
+      if (typeof dispatchAgentAssistEvent === "function") {
+        dispatchAgentAssistEvent(
+          "analyze-content-requested",
+          {
+            detail: {
+              conversationId: this.lwc.conversationId,
+              participantRole: participantRole,
+              request: {
+                textInput: {
+                  text: event.content,
+                  languageCode: "us"
+                }
+              }
+            }
+          },
+          { namespace: this.lwc.recordId }
+        );
+      }
+    }
   }
 
   handleConversationEndedForMessaging(event) {
-    // Generate a summary when a Messaging conversation ends
-    this.lwc.debugLog("handleConversationEnded called");
-
-    if (this.lwc.recordId !== event.recordId) return;
-    dispatchAgentAssistEvent(
-      "complete-conversation-requested",
-      { detail: { conversationName: this.lwc.conversationName } },
-      { namespace: this.lwc.recordId }
-    );
-
-    // Manually complete the conversation via UI Connector's proxy Dialogflow endpoint
-    fetch(
-      `${this.lwc.endpoint}/${DIALOGFLOW_API_VERSION}/${this.lwc.conversationName}:complete`,
-      this.createRequestOptions("POST", JSON.stringify({}))
-    )
-      .then((res) => {
-        this.lwc.debugLog(
-          `completeConversation response status: ${res.status}`
+    if (event.recordId === this.lwc.recordId || event.tabId) {
+      if (typeof dispatchAgentAssistEvent === "function") {
+        dispatchAgentAssistEvent(
+          "complete-conversation-requested",
+          { detail: { conversationName: this.lwc.conversationName } },
+          { namespace: this.lwc.recordId }
         );
-      })
-      .catch((err) => {
-        this.lwc.debugLog(
-          `Failed to manually complete conversation via REST: ${err.message}`
+      }
+      this.completeConversationForMessaging();
+      if (this.lwc.triggerSummarization) {
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this.lwc.cancelSummarizationTimeout = setTimeout(
+          () => this.lwc.triggerSummarization(),
+          1000
         );
-      });
-
-    if (this.lwc.cancelSummarizationTimeout) {
-      clearTimeout(this.lwc.cancelSummarizationTimeout);
+      }
     }
-
-    // Give handleTabClosed opportunity to cancel summarization
-    this.lwc.cancelSummarizationTimeout = setTimeout(() => {
-      // Create a synthetic click event to trigger summarization modal
-      this.lwc.triggerSummarization();
-    }, 500);
   }
 
   handleTabClosedForMessaging(event) {
-    // Handle Messaging Session tab closed event
-    this.lwc.debugLog("handleTabClosed called");
-    // Cancel summarization if the tab is closing
     if (this.lwc.cancelSummarizationTimeout) {
       clearTimeout(this.lwc.cancelSummarizationTimeout);
+      this.lwc.cancelSummarizationTimeout = null;
     }
   }
+
+  async completeConversationForMessaging() {
+    let url = `${this.lwc.endpoint}/${DIALOGFLOW_API_VERSION}/${this.lwc.conversationName}:complete`;
+    fetch(url, this.createRequestOptions("POST", JSON.stringify({})))
+      .then((res) => res.text())
+      .then(() => {
+        this.lwc.debugLog("completeConversationForMessaging ran successfully");
+      })
+      .catch((err) => {
+        this.lwc.debugLog(
+          `completeConversationForMessaging failed: ${err.message}`
+        );
+      });
+  }
+
+  async sendSmartReplyForMessaging(messageText) {
+    const toolkitApi = this.refs.conversationToolkitApi;
+    if (toolkitApi && typeof toolkitApi.setAgentInput === "function") {
+      toolkitApi.setAgentInput(this.lwc.recordId, { text: messageText });
+    } else if (toolkitApi && typeof toolkitApi.sendChat === "function") {
+      toolkitApi.sendChat(this.lwc.recordId, messageText);
+    }
+  }
+
+  // #endregion
 }
