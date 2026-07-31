@@ -23,12 +23,21 @@ export default class AgentAssistSetupCxPlatformPanel extends LightningElement {
   // #region 1. Reactive Properties and Wires
   // =============================================================================
 
-  @api packageStatus = {};
+  _externalPackageStatus;
+  _wiredPackageStatus = {};
+
+  @api
+  get packageStatus() {
+    return this._externalPackageStatus || this._wiredPackageStatus;
+  }
+  set packageStatus(value) {
+    this._externalPackageStatus = value;
+  }
 
   @wire(getInstalledPackageStatus)
   wiredPackageStatus({ error, data }) {
     if (data) {
-      this.packageStatus = data;
+      this._wiredPackageStatus = data;
     } else if (error) {
       console.warn("Could not load installed package status", error);
     }

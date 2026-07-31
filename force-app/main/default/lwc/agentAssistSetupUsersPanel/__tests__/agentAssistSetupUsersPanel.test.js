@@ -16,7 +16,6 @@
 
 import { createElement } from "@lwc/engine-dom";
 import AgentAssistSetupUsersPanel from "c/agentAssistSetupUsersPanel";
-import getUsersWithPermissionSetStatus from "@salesforce/apex/AgentAssistConfigController.getUsersWithPermissionSetStatus";
 import toggleUserPermissionSetAssignment from "@salesforce/apex/AgentAssistConfigController.toggleUserPermissionSetAssignment";
 
 jest.mock(

@@ -1038,44 +1038,44 @@ public without sharing class AgentAssistConfigController {
       );
     }
 
-    // Check Agent Assist Named Credentials (prefixed with Agent_Assist_)
-    List<String> ncNames = new List<String>();
+    // Check Agent Assist Remote Site Settings (prefixed with Agent_Assist_)
+    List<String> remoteSiteNames = new List<String>();
     try {
-      for (SObject nc : Database.query(
-        'SELECT Id, DeveloperName FROM NamedCredential WHERE DeveloperName LIKE \'Agent\\_Assist%\' ORDER BY DeveloperName ASC'
+      for (SObject rs : Database.query(
+        'SELECT Id, DeveloperName FROM RemoteProxy WHERE DeveloperName LIKE \'Agent\\_Assist%\' ORDER BY DeveloperName ASC'
       )) {
-        ncNames.add((String) nc.get('DeveloperName'));
+        remoteSiteNames.add((String) rs.get('DeveloperName'));
       }
     } catch (Exception ex) {
     }
 
-    if (!ncNames.isEmpty()) {
+    if (!remoteSiteNames.isEmpty()) {
       authSection.items.add(
         new DiagnosticItemDetail(
-          'check-named-credentials',
-          'Agent Assist Named Credentials (Agent_Assist_*)',
+          'check-remote-site-settings',
+          'Agent Assist Remote Site Settings (Agent_Assist_*)',
           'Verified ' +
-            ncNames.size() +
-            ' Named Credential(s) prefixed with "Agent_Assist_": ' +
-            String.join(ncNames, ', '),
+            remoteSiteNames.size() +
+            ' Remote Site Setting(s) prefixed with "Agent_Assist_": ' +
+            String.join(remoteSiteNames, ', '),
           'pass',
           null,
-          ncNames,
-          ncNames.size(),
-          '/lightning/setup/NamedCredentials/home'
+          remoteSiteNames,
+          remoteSiteNames.size(),
+          '/lightning/setup/SecurityRemoteProxy/home'
         )
       );
     } else {
       authSection.items.add(
         new DiagnosticItemDetail(
-          'check-named-credentials',
-          'Agent Assist Named Credentials (Agent_Assist_*)',
-          'No Named Credentials found with prefix "Agent_Assist_".',
+          'check-remote-site-settings',
+          'Agent Assist Remote Site Settings (Agent_Assist_*)',
+          'No Remote Site Settings found with prefix "Agent_Assist_".',
           'warning',
-          'No Named Credentials starting with "Agent_Assist_" were found in Setup > Named Credentials.',
+          'No Remote Site Settings starting with "Agent_Assist_" were found in Setup > Remote Site Settings.',
           null,
           0,
-          '/lightning/setup/NamedCredentials/home'
+          '/lightning/setup/SecurityRemoteProxy/home'
         )
       );
     }

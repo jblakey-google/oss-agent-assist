@@ -19,7 +19,7 @@
 - [x] Can we easily make the Select Salesforce User and other picklists searchable?
 - [x] Disambiguate LWC Configuration Profiles from Google Cloud Conversation Profiles across all Setup Wizard labels and docs.
 - [x] Promote the Users Permission Set assignment card out of the Profiles panel into its own dedicated top-level **"Users"** tab in the Setup Wizard, allowing admins to search users and manage `Agent_Assist_Admin`, `Agent_Assist_User`, and CX platform permission set assignments directly.
-- [x] In the diagnostic panel, add a check for the namedCredentials prefixed like ours are. It should say if any exist and how many there are.
+- [x] In the diagnostic panel, add a check for the Remote Site Settings prefixed like ours are (`Agent_Assist_*`). It should say if any exist and how many there are.
 - [x] Add CX Platform Setup accordion logos. Use the SVGs in the static resource folder.
 - [x] Test standalone transcript using the .
 - [x] Everywhere in the codebase, LWC templates with inline HTML elements should be surrounded with &#32;, not spaces

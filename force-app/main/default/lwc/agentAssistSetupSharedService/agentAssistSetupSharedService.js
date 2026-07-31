@@ -101,9 +101,9 @@ export const DEFAULT_DIAGNOSTIC_SECTIONS = [
         assignees: []
       },
       {
-        id: "check-named-credentials",
-        label: "Agent Assist Named Credentials (Agent_Assist_*)",
-        subLabel: "Named Credentials for secure callout authentication.",
+        id: "check-remote-site-settings",
+        label: "Agent Assist Remote Site Settings (Agent_Assist_*)",
+        subLabel: "Remote Site Settings for network callout authorization.",
         status: "pending",
         errorMessage: "",
         totalCount: 0,
@@ -404,7 +404,6 @@ export const STATUS_LABELS = {
 // =============================================================================
 // #region 2. Storage and Toast Utilities
 // =============================================================================
-/* eslint-disable @lwc/lwc/no-async-operation */
 
 /**
  * Reads a value from localStorage or sessionStorage with fallback and error handling.
@@ -470,7 +469,7 @@ export function dispatchErrorToast(element, title, error) {
 // =============================================================================
 
 /**
- * Validates whether a given endpoint URL string is formatted correctly or uses a Named Credential.
+ * Validates whether a given endpoint URL string is formatted correctly.
  *
  * @param {string} url - Endpoint URL input string.
  * @returns {{ valid: boolean, reason?: string, message?: string, url?: string }} Validation result object.
