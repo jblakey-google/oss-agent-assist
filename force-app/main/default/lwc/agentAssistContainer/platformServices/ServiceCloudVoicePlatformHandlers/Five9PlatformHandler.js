@@ -146,17 +146,12 @@ export default class Five9PlatformHandler extends BasePlatformHandler {
       ) {
         this._five9Sdk = global.Five9Sdk.create();
       } else {
-        const five9Module = await import("Five9BYOT/five9ServiceCloudVoiceSdk");
-        const Five9BYOTServiceCloudVoiceSdk = five9Module.default;
-        this._channelTransportProvider = new ChannelTransportProvider();
-        this._five9Sdk = new Five9BYOTServiceCloudVoiceSdk(
-          this._channelTransportProvider
-        );
+        this.lwc.debugLog("Five9Sdk not detected on window scope.");
       }
       if (this._five9Sdk) {
         this._registerFive9Hooks();
+        this.lwc.debugLog("Five9 BYOT SDK loaded successfully.");
       }
-      this.lwc.debugLog("Five9 BYOT SDK loaded dynamically.");
     } catch (e) {
       this.lwc.debugLog(
         `Five9 BYOT Package not installed or un-importable. Error: ${e.message}`
@@ -212,7 +207,9 @@ export default class Five9PlatformHandler extends BasePlatformHandler {
         `Five9 sessionId unavailable on callconnected. Waiting up to ${SESSION_ID_WAIT_TIMEOUT_SECONDS}s for Five9 SDK populate...`
       );
       let attempts = 0;
-      const maxAttempts = Math.floor((SESSION_ID_WAIT_TIMEOUT_SECONDS * 1000) / 100);
+      const maxAttempts = Math.floor(
+        (SESSION_ID_WAIT_TIMEOUT_SECONDS * 1000) / 100
+      );
       while (!activeGuid && attempts < maxAttempts) {
         attempts++;
         // eslint-disable-next-line @lwc/lwc/no-async-operation

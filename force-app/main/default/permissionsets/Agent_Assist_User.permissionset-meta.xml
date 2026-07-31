@@ -32,6 +32,10 @@
     <label>Google Cloud Agent Assist User</label>
     <description
   >Grants contact center agents standard access to Google Cloud Agent Assist &amp; Companion Agent LWCs and UI Connector callouts.</description>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>Agent_Assist_UI_Connector-Agent_Assist_Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
     <fieldPermissions>
         <editable>false</editable>
         <field>Agent_Assist_Config__c.Additional_Config_JSON__c</field>
